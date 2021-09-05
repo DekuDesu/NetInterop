@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Diagnostics;
 
-namespace RemoteInvoke.Runtime.Data.Helpers
+namespace RemoteInvoke.Net.Transport.Extensions
 {
     public static class StreamTypeConversionExtensions
     {
@@ -240,7 +240,7 @@ namespace RemoteInvoke.Runtime.Data.Helpers
 
             bool sign = (scaleAndSign & 0x80000000) != 0;
 
-            byte scale = (byte)((scaleAndSign >> 16) & 0x7F);
+            byte scale = (byte)(scaleAndSign >> 16 & 0x7F);
 
             return new decimal(low, mid, high, sign, scale);
         }

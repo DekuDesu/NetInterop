@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 #nullable enable
-namespace RemoteInvoke.Runtime.Data.Helpers
+namespace RemoteInvoke.Net.Transport.Extensions
 {
     public static class DispatcherExtensions
     {
@@ -42,7 +42,7 @@ namespace RemoteInvoke.Runtime.Data.Helpers
         /// <returns></returns>
         public static T?[] DispatchPayloads<T>(this IPacketDispatcher dispatcher, Func<(Stream Packet, int PacketType), T?> Converter, int count)
         {
-            return DispatchPayloads<T>(dispatcher, Converter, count, CancellationToken.None);
+            return dispatcher.DispatchPayloads(Converter, count, CancellationToken.None);
         }
     }
 }

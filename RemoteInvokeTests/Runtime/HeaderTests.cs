@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using RemoteInvoke.Runtime.Data;
+using RemoteInvoke.Net.Transport;
 
 namespace RemoteInvokeTests.Runtime
 {

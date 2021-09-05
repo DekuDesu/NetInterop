@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RemoteInvoke.Runtime.Data.Helpers
+namespace RemoteInvoke.Net.Transport.Extensions
 {
     public static class StreamExtensions
     {

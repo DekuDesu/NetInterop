@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using RemoteInvoke.Runtime.Data.Helpers;
 using System.Threading;
+using RemoteInvoke.Net.Transport.Extensions;
 
 namespace RemoteInvokeTests.Runtime
 {

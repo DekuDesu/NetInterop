@@ -11,17 +11,22 @@ using RemoteInvoke.Net.Server;
 using RemoteInvoke.Net.Client;
 using System.Reflection;
 using System.IO;
-using RemoteInvoke.Runtime.Data;
-using RemoteInvoke.Runtime.Data.Helpers;
 using System.Diagnostics;
+using RemoteInvoke.Net.Transport;
+using RemoteInvoke.Net.Transport.Extensions;
 
 namespace RemoteInvokeConsole
 {
     class Program
     {
+        static int maxClients = 1;
         static readonly Barrier ServerBarrier = new(2);
         static readonly Random Rng = new();
         static readonly int MaxSpeed = 0;
+        static long bytesWritten = 0;
+        static object writeLock = new();
+        static long bytesRead = 0;
+        static Stopwatch watch = Stopwatch.StartNew();
 
         static async Task Main()
         {
@@ -33,11 +38,17 @@ namespace RemoteInvokeConsole
 
             int port = 13000;
 
-            Task client = Task.Run(() => StartClient(ip, port, TokenSource.Token));
+            List<Task> tasks = new();
 
             Task server = Task.Run(() => StartServer(ip, port, TokenSource.Token));
 
-            Task[] tasks = { client, server };
+            tasks.Add(server);
+
+            for (int i = 0; i < maxClients; i++)
+            {
+                Task client = Task.Run(() => StartClient(ip, port, TokenSource.Token));
+                tasks.Add(client);
+            }
 
             Console.WriteLine("Press any key to exit");
             Console.ReadLine();
@@ -48,6 +59,14 @@ namespace RemoteInvokeConsole
             await Task.WhenAll(tasks);
 
             Console.WriteLine("Finished");
+        }
+
+        private static void IncrementValue(int value)
+        {
+            lock (writeLock)
+            {
+                Volatile.Write(ref bytesWritten, bytesWritten + value);
+            }
         }
 
         private static void StartClient(IPAddress address, int port, CancellationToken token)
@@ -72,22 +91,19 @@ namespace RemoteInvokeConsole
 
             bool VerifyServerResponse()
             {
-                byte response = dispatcher.WaitAndConvertPacket<byte>((packet) =>
-                {
-                    if ((PacketType)packet.PacketType != PacketType.Response)
-                    {
-                        return 0;
-                    }
+                return dispatcher.WaitAndConvertPacket<bool>((packet) =>
+                 {
+                     if ((PacketType)packet.PacketType == PacketType.ResponseGood)
+                     {
+                         return true;
+                     }
 
-                    return (byte)packet.Packet.ReadByte();
-                }, token);
-
-                return response == 255;
+                     return false;
+                 }, token);
             }
 
-            int bytesSent = 1;
 
-            Stopwatch watch = Stopwatch.StartNew();
+
 
             int GetNumber(int upper)
             {
@@ -101,7 +117,7 @@ namespace RemoteInvokeConsole
             {
                 while (token.IsCancellationRequested is false)
                 {
-                    Console.WriteLine($"                                                         {(bytesSent + 1) / (((watch.ElapsedMilliseconds + 1) / 1000) + 1)} B/s");
+
 
                     string message = "Hello World!";
 
@@ -111,19 +127,19 @@ namespace RemoteInvokeConsole
 
                     stream.WriteUInt(header);
 
-                    bytesSent += 4;
+                    IncrementValue(4);
 
                     Thread.Sleep(GetNumber(MaxSpeed));
 
                     stream.WriteInt(message.Length);
 
-                    bytesSent += 4;
+                    IncrementValue(4);
 
                     Thread.Sleep(GetNumber(MaxSpeed));
 
                     stream.WriteString(message, Encoding.UTF8);
 
-                    bytesSent += 4;
+                    IncrementValue(16);
 
                     if (VerifyServerResponse())
                     {
@@ -136,13 +152,13 @@ namespace RemoteInvokeConsole
 
                     header = headerParser.CreateHeader(4, (byte)PacketType.Int);
 
-                    bytesSent += 4;
-
                     stream.WriteUInt(header);
 
-                    bytesSent += 4;
+                    IncrementValue(4);
 
                     stream.WriteInt(GetNumber(int.MaxValue));
+
+                    IncrementValue(4);
 
                     Thread.Sleep(GetNumber(MaxSpeed));
 
@@ -176,7 +192,7 @@ namespace RemoteInvokeConsole
                         }
                         stream.Write(data);
 
-                        bytesSent += packetSize;
+                        IncrementValue(packetSize);
 
                         Thread.Sleep(GetNumber(MaxSpeed));
 
@@ -209,7 +225,8 @@ namespace RemoteInvokeConsole
             none,
             Int,
             String,
-            Response,
+            ResponseGood,
+            ResponseBad,
             IntArray
         }
 
@@ -229,14 +246,20 @@ namespace RemoteInvokeConsole
                 {
                     object result = dispatcher.WaitAndConvertPacket<object>((packet) =>
                     {
+                        bytesRead += 4;
+
                         if ((PacketType)packet.PacketType == PacketType.Int)
                         {
+                            bytesRead += 4;
                             return packet.Packet.ReadInt();
                         }
 
                         if ((PacketType)packet.PacketType == PacketType.String)
                         {
+                            bytesRead += 4;
                             int stringLength = packet.Packet.ReadInt();
+
+                            bytesRead += stringLength * 2;
                             return packet.Packet.ReadString(stringLength, Encoding.UTF8);
                         }
 
@@ -249,6 +272,7 @@ namespace RemoteInvokeConsole
                             for (int i = 0; i < size; i++)
                             {
                                 nums[i] = packet.Packet.ReadInt();
+                                bytesRead += 4;
                             }
 
                             return $"int[ {string.Join(", ", nums)} ]";
@@ -261,8 +285,8 @@ namespace RemoteInvokeConsole
                     {
                         Console.WriteLine($"Worker: Failed to convert recieved data (null)");
 
-                        stream.WriteUInt(headerParser.CreateHeader(1, (byte)PacketType.Response));
-                        stream.WriteByte(0);
+                        stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseBad));
+                        IncrementValue(4);
                     }
 
                     lock (Rng)
@@ -272,13 +296,21 @@ namespace RemoteInvokeConsole
 
 
                     Console.WriteLine($"Worker: read value: ({result})");
-                    stream.WriteUInt(headerParser.CreateHeader(1, (byte)PacketType.Response));
-                    stream.WriteByte(255);
+                    stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
+                    IncrementValue(4);
 
                     lock (Rng)
                     {
                         Thread.Sleep(Rng.Next(0, MaxSpeed));
                     }
+
+                    int time = (int)(watch.ElapsedMilliseconds / 1000) + 1;
+
+                    long readSpeed = (bytesRead + 1) / time;
+
+                    long writeSpeed = (bytesWritten + 1) / time;
+
+                    Console.WriteLine($"                                                         Read: {readSpeed / 1000} KB/s Write: {writeSpeed / 1000} KB/s t={watch.ElapsedMilliseconds / 1000} Read: {bytesRead / 1_000_000}MB Written: {bytesWritten / 1_000_000}MB");
                 }
             }
             finally

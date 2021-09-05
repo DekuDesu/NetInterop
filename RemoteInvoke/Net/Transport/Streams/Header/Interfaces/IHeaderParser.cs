@@ -1,4 +1,4 @@
-﻿namespace RemoteInvoke.Runtime.Data
+﻿namespace RemoteInvoke.Net.Transport
 {
     public interface IHeaderParser
     {

@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RemoteInvoke.Runtime.Data
+namespace RemoteInvoke.Net.Transport
 {
     /// <summary>
     /// Represents a <see cref="NetworkStream"/> who's lifetime is managed by another object

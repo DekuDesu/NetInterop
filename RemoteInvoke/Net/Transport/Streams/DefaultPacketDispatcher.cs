@@ -6,9 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using RemoteInvoke.Runtime.Data.Helpers;
+using RemoteInvoke.Net.Transport.Extensions;
+
 #nullable enable
-namespace RemoteInvoke.Runtime.Data
+namespace RemoteInvoke.Net.Transport
 {
     public class DefaultPacketDispatcher : IPacketDispatcher
     {
@@ -23,13 +24,13 @@ namespace RemoteInvoke.Runtime.Data
 
         public DefaultPacketDispatcher(IStream<byte> stream, IHeaderParser headerParser)
         {
-            this.backingStream = stream;
+            backingStream = stream;
             this.headerParser = headerParser;
         }
 
         public T? WaitAndConvertPacket<T>(Func<(Stream Packet, int PacketType), T> packetConverter)
         {
-            return WaitAndConvertPacket<T>(packetConverter, CancellationToken.None);
+            return WaitAndConvertPacket(packetConverter, CancellationToken.None);
         }
 
         public T? WaitAndConvertPacket<T>(Func<(Stream Packet, int PacketType), T> packetConverter, CancellationToken token)

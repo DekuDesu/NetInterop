@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RemoteInvoke.Runtime.Data
+namespace RemoteInvoke.Net.Transport
 {
     public interface IStream<T>
     {

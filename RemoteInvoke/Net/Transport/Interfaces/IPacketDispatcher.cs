@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 
-namespace RemoteInvoke.Runtime.Data
+namespace RemoteInvoke.Net.Transport
 {
     /// <summary>
     /// Reponsible for waiting for responses from the stream. When a response is received it copies the data into a new stream and dispatches it.
