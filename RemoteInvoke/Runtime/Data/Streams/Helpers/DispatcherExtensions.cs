@@ -17,7 +17,7 @@ namespace RemoteInvoke.Runtime.Data.Helpers
         /// </para>
         /// </summary>
         /// <returns></returns>
-        public static T?[] DispatchPayloads<T>(this IPayloadDispatcher dispatcher, Func<Stream, T?> Converter, int count, CancellationToken token)
+        public static T?[] DispatchPayloads<T>(this IPacketDispatcher dispatcher, Func<(Stream Packet, int PacketType), T?> Converter, int count, CancellationToken token)
         {
             T?[] result = new T?[count];
 
@@ -25,7 +25,7 @@ namespace RemoteInvoke.Runtime.Data.Helpers
             {
                 token.ThrowIfCancellationRequested();
 
-                T? value = dispatcher.DispatchPayload(Converter, token);
+                T? value = dispatcher.WaitAndConvertPacket(Converter, token);
 
                 result[i] = value;
             }
@@ -40,7 +40,7 @@ namespace RemoteInvoke.Runtime.Data.Helpers
         /// </para>
         /// </summary>
         /// <returns></returns>
-        public static T?[] DispatchPayloads<T>(this IPayloadDispatcher dispatcher, Func<Stream, T?> Converter, int count)
+        public static T?[] DispatchPayloads<T>(this IPacketDispatcher dispatcher, Func<(Stream Packet, int PacketType), T?> Converter, int count)
         {
             return DispatchPayloads<T>(dispatcher, Converter, count, CancellationToken.None);
         }

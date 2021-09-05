@@ -77,7 +77,9 @@ namespace RemoteInvokeConsole
             Console.WriteLine("Worker: started");
             IStream<byte> stream = new LoggerStreamWrapper(new DisposableNetworkStream(client.GetStream())) { MessagePrefix = "Worker: " };
 
-            IPayloadDispatcher dispatcher = new PayloadDispatcher(stream);
+            IHeaderParser headerParser = new DefaultHeader();
+
+            IPacketDispatcher dispatcher = new DefaultPacketDispatcher(stream, headerParser);
 
             try
             {
