@@ -35,22 +35,40 @@ namespace RemoteInvoke.Runtime.Data
         {
             Console.WriteLine($"{MessagePrefix}Reading stream buffer");
 
-            int read = stream.Read(buffer);
+            try
+            {
+                int read = stream.Read(buffer);
 
-            Console.WriteLine($"{MessagePrefix}{read} bytes read from stream");
+                Console.WriteLine($"{MessagePrefix}{read} bytes read from stream");
 
-            return read;
+                return read;
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine($"{MessagePrefix}Encountered error while reading from stream\n\t{e.Message}");
+            }
+
+            return 0;
         }
 
         public int Read(byte[] buffer, int offset, int count)
         {
             Console.WriteLine($"{MessagePrefix}Reading stream buffer with offset({offset}) count({count})");
 
-            int read = stream.Read(buffer, offset, count);
+            try
+            {
+                int read = stream.Read(buffer, offset, count);
 
-            Console.WriteLine($"{MessagePrefix}{read} bytes read from stream");
+                Console.WriteLine($"{MessagePrefix}{read} bytes read from stream");
 
-            return read;
+                return read;
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine($"{MessagePrefix}Encountered error while reading from stream\n\t{e.Message}");
+            }
+
+            return 0;
         }
 
         public void Write(byte[] buffer, int offset, int count)

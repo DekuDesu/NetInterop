@@ -10,13 +10,14 @@ namespace RemoteInvoke.Runtime.Data
     {
         private const uint HeaderSizeTypeMask = 0x80000000;
         private const uint HeaderTypeMask = 0xFFFFFF00;
+        private const int MaxPacketSize = ushort.MaxValue * 127;
 
         /// <summary>
         /// Returns the number of <see langword="bytes"/> that are following the header of a given message
         /// </summary>
         /// <param name="header"></param>
         /// <returns></returns>
-        public int GetPacketType(uint header)
+        public int GetPacketSize(uint header)
         {
             // we use uint here becuase we use the leading bit for size type
             // int is returned becuase max message size is 127 * ushort which can fit into an int
@@ -71,10 +72,55 @@ namespace RemoteInvoke.Runtime.Data
         /// </summary>
         /// <param name="header"></param>
         /// <returns></returns>
-        public int GetPacketSize(uint header)
+        public int GetPacketType(uint header)
         {
             // per the specification the header type is stored in the 8 trailing bits
             return (int)((header | HeaderTypeMask) ^ HeaderTypeMask);
+        }
+
+        public uint CreateHeader(ushort packetSize, byte packetType)
+        {
+            Span<byte> header = new byte[4];
+
+            header[0] = packetType;
+
+            Span<byte> sizeBytes = BitConverter.GetBytes(packetSize);
+
+            header[1] = sizeBytes[0];
+            header[2] = sizeBytes[1];
+
+            header[3] = 0b_0000_0001;
+
+            return BitConverter.ToUInt32(header);
+        }
+
+        /// <summary>
+        /// Creates a header that denotes a larg packet, the packet size must be equally divisible by ushort.MaxValue(65535) and the max packet size is 8322945 bytes (8MB)
+        /// </summary>
+        /// <param name="packetSize"></param>
+        /// <param name="packetType"></param>
+        /// <returns></returns>
+        public uint CreateLargeHeader(int packetSize, byte packetType)
+        {
+            if (packetSize > MaxPacketSize)
+            {
+                throw new ArgumentOutOfRangeException($"{nameof(packetSize)} must be between 0 and {MaxPacketSize} and be equally divisible by {ushort.MaxValue}.");
+            }
+
+            Span<byte> header = new byte[4];
+
+            header[0] = packetType;
+
+            header[1] = 0b_1111_1111;
+            header[2] = 0b_1111_1111;
+
+            byte size = (byte)(packetSize / ushort.MaxValue);
+
+            size |= 0b_1000_0000;
+
+            header[3] = size;
+
+            return BitConverter.ToUInt32(header);
         }
     }
 }

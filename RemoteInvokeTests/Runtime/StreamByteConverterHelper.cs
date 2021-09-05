@@ -111,7 +111,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WriteFloat(data);
+            s.WriteULong(data);
 
             s.Position = 0;
 
