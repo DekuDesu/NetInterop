@@ -69,32 +69,7 @@ namespace RemoteInvokeConsole
 
             IStream<byte> stream = new LoggerStreamWrapper(new ManagedNetworkStream(client)) { MessagePrefix = "Client: " };
 
-            byte[] bytes = LoadAssembly();
-            if (bytes?.Length is not null or 0)
-            {
-                if (stream.CanWrite)
-                {
-                    Console.WriteLine($"Sent assembly Size: {bytes.Length:N} bytes");
-                    stream.WritePrimitive(bytes.Length);
-                    stream.Write(bytes);
-                }
-
-                IPayloadDispatcher dispatcher = new PayloadDispatcher(stream);
-
-                int result = dispatcher.DispatchPayload(s => s.ReadInt());
-
-                Console.WriteLine($"Client: Receieved {result}");
-
-                stream.WritePrimitive(1);
-                stream.WritePrimitive(2);
-                stream.WritePrimitive(3);
-                stream.WritePrimitive(4);
-                stream.WritePrimitive(5);
-            }
-            else
-            {
-                Console.WriteLine("Failed to load assembly");
-            }
+            stream.WriteInt(4);
         }
 
         private static void Worker(TcpClient client, CancellationToken token)
@@ -106,34 +81,7 @@ namespace RemoteInvokeConsole
 
             try
             {
-                // check to see if client sent assembly
-                Assembly loadedAssembly = dispatcher.DispatchPayload<Assembly>(strm =>
-                {
-                    byte[] buffer = new byte[strm.Length];
 
-                    strm.Read(buffer);
-
-                    return Assembly.Load(buffer);
-                }, token);
-
-                Thread.Sleep(10000);
-
-                int result = (int)loadedAssembly.EntryPoint.Invoke(null, new object[] { new string[] { "Test Arg" } });
-
-                Console.WriteLine($"Worker: Result from entry point {result}");
-
-                stream.WritePrimitive(4);
-
-                stream.WritePrimitive(result);
-
-                Console.WriteLine($"Worker: Sent Response");
-
-                int[] nums = dispatcher.DispatchPayloads<int>(strm => strm.ReadInt(), 5, token);
-
-                foreach (var item in nums)
-                {
-                    Console.WriteLine($"Worker: Read{item}");
-                }
             }
             finally
             {

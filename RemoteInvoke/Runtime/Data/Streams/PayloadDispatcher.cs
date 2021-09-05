@@ -12,6 +12,7 @@ namespace RemoteInvoke.Runtime.Data
     public class PayloadDispatcher : IPayloadDispatcher
     {
         private readonly IStream<byte> stream;
+        private readonly IHeaderParser headerParser;
 
         private volatile bool breakSentinel;
 
@@ -19,9 +20,10 @@ namespace RemoteInvoke.Runtime.Data
 
         public int PollingRate { get; set; } = 10;
 
-        public PayloadDispatcher(IStream<byte> stream)
+        public PayloadDispatcher(IStream<byte> stream, IHeaderParser headerParser)
         {
             this.stream = stream;
+            this.headerParser = headerParser;
         }
 
         public T? DispatchPayload<T>(Func<Stream, T> Converter)
@@ -104,12 +106,14 @@ namespace RemoteInvoke.Runtime.Data
                 // check to see if there is anything to dispatch
                 if (stream.DataAvailable)
                 {
+                    // get the header
+                    uint header = stream.ReadUInt();
 
-                    // get size of payload to be expected
-                    int expectedSize = stream.ReadInt();
+                    // determine how many bytes to read from stream to dispatch
+                    int packetSize = headerParser.GetPacketSize(header);
 
                     // copy the bytes to a new stream 
-                    Stream payloadStream = GenerateStream(expectedSize);
+                    Stream payloadStream = GenerateStream(packetSize);
 
                     // send the stream to the handler
                     payloadHandler(payloadStream);

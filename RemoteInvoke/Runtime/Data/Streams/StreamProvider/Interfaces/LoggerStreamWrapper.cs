@@ -57,7 +57,14 @@ namespace RemoteInvoke.Runtime.Data
         {
             Console.WriteLine($"{MessagePrefix}Writing to stream with offset({offset}) count({count})");
 
-            stream.Write(buffer, offset, count);
+            try
+            {
+                stream.Write(buffer, offset, count);
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine($"{MessagePrefix}Encountered error while writing to stream\n\t{e.Message}");
+            }
 
             Console.WriteLine($"{MessagePrefix}Stream writing finished");
         }
@@ -66,7 +73,14 @@ namespace RemoteInvoke.Runtime.Data
         {
             Console.WriteLine($"{MessagePrefix}Writing to stream max length {buffer.Length}");
 
-            stream.Write(buffer);
+            try
+            {
+                stream.Write(buffer);
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine($"{MessagePrefix}Encountered error while writing to stream\n\t{e.Message}");
+            }
 
             Console.WriteLine($"{MessagePrefix}Stream writing finished");
         }
@@ -75,7 +89,14 @@ namespace RemoteInvoke.Runtime.Data
         {
             Console.WriteLine($"{MessagePrefix}Writing to stream max length {buffer.Length}");
 
-            stream.Write(buffer);
+            try
+            {
+                stream.Write(buffer);
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine($"{MessagePrefix}Encountered error while writing to stream\n\t{e.Message}");
+            }
 
             Console.WriteLine($"{MessagePrefix}Stream writing finished");
         }

@@ -225,11 +225,11 @@ namespace RemoteInvoke.Runtime.Data.Helpers
             return new decimal(low, mid, high, sign, scale);
         }
 
-        public static void WritePrimitive(this Stream stream, decimal value) => WritePrimitive(stream.Write, value);
+        public static void WriteDecimal(this Stream stream, decimal value) => WriteDecimal(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, decimal value) => WritePrimitive(stream.Write, value);
+        public static void WriteDecimal(this IStream<byte> stream, decimal value) => WriteDecimal(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, decimal value)
+        private static void WriteDecimal(SpanWriteFunc stream, decimal value)
         {
             int[] bits = decimal.GetBits(value);
 
@@ -252,83 +252,83 @@ namespace RemoteInvoke.Runtime.Data.Helpers
             stream(encoding.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, bool value) => WritePrimitive(stream.Write, value);
+        public static void WriteBool(this Stream stream, bool value) => WriteBool(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, bool value) => WritePrimitive(stream.Write, value);
+        public static void WriteBool(this IStream<byte> stream, bool value) => WriteBool(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, bool value)
+        private static void WriteBool(SpanWriteFunc stream, bool value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, short value) => WritePrimitive(stream.Write, value);
+        public static void WriteShort(this Stream stream, short value) => WriteShort(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, short value) => WritePrimitive(stream.Write, value);
+        public static void WriteShort(this IStream<byte> stream, short value) => WriteShort(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, short value)
+        private static void WriteShort(SpanWriteFunc stream, short value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, ushort value) => WritePrimitive(stream.Write, value);
+        public static void WriteUShort(this Stream stream, ushort value) => WriteUShort(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, ushort value) => WritePrimitive(stream.Write, value);
+        public static void WriteUShort(this IStream<byte> stream, ushort value) => WriteUShort(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, ushort value)
+        private static void WriteUShort(SpanWriteFunc stream, ushort value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, int value) => WritePrimitive(stream.Write, value);
+        public static void WriteInt(this Stream stream, int value) => WriteInt(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, int value) => WritePrimitive(stream.Write, value);
+        public static void WriteInt(this IStream<byte> stream, int value) => WriteInt(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, int value)
+        private static void WriteInt(SpanWriteFunc stream, int value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, uint value) => WritePrimitive(stream.Write, value);
+        public static void WriteUInt(this Stream stream, uint value) => WriteUInt(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, uint value) => WritePrimitive(stream.Write, value);
+        public static void WriteUInt(this IStream<byte> stream, uint value) => WriteUInt(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, uint value)
+        private static void WriteUInt(SpanWriteFunc stream, uint value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, long value) => WritePrimitive(stream.Write, value);
+        public static void WriteLong(this Stream stream, long value) => WriteLong(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, long value) => WritePrimitive(stream.Write, value);
+        public static void WriteLong(this IStream<byte> stream, long value) => WriteLong(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, long value)
+        private static void WriteLong(SpanWriteFunc stream, long value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, ulong value) => WritePrimitive(stream.Write, value);
+        public static void WriteULong(this Stream stream, ulong value) => WriteULong(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, ulong value) => WritePrimitive(stream.Write, value);
+        public static void WriteULong(this IStream<byte> stream, ulong value) => WriteULong(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, ulong value)
+        private static void WriteULong(SpanWriteFunc stream, ulong value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, float value) => WritePrimitive(stream.Write, value);
+        public static void WriteFloat(this Stream stream, float value) => WriteFloat(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, float value) => WritePrimitive(stream.Write, value);
+        public static void WriteFloat(this IStream<byte> stream, float value) => WriteFloat(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, float value)
+        private static void WriteFloat(SpanWriteFunc stream, float value)
         {
             stream(BitConverter.GetBytes(value));
         }
 
-        public static void WritePrimitive(this Stream stream, double value) => WritePrimitive(stream.Write, value);
+        public static void WriteDouble(this Stream stream, double value) => WriteDouble(stream.Write, value);
 
-        public static void WritePrimitive(this IStream<byte> stream, double value) => WritePrimitive(stream.Write, value);
+        public static void WriteDouble(this IStream<byte> stream, double value) => WriteDouble(stream.Write, value);
 
-        private static void WritePrimitive(SpanWriteFunc stream, double value)
+        private static void WriteDouble(SpanWriteFunc stream, double value)
         {
             stream(BitConverter.GetBytes(value));
         }

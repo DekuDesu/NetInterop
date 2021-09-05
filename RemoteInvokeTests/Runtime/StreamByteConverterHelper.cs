@@ -19,7 +19,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteBool(data);
 
             s.Position = 0;
 
@@ -36,7 +36,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteLong(data);
 
             s.Position = 0;
 
@@ -51,7 +51,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteUInt(data);
 
             s.Position = 0;
 
@@ -66,7 +66,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteLong(data);
 
             s.Position = 0;
 
@@ -81,7 +81,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteUInt(data);
 
             s.Position = 0;
 
@@ -96,7 +96,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteLong(data);
 
             s.Position = 0;
 
@@ -111,7 +111,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteFloat(data);
 
             s.Position = 0;
 
@@ -126,7 +126,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteFloat(data);
 
             s.Position = 0;
 
@@ -141,7 +141,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive(data);
+            s.WriteDouble(data);
 
             s.Position = 0;
 
@@ -157,7 +157,7 @@ namespace RemoteInvokeTests.Runtime
         {
             using Stream s = new MemoryStream();
 
-            s.WritePrimitive((decimal)data);
+            s.WriteDecimal((decimal)data);
 
             s.Position = 0;
 
@@ -170,7 +170,7 @@ namespace RemoteInvokeTests.Runtime
             using Stream left = new MemoryStream();
             using Stream right = new MemoryStream();
 
-            left.WritePrimitive(12);
+            left.WriteUInt(12);
 
             left.Position = 0;
 
