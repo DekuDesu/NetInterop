@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace RemoteInvoke.Net.Transport.Packets.Extensions
 {
-    public static class SpanConverterExtensions
+    /// <summary>
+    /// Converts unmanaged types to and from Span<byte>
+    /// </summary>
+    public static class SpanTypeConversionExtensions
     {
         public static bool ToBool(this Span<byte> buffer)
         {

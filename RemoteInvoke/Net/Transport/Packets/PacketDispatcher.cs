@@ -1,4 +1,5 @@
 ﻿using RemoteInvoke.Net.Transport.Extensions;
+using RemoteInvoke.Net.Transport.Packets.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,6 +94,46 @@ namespace RemoteInvoke.Net.Transport.Packets
 
             // if there was no data available then return false
             return false;
+        }
+
+        /// <summary>
+        /// Attempts to write the packet to the underlying stream, waits until a response packet is received.
+        /// <para>
+        /// Blocking; Graceful Cancel;
+        /// </para>
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="responsePacket"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public bool TryWritePacket(Packet<T> packet, out Packet<T> responsePacket, CancellationToken token = default)
+        {
+            WriteBlindPacket(packet);
+
+            responsePacket = WaitForPacket(token);
+
+            return responsePacket.PacketType.ToInt32(null) != 0;
+        }
+
+        /// <summary>
+        /// Writes the packet to the underlying stream, does not wait for a response packet to be received
+        /// <para>
+        /// Blocking; Blocks while writing data to underlying stream, if available, otherwise Non-Blocking;
+        /// </para>
+        /// </summary>
+        /// <param name="packet"></param>
+        public void WriteBlindPacket(Packet<T> packet)
+        {
+            // generate a header for the packet
+            uint header = headerParser.CreateHeader((ushort)packet.Length, packet.PacketType.ToByte(null));
+
+            Span<byte> data = stackalloc byte[packet.Length + sizeof(uint)];
+
+            packet.Data.CopyTo(data.Slice(sizeof(uint)));
+
+            header.ToSpan().CopyTo(data.Slice(0, sizeof(uint)));
+
+            backingStream.Write(data);
         }
     }
 }

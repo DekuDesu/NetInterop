@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RemoteInvoke.Net.Transport.Packets.Extensions
 {
-    public static class PacketExtensions
+    public static class RefPacketExtensions
     {
         public static bool ReadBool<T>(this ref Packet<T> packet) where T : Enum, IConvertible => packet.Data.ReadBool();
         public static void WriteBool<T>(this ref Packet<T> packet, bool value) where T : Enum, IConvertible => packet.Data.WriteBool(value);

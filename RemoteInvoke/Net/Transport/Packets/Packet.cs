@@ -31,4 +31,13 @@ namespace RemoteInvoke.Net.Transport
             Data = data;
         }
     }
+
+    public static class Packet
+    {
+        public static Packet<TContext> Create<TContext>(TContext packetType)
+            where TContext : Enum, IConvertible
+        {
+            return new Packet<TContext>() { PacketType = packetType };
+        }
+    }
 }

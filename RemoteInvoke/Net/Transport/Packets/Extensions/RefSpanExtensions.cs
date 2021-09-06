@@ -238,17 +238,32 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
         /// <param name="data"></param>
         /// <param name="additionalSize"></param>
         /// <returns></returns>
-        private static int Expand<T>(this ref Span<T> data, int additionalSize)
+        public static int Expand<T>(this ref Span<T> data, int additionalSize)
         {
             int previousLength = data.Length;
 
-            Span<T> bytes = new T[data.Length + additionalSize];
+            Span<T> bytes = new T[previousLength + additionalSize];
 
             data.CopyTo(bytes);
 
             data = bytes;
 
             return previousLength;
+        }
+
+        /// <summary>
+        /// Expands the provided <see cref="Span{T}"/> returns the index where the additional space starts
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="additionalSize"></param>
+        /// <returns></returns>
+        public static void ExpandLeft<T>(this ref Span<T> data, int additionalSize)
+        {
+            Span<T> bytes = new T[data.Length + additionalSize];
+
+            data.CopyTo(bytes.Slice(additionalSize));
+
+            data = bytes;
         }
     }
 }

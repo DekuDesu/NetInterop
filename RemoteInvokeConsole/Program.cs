@@ -21,8 +21,8 @@ namespace RemoteInvokeConsole
 {
     class Program
     {
-        static int maxClients = 1;
-        static readonly Barrier ServerBarrier = new(2);
+        static int maxClients = 7;
+        static readonly Barrier ServerBarrier = new(8);
         static readonly Random Rng = new();
         static readonly int MaxSpeed = 0;
         static long bytesWritten = 0;
@@ -91,22 +91,6 @@ namespace RemoteInvokeConsole
 
             IPacketDispatcher<PacketType> dispatcher = new PacketDispatcher<PacketType>(stream, headerParser);
 
-            bool VerifyServerResponse()
-            {
-                return dispatcher.WaitAndConvertPacket<bool, PacketType>((ref Packet<PacketType> packet) =>
-                  {
-                      if (packet.PacketType == PacketType.ResponseGood)
-                      {
-                          return true;
-                      }
-
-                      return false;
-                  }, token);
-            }
-
-
-
-
             int GetNumber(int upper)
             {
                 lock (Rng)
@@ -119,31 +103,16 @@ namespace RemoteInvokeConsole
             {
                 while (token.IsCancellationRequested is false)
                 {
-
-
                     string message = "Hello World!";
 
-                    ushort packetSize = (ushort)(sizeof(int) + message.Length);
+                    var packet = Packet.Create(PacketType.String);
 
-                    uint header = headerParser.CreateHeader(packetSize, (byte)PacketType.String);
+                    packet.WriteInt(message.Length);
+                    packet.WriteString(message);
 
-                    stream.WriteUInt(header);
+                    IncrementValue(packet.Length + sizeof(uint));
 
-                    IncrementValue(4);
-
-                    Thread.Sleep(GetNumber(MaxSpeed));
-
-                    stream.WriteInt(message.Length);
-
-                    IncrementValue(4);
-
-                    Thread.Sleep(GetNumber(MaxSpeed));
-
-                    stream.WriteString(message, Encoding.UTF8);
-
-                    IncrementValue(16);
-
-                    if (VerifyServerResponse())
+                    if (dispatcher.TryWritePacket(packet, out var response, token) && response.PacketType == PacketType.ResponseGood)
                     {
                         Console.WriteLine("Server recognized string packet");
                     }
@@ -152,19 +121,13 @@ namespace RemoteInvokeConsole
                         throw new InvalidOperationException("Server sent invalid command response");
                     }
 
-                    header = headerParser.CreateHeader(4, (byte)PacketType.Int);
+                    packet = Packet.Create(PacketType.Int);
 
-                    stream.WriteUInt(header);
+                    packet.WriteInt(GetNumber(int.MaxValue));
 
-                    IncrementValue(4);
+                    IncrementValue(packet.Length + sizeof(uint));
 
-                    stream.WriteInt(GetNumber(int.MaxValue));
-
-                    IncrementValue(4);
-
-                    Thread.Sleep(GetNumber(MaxSpeed));
-
-                    if (VerifyServerResponse())
+                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
                     {
                         Console.WriteLine("Server recognized int packet");
                     }
@@ -173,34 +136,28 @@ namespace RemoteInvokeConsole
                         throw new InvalidOperationException("Server sent invalid command response");
                     }
 
+
+                    Thread.Sleep(GetNumber(MaxSpeed));
+
                     //int arraySize = GetNumber(ushort.MaxValue / sizeof(int));
                     int arraySize = ushort.MaxValue / sizeof(int);
 
                     if (arraySize > 0)
                     {
-                        packetSize = (ushort)(arraySize * sizeof(int));
+                        packet = Packet.Create(PacketType.IntArray);
 
-                        header = headerParser.CreateHeader(packetSize, (byte)PacketType.IntArray);
-
-                        stream.WriteUInt(header);
-
-                        Thread.Sleep(GetNumber(MaxSpeed));
-
-                        Span<byte> data = new byte[arraySize * sizeof(int)];
+                        packet.Data = new byte[arraySize * sizeof(int)];
 
                         for (int i = 0; i < arraySize * sizeof(int); i += sizeof(int))
                         {
-                            BitConverter.GetBytes(GetNumber(1000)).CopyTo(data.Slice(i, sizeof(int)));
+                            BitConverter.GetBytes(GetNumber(1000)).CopyTo(packet.Data.Slice(i, sizeof(int)));
                         }
-                        stream.Write(data);
 
-                        IncrementValue(packetSize);
+                        IncrementValue(packet.Length + sizeof(uint));
 
-                        Thread.Sleep(GetNumber(MaxSpeed));
-
-                        if (VerifyServerResponse())
+                        if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
                         {
-                            Console.WriteLine("Server recognized int array");
+                            Console.WriteLine("Server recognized int array packet");
                         }
                         else
                         {
