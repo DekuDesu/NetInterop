@@ -14,6 +14,8 @@ using System.IO;
 using System.Diagnostics;
 using RemoteInvoke.Net.Transport;
 using RemoteInvoke.Net.Transport.Extensions;
+using RemoteInvoke.Net.Transport.Packets;
+using RemoteInvoke.Net.Transport.Packets.Extensions;
 
 namespace RemoteInvokeConsole
 {
@@ -87,19 +89,19 @@ namespace RemoteInvokeConsole
 
             IHeaderParser headerParser = new DefaultHeader();
 
-            IPacketDispatcher dispatcher = new DefaultPacketDispatcher(stream, headerParser);
+            IPacketDispatcher<PacketType> dispatcher = new PacketDispatcher<PacketType>(stream, headerParser);
 
             bool VerifyServerResponse()
             {
-                return dispatcher.WaitAndConvertPacket<bool>((packet) =>
-                 {
-                     if ((PacketType)packet.PacketType == PacketType.ResponseGood)
-                     {
-                         return true;
-                     }
+                return dispatcher.WaitAndConvertPacket<bool, PacketType>((ref Packet<PacketType> packet) =>
+                  {
+                      if (packet.PacketType == PacketType.ResponseGood)
+                      {
+                          return true;
+                      }
 
-                     return false;
-                 }, token);
+                      return false;
+                  }, token);
             }
 
 
@@ -238,48 +240,48 @@ namespace RemoteInvokeConsole
 
             IHeaderParser headerParser = new DefaultHeader();
 
-            IPacketDispatcher dispatcher = new DefaultPacketDispatcher(stream, headerParser);
+            IPacketDispatcher<PacketType> dispatcher = new PacketDispatcher<PacketType>(stream, headerParser);
 
             try
             {
                 while (token.IsCancellationRequested is false)
                 {
-                    object result = dispatcher.WaitAndConvertPacket<object>((packet) =>
-                    {
-                        bytesRead += 4;
+                    object result = dispatcher.WaitAndConvertPacket<object, PacketType>((ref Packet<PacketType> packet) =>
+                     {
+                         bytesRead += 4;
 
-                        if ((PacketType)packet.PacketType == PacketType.Int)
-                        {
-                            bytesRead += 4;
-                            return packet.Packet.ReadInt();
-                        }
+                         if (packet.PacketType == PacketType.Int)
+                         {
+                             bytesRead += 4;
+                             return packet.ReadInt();
+                         }
 
-                        if ((PacketType)packet.PacketType == PacketType.String)
-                        {
-                            bytesRead += 4;
-                            int stringLength = packet.Packet.ReadInt();
+                         if (packet.PacketType == PacketType.String)
+                         {
+                             bytesRead += 4;
+                             int stringLength = packet.ReadInt();
 
-                            bytesRead += stringLength * 2;
-                            return packet.Packet.ReadString(stringLength, Encoding.UTF8);
-                        }
+                             bytesRead += stringLength * 2;
+                             return packet.ReadString(stringLength, Encoding.UTF8);
+                         }
 
-                        if ((PacketType)packet.PacketType == PacketType.IntArray)
-                        {
-                            int size = (int)(packet.Packet.Length / sizeof(int));
+                         if (packet.PacketType == PacketType.IntArray)
+                         {
+                             int size = (int)(packet.Length / sizeof(int));
 
-                            int[] nums = new int[size];
+                             int[] nums = new int[size];
 
-                            for (int i = 0; i < size; i++)
-                            {
-                                nums[i] = packet.Packet.ReadInt();
-                                bytesRead += 4;
-                            }
+                             for (int i = 0; i < size; i++)
+                             {
+                                 nums[i] = packet.ReadInt();
+                                 bytesRead += 4;
+                             }
 
-                            return $"int[ {string.Join(", ", nums)} ]";
-                        }
+                             return $"int[ {string.Join(", ", nums)} ]";
+                         }
 
-                        return null;
-                    }, token);
+                         return null;
+                     }, token);
 
                     if (result == null)
                     {
@@ -295,7 +297,7 @@ namespace RemoteInvokeConsole
                     }
 
 
-                    Console.WriteLine($"Worker: read value: ({result})");
+                    //Console.WriteLine($"Worker: read value: ({result})");
                     stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
                     IncrementValue(4);
 

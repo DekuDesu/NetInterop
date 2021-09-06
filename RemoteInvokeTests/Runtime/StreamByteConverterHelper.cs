@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Threading;
 using RemoteInvoke.Net.Transport.Extensions;
+using RemoteInvoke.Net.Transport.Packets.Extensions;
 
 namespace RemoteInvokeTests.Runtime
 {
@@ -17,13 +18,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(false)]
         public void Test_Bool(bool data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteBool(data);
+            stream.WriteBool(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(bool), stream.Length);
 
-            Assert.Equal(data, s.ReadBool());
+            Assert.Equal(data, stream.ReadBool());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -34,13 +37,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(-4434)]
         public void Test_shortt(short data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteLong(data);
+            stream.WriteShort(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(short), stream.Length);
 
-            Assert.Equal(data, s.ReadShort());
+            Assert.Equal(data, stream.ReadShort());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -49,13 +54,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(ushort.MaxValue)]
         public void Test_ushort(ushort data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteUInt(data);
+            stream.WriteUShort(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(ushort), stream.Length);
 
-            Assert.Equal(data, s.ReadUShort());
+            Assert.Equal(data, stream.ReadUShort());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -64,13 +71,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(int.MaxValue)]
         public void Test_Int(int data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteLong(data);
+            stream.WriteInt(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(int), stream.Length);
 
-            Assert.Equal(data, s.ReadInt());
+            Assert.Equal(data, stream.ReadInt());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -79,13 +88,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(uint.MaxValue)]
         public void Test_UInt(uint data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteUInt(data);
+            stream.WriteUInt(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(uint), stream.Length);
 
-            Assert.Equal(data, s.ReadUInt());
+            Assert.Equal(data, stream.ReadUInt());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -94,13 +105,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(long.MaxValue)]
         public void Test_long(long data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteLong(data);
+            stream.WriteLong(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(long), stream.Length);
 
-            Assert.Equal(data, s.ReadLong());
+            Assert.Equal(data, stream.ReadLong());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -109,13 +122,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(ulong.MaxValue)]
         public void Test_ulong(ulong data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteULong(data);
+            stream.WriteULong(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(ulong), stream.Length);
 
-            Assert.Equal(data, s.ReadULong());
+            Assert.Equal(data, stream.ReadULong());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -124,13 +139,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(float.MaxValue)]
         public void Test_float(float data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteFloat(data);
+            stream.WriteFloat(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(float), stream.Length);
 
-            Assert.Equal(data, s.ReadFloat());
+            Assert.Equal(data, stream.ReadFloat());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -139,13 +156,15 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(double.MaxValue)]
         public void Test_double(double data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteDouble(data);
+            stream.WriteDouble(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(double), stream.Length);
 
-            Assert.Equal(data, s.ReadDouble());
+            Assert.Equal(data, stream.ReadDouble());
+
+            Assert.Equal(0, stream.Length);
         }
 
         [Theory]
@@ -155,30 +174,41 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(1)]
         public void Test_decimal(decimal data)
         {
-            using Stream s = new MemoryStream();
+            Span<byte> stream = stackalloc byte[0];
 
-            s.WriteDecimal((decimal)data);
+            stream.WriteDecimal(data);
 
-            s.Position = 0;
+            Assert.Equal(sizeof(decimal), stream.Length);
 
-            Assert.Equal(data, s.ReadDecimal());
+            Assert.Equal(data, stream.ReadDecimal());
+
+            Assert.Equal(0, stream.Length);
         }
 
-        [Fact]
-        public void Test_CopyTo()
+        [Theory]
+        [InlineData("Hello World", "UTF8")]
+        [InlineData("Hello World", "ASCII")]
+        [InlineData("Hello World", "UTF7")]
+        [InlineData("Hello World", "UTF32")]
+        [InlineData("Hello World", "Latin1")]
+        [InlineData("Hello World", "Unicode")]
+        [InlineData("Hello World", "BigEndianUnicode")]
+        [InlineData("Hello World", "Default")]
+        public void Test_String(string data, string encodingName)
         {
-            using Stream left = new MemoryStream();
-            using Stream right = new MemoryStream();
+            Encoding encoding = (Encoding)typeof(Encoding).GetProperty(encodingName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).GetValue(null);
 
-            left.WriteUInt(12);
+            Span<byte> stream = stackalloc byte[0];
 
-            left.Position = 0;
+            stream.WriteString(data, encoding);
 
-            left.CopyTo(right, 4, 81920, CancellationToken.None);
+            int expectedLength = encoding.GetByteCount("a") * data.Length;
 
-            right.Position = 0;
+            Assert.Equal(expectedLength, stream.Length);
 
-            Assert.Equal(12, right.ReadInt());
+            Assert.Equal(data, stream.ReadString(data.Length, encoding));
+
+            Assert.Equal(0, stream.Length);
         }
     }
 }
