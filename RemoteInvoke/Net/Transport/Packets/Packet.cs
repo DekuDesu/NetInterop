@@ -11,7 +11,7 @@ namespace RemoteInvoke.Net.Transport
     /// Represents a wrapper around a <see cref="Span{TPayload}"/> with an indentifying number for the context the <see cref="Data"/> represents
     /// </summary>
     public ref struct Packet<TContext>
-        where TContext : Enum, IConvertible
+        where TContext : Enum
     {
         /// <summary>
         /// The type of packet this represents, this is enum whos value must be between 0 and 255(byte)

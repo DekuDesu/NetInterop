@@ -38,7 +38,7 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
         {
             int index = data.Expand(sizeof(sbyte));
 
-            BitConverter.GetBytes(value).CopyTo(data.Slice(index));
+            data[index] = (byte)value;
         }
 
         public static byte ReadByte(this ref Span<byte> data)
@@ -54,7 +54,16 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
         {
             int index = data.Expand(sizeof(byte));
 
-            BitConverter.GetBytes(value).CopyTo(data.Slice(index));
+            data[index] = value;
+        }
+
+        public static char ReadChar(this ref Span<byte> data)
+        {
+            return (char)data.ReadUShort();
+        }
+        public static void WriteChar(this ref Span<byte> data, char value)
+        {
+            data.WriteUShort(value);
         }
 
         public static short ReadShort(this ref Span<byte> data)
@@ -197,8 +206,8 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
         {
             int[] bits = decimal.GetBits(value);
 
-            // this is an intentional violation of DRY, SpanConverterExtentions duplicates this code
-            // this uses stackalloc and SpanConverterExtentions uses heap alloc, this is faster for ref spans
+            // this is an intentional violation of DRY, SpanConverterExtensions duplicates this code
+            // this uses stackalloc and SpanConverterExtensions uses heap alloc, this is faster for ref spans
             Span<byte> bytes = stackalloc byte[16];
 
             BitConverter.GetBytes(bits[0]).CopyTo(bytes.Slice(0, 4));
@@ -230,6 +239,17 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
             int index = data.Expand(bytes.Length);
 
             bytes.CopyTo(data.Slice(index));
+        }
+
+        public static DateTime ReadDateTime(this ref Span<byte> data)
+        {
+            long binaryDateTime = data.ReadLong();
+
+            return DateTime.FromBinary(binaryDateTime);
+        }
+        public static void WriteDateTime(this ref Span<byte> data, DateTime value)
+        {
+            data.WriteLong(value.ToBinary());
         }
 
         /// <summary>
