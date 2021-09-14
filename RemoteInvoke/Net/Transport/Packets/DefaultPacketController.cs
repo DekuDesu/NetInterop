@@ -1,4 +1,5 @@
-﻿using RemoteInvoke.Net.Transport.Extensions;
+﻿using RemoteInvoke.Net.Transport.Abstractions;
+using RemoteInvoke.Net.Transport.Extensions;
 using RemoteInvoke.Net.Transport.Packets.Extensions;
 using System;
 using System.Collections.Generic;
@@ -10,17 +11,17 @@ using System.Threading.Tasks;
 #nullable enable
 namespace RemoteInvoke.Net.Transport.Packets
 {
-    public class PacketDispatcher<T> : IPacketDispatcher<T> where T : Enum, IConvertible
+    public class DefaultPacketController<T> : IPacketController<T> where T : Enum, IConvertible
     {
         private readonly IStream<byte> backingStream;
         private readonly IHeaderParser headerParser;
         private readonly Type PacketEnumType = typeof(T);
         private const int PollingRate = 1;
 
-        public PacketDispatcher(IStream<byte> backingStream, IHeaderParser headerParser)
+        public DefaultPacketController(IStream<byte> backingStream, IHeaderParser headerParser)
         {
-            this.backingStream = backingStream;
-            this.headerParser = headerParser;
+            this.backingStream = backingStream ?? throw new ArgumentNullException(nameof(backingStream));
+            this.headerParser = headerParser ?? throw new ArgumentNullException(nameof(headerParser));
         }
 
         public Packet<T> WaitForPacket(CancellationToken token = default)
@@ -70,7 +71,7 @@ namespace RemoteInvoke.Net.Transport.Packets
                 if (validPacket)
                 {
                     // no sense creating a new object if we got weird data
-                    packet = new Packet<T>(packetType, packetData);
+                    packet = Packet.Create(packetType, packetData);
                 }
 
                 return validPacket;
@@ -91,16 +92,9 @@ namespace RemoteInvoke.Net.Transport.Packets
 
         public void WriteBlindPacket(Packet<T> packet)
         {
-            // generate a header for the packet
-            uint header = headerParser.CreateHeader((ushort)packet.Length, packet.PacketType.ToByte(null));
+            headerParser.CreateHeader(ref packet);
 
-            Span<byte> data = stackalloc byte[packet.Length + sizeof(uint)];
-
-            packet.Data.CopyTo(data.Slice(sizeof(uint)));
-
-            header.ToSpan().CopyTo(data.Slice(0, sizeof(uint)));
-
-            backingStream.Write(data);
+            backingStream.Write(packet.Data);
         }
     }
 }

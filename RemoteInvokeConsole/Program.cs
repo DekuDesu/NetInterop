@@ -16,6 +16,7 @@ using RemoteInvoke.Net.Transport;
 using RemoteInvoke.Net.Transport.Extensions;
 using RemoteInvoke.Net.Transport.Packets;
 using RemoteInvoke.Net.Transport.Packets.Extensions;
+using RemoteInvoke.Net.Transport.Abstractions;
 
 namespace RemoteInvokeConsole
 {
@@ -23,12 +24,12 @@ namespace RemoteInvokeConsole
     {
         static int maxClients = 1;
         static readonly Barrier ServerBarrier = new(2);
-        static readonly Random Rng = new();
-        static readonly int MaxSpeed = 0;
         static long bytesWritten = 0;
         static object writeLock = new();
         static long bytesRead = 0;
-        static Stopwatch watch = Stopwatch.StartNew();
+        static object readLock = new();
+        static long totalRead = 0;
+        static long totalWritten = 0;
 
         static async Task Main()
         {
@@ -53,6 +54,9 @@ namespace RemoteInvokeConsole
             }
 
             Console.WriteLine("Press any key to exit");
+
+            //StartDataRateLogger(TokenSource.Token);
+
             Console.ReadLine();
 
             TokenSource.Cancel();
@@ -63,12 +67,68 @@ namespace RemoteInvokeConsole
             Console.WriteLine("Finished");
         }
 
-        private static void IncrementValue(int value)
+        private static void IncrementWritten(int value)
         {
             lock (writeLock)
             {
                 Volatile.Write(ref bytesWritten, bytesWritten + value);
             }
+        }
+        private static void IncrementRead(int value)
+        {
+            lock (readLock)
+            {
+                Volatile.Write(ref bytesRead, bytesRead + value);
+            }
+        }
+
+        private static void StartDataRateLogger(CancellationToken token)
+        {
+            int interval = 1000;
+
+            bool stopped = false;
+
+            void WriteDataRates()
+            {
+                if (stopped) return;
+
+                long read = 0;
+                long written = 0;
+
+                lock (readLock)
+                {
+                    read = bytesRead;
+                    bytesRead = 0;
+                }
+
+                totalRead += read;
+
+                lock (writeLock)
+                {
+                    written = bytesWritten;
+                    bytesWritten = 0;
+                }
+
+                totalWritten += written;
+
+                //Console.WriteLine($"{read}B:{written}B:{totalRead}B:{totalWritten}B");
+
+                Console.WriteLine($"Read: {read} B/s Write: {written} B/s Total RW ({totalRead / 1000}KB : {totalWritten / 1000}KB )");
+            }
+
+            System.Timers.Timer timer = new() { AutoReset = true, Enabled = true, Interval = interval };
+
+            timer.Elapsed += (x, y) => WriteDataRates();
+
+            timer.Start();
+
+            token.Register(() =>
+            {
+                stopped = true;
+                timer.Stop();
+                Console.WriteLine("Disposed Timer");
+                timer.Dispose();
+            });
         }
 
         private static void StartClient(IPAddress address, int port, CancellationToken token)
@@ -89,233 +149,54 @@ namespace RemoteInvokeConsole
 
             IHeaderParser headerParser = new DefaultHeader();
 
-            IPacketDispatcher<PacketType> dispatcher = new PacketDispatcher<PacketType>(stream, headerParser);
+            IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
 
-            int GetNumber(int upper)
+            var noneHandler = new ActionPacketHandler<PacketType>(PacketType.none, (ref Packet<PacketType> packet) =>
             {
-                lock (Rng)
-                {
-                    return Rng.Next(0, upper);
-                }
-            }
+                // we read the header and packet at this point
+                IncrementRead(packet.ActualSize);
+
+                //return $"Client:  handled none";
+            });
+
+            var intHandler = new ActionPacketHandler<PacketType>(PacketType.ResponseGood, (ref Packet<PacketType> packet) =>
+            {
+                // we read the header and packet at this point
+                IncrementRead(packet.ActualSize);
+
+                string message = "Hello World!";
+
+                packet = new(PacketType.String, Encoding.UTF8.GetByteCount(message) + sizeof(int));
+
+                packet.AppendInt(message.Length);
+                packet.AppendString(message, Encoding.UTF8);
+
+                IncrementWritten(packet.ActualSize);
+
+                controller.WriteBlindPacket(packet);
+
+                //return $"Client: received response good from worker";
+            });
+
+            var handlers = new IPacketHandler<PacketType>[] { noneHandler, intHandler };
+
+
+            IPacketDispatcher<PacketType> dispatcher = new DefaultPacketDispatcher<PacketType>(handlers);
+
+            IPacketReceiver<PacketType> receiver = new DefaultPacketReceiver<PacketType>(dispatcher, controller);
 
             try
             {
-                while (token.IsCancellationRequested is false)
-                {
-                    string message = "Hello World!";
 
-                    var packet = Packet.Create(PacketType.String);
+                var packet = Packet.Create(PacketType.Int);
 
-                    packet.AppendInt(message.Length);
-                    packet.AppendString(message);
+                packet.AppendInt(69);
 
-                    IncrementValue(packet.Length + sizeof(uint));
+                IncrementWritten(packet.ActualSize);
 
-                    if (dispatcher.TryWritePacket(packet, out var response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized string packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
+                controller.WriteBlindPacket(packet);
 
-                    packet = Packet.Create(PacketType.Int);
-
-                    packet.AppendInt(GetNumber(int.MaxValue));
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized int packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Sbyte);
-
-                    packet.AppendSByte(7);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Sbyte packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Byte);
-
-                    packet.AppendByte(13);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Byte packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Short);
-
-                    packet.AppendShort(1222);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Short packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.UShort);
-
-                    packet.AppendUShort(5565);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized UShort packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.UInt);
-
-                    packet.AppendUInt((uint)GetNumber(int.MaxValue));
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized UInt packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Long);
-
-                    packet.AppendLong(long.MaxValue);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Long packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.ULong);
-
-                    packet.AppendLong(long.MaxValue);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized ULong packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Float);
-
-                    packet.AppendFloat(float.MaxValue);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Float packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Double);
-
-                    packet.AppendDouble(double.MaxValue);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Double packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-                    packet = Packet.Create(PacketType.Decimal);
-
-                    packet.AppendDecimal(decimal.MaxValue);
-
-                    IncrementValue(packet.Length + sizeof(uint));
-
-                    if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                    {
-                        Console.WriteLine("Server recognized Decimal packet");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Server sent invalid command response");
-                    }
-
-
-                    Thread.Sleep(GetNumber(MaxSpeed));
-
-                    //int arraySize = GetNumber(ushort.MaxValue / sizeof(int));
-                    int arraySize = ushort.MaxValue / sizeof(int);
-
-                    if (arraySize > 0)
-                    {
-                        packet = Packet.Create(PacketType.IntArray);
-
-                        packet.Data = new byte[arraySize * sizeof(int)];
-
-                        for (int i = 0; i < arraySize * sizeof(int); i += sizeof(int))
-                        {
-                            BitConverter.GetBytes(GetNumber(1000)).CopyTo(packet.Data.Slice(i, sizeof(int)));
-                        }
-
-                        IncrementValue(packet.Length + sizeof(uint));
-
-                        if (dispatcher.TryWritePacket(packet, out response, token) && response.PacketType == PacketType.ResponseGood)
-                        {
-                            Console.WriteLine("Server recognized int array packet");
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("Server sent invalid command response");
-                        }
-                    }
-
-                }
+                receiver.BeginReceiving(token);
             }
             catch (Exception e)
             {
@@ -357,140 +238,57 @@ namespace RemoteInvokeConsole
 
             IHeaderParser headerParser = new DefaultHeader();
 
-            IPacketDispatcher<PacketType> dispatcher = new PacketDispatcher<PacketType>(stream, headerParser);
+            IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
+
+            var noneHandler = new ActionPacketHandler<PacketType>(PacketType.none, (ref Packet<PacketType> packet) =>
+            {
+                // we read the header and packet at this point
+                IncrementRead(packet.ActualSize);
+
+                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
+
+                IncrementWritten(sizeof(uint));
+
+                //return $"Handled: none";
+            });
+
+            var intHandler = new ActionPacketHandler<PacketType>(PacketType.Int, (ref Packet<PacketType> packet) =>
+            {
+                // we read the header and packet at this point
+                IncrementRead(packet.ActualSize);
+
+                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
+
+                IncrementWritten(sizeof(uint));
+
+                //return $"Handled: (int){packet.GetInt()}";
+            });
+
+            var stringHandler = new ActionPacketHandler<PacketType>(PacketType.String, (ref Packet<PacketType> packet) =>
+            {
+                // we read the header and packet at this point
+                IncrementRead(packet.ActualSize);
+
+                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
+
+                IncrementWritten(sizeof(uint));
+
+                int messageLength = packet.GetInt();
+
+                string message = packet.GetString(messageLength, Encoding.UTF8);
+
+                //return $"Handled: (string){message}";
+            });
+
+            var handlers = new IPacketHandler<PacketType>[] { noneHandler, intHandler, stringHandler };
+
+            IPacketDispatcher<PacketType> dispatcher = new DefaultPacketDispatcher<PacketType>(handlers);
+
+            IPacketReceiver<PacketType> receiver = new DefaultPacketReceiver<PacketType>(dispatcher, controller);
 
             try
             {
-                while (token.IsCancellationRequested is false)
-                {
-                    object result = dispatcher.WaitAndConvertPacket<object, PacketType>((ref Packet<PacketType> packet) =>
-                     {
-                         bytesRead += 4;
-
-                         if (packet.PacketType == PacketType.Int)
-                         {
-                             bytesRead += 4;
-                             return packet.GetInt();
-                         }
-
-                         if (packet.PacketType == PacketType.String)
-                         {
-                             bytesRead += 4;
-                             int stringLength = packet.GetInt();
-
-                             bytesRead += stringLength * 2;
-                             return packet.GetString(stringLength, Encoding.UTF8);
-                         }
-
-                         if (packet.PacketType == PacketType.IntArray)
-                         {
-                             int size = (int)(packet.Length / sizeof(int));
-
-                             int[] nums = new int[size];
-
-                             for (int i = 0; i < size; i++)
-                             {
-                                 nums[i] = packet.GetInt();
-                                 bytesRead += 4;
-                             }
-
-                             return $"int[ {string.Join(", ", nums)} ]";
-                         }
-
-                         if (packet.PacketType == PacketType.Sbyte)
-                         {
-                             bytesRead += sizeof(sbyte);
-                             return packet.GetSByte();
-                         }
-
-                         if (packet.PacketType == PacketType.Byte)
-                         {
-                             bytesRead += sizeof(byte);
-                             return packet.GetByte();
-                         }
-
-                         if (packet.PacketType == PacketType.Short)
-                         {
-                             bytesRead += sizeof(short);
-                             return packet.GetShort();
-                         }
-
-                         if (packet.PacketType == PacketType.UShort)
-                         {
-                             bytesRead += sizeof(ushort);
-                             return packet.GetUShort();
-                         }
-
-                         if (packet.PacketType == PacketType.UInt)
-                         {
-                             bytesRead += sizeof(uint);
-                             return packet.GetUInt();
-                         }
-
-                         if (packet.PacketType == PacketType.Long)
-                         {
-                             bytesRead += sizeof(long);
-                             return packet.GetLong();
-                         }
-
-                         if (packet.PacketType == PacketType.ULong)
-                         {
-                             bytesRead += sizeof(ulong);
-                             return packet.GetULong();
-                         }
-
-                         if (packet.PacketType == PacketType.Float)
-                         {
-                             bytesRead += sizeof(float);
-                             return packet.GetFloat();
-                         }
-
-                         if (packet.PacketType == PacketType.Double)
-                         {
-                             bytesRead += sizeof(double);
-                             return packet.GetDouble();
-                         }
-
-                         if (packet.PacketType == PacketType.Decimal)
-                         {
-                             bytesRead += sizeof(decimal);
-                             return packet.GetDecimal();
-                         }
-
-                         return null;
-                     }, token);
-
-                    if (result == null)
-                    {
-                        Console.WriteLine($"Worker: Failed to convert recieved data (null)");
-
-                        stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseBad));
-                        IncrementValue(4);
-                    }
-
-                    lock (Rng)
-                    {
-                        Thread.Sleep(Rng.Next(0, MaxSpeed));
-                    }
-
-
-                    Console.WriteLine($"Worker: read value: ({result})");
-                    stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
-                    IncrementValue(4);
-
-                    lock (Rng)
-                    {
-                        Thread.Sleep(Rng.Next(0, MaxSpeed));
-                    }
-
-                    int time = (int)(watch.ElapsedMilliseconds / 1000) + 1;
-
-                    long readSpeed = (bytesRead + 1) / time;
-
-                    long writeSpeed = (bytesWritten + 1) / time;
-
-                    Console.WriteLine($"                                                         Read: {readSpeed / 1000} KB/s Write: {writeSpeed / 1000} KB/s t={watch.ElapsedMilliseconds / 1000} Read: {bytesRead / 1_000_000}MB Written: {bytesWritten / 1_000_000}MB");
-                }
+                receiver.BeginReceiving(token);
             }
             finally
             {

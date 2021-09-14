@@ -162,5 +162,26 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
             return bytes;
         }
 
+        public static string ToString(this Span<byte> buffer, Encoding encoding = default)
+        {
+            return encoding.GetString(buffer);
+        }
+
+        public static Span<byte> ToSpan(this string value, Encoding encoding = default)
+        {
+            encoding ??= Encoding.UTF8;
+
+            return encoding.GetBytes(value);
+        }
+
+        public static DateTime ToDateTime(this Span<byte> buffer)
+        {
+            return DateTime.FromBinary(buffer.ToLong());
+        }
+
+        public static Span<byte> ToSpan(this DateTime value)
+        {
+            return value.ToBinary().ToSpan();
+        }
     }
 }

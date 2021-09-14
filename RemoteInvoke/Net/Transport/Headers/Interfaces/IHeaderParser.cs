@@ -1,4 +1,6 @@
-﻿namespace RemoteInvoke.Net.Transport
+﻿using System;
+
+namespace RemoteInvoke.Net.Transport
 {
     public interface IHeaderParser
     {
@@ -6,5 +8,6 @@
         uint CreateLargeHeader(int packetSize, byte packetType);
         int GetPacketType(uint header);
         int GetPacketSize(uint header);
+        void CreateHeader<TPacketType>(ref Packet<TPacketType> packet) where TPacketType : Enum, IConvertible;
     }
 }

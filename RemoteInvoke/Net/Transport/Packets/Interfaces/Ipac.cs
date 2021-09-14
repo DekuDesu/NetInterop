@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace RemoteInvoke.Net.Transport.Packets
 {
-    public interface IPacketDispatcher<T> where T : Enum, IConvertible
+    public interface Ipac<T> where T : Enum, IConvertible
     {
         /// <summary>
         /// Checks to see if a data is available, if it is creates and returns new packet.

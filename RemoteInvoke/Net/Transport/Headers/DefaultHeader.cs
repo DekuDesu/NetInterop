@@ -122,5 +122,29 @@ namespace RemoteInvoke.Net.Transport
 
             return BitConverter.ToUInt32(header);
         }
+
+        public void CreateHeader<TPacketType>(ref Packet<TPacketType> packet) where TPacketType : Enum, IConvertible
+        {
+            Span<byte> header = packet.GetHeaderBytes();
+
+            header[0] = packet.PacketType.ToByte(null);
+
+            BitConverter.GetBytes(packet.Length).CopyTo(header.Slice(1, 2));
+
+            //header[1] = sizeBytes[0];
+            //header[2] = sizeBytes[1];
+
+            header[3] = 0b_0000_0001;
+        }
+
+        public TPacketType GetHeaderType<TPacketType>(Span<byte> headerBytes) where TPacketType : Enum, IConvertible
+        {
+            return (TPacketType)Enum.ToObject(typeof(TPacketType), headerBytes[0]);
+        }
+
+        public int GetPacketSize(Span<byte> headerBytes)
+        {
+            return BitConverter.ToInt16(headerBytes.Slice(1, 2));
+        }
     }
 }

@@ -7,8 +7,10 @@ using System.Threading.Tasks;
 namespace RemoteInvoke.Net.Transport.Packets.Extensions
 {
     // This might seem counter intuitive over using streams, in my testing this is 50% faster than using streams and has no memory and GC side effects
+
     public static class RefSpanExtensions
     {
+        [Obsolete("Use Packet Instead")]
         public static bool ReadBool(this ref Span<byte> data)
         {
             // slice is faster than indexers as of 9/2021
