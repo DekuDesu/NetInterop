@@ -44,11 +44,13 @@ namespace RemoteInvoke.Net.Transport.Packets
 
             if (backingStream.DataAvailable)
             {
+                Span<byte> header = new byte[4];
+
                 // read the header, it contains the type of packet and the size of the packet
-                uint header = backingStream.ReadUInt();
+                backingStream.Read(header);
 
                 // convert the int type to the actual packet type for compile type type safety and convenience
-                T packetType = (T)Enum.ToObject(PacketEnumType, headerParser.GetPacketType(header));
+                T packetType = headerParser.GetHeaderType<T>(header);
 
                 // get the message size in bytes
                 int messageSize = headerParser.GetPacketSize(header);
@@ -57,7 +59,7 @@ namespace RemoteInvoke.Net.Transport.Packets
                 // such as things like "response good" or "ping"
                 if (messageSize == 0)
                 {
-                    packet = new Packet<T>(packetType, Array.Empty<byte>());
+                    packet = Packet.Empty(packetType);
 
                     return true;
                 }
@@ -72,6 +74,9 @@ namespace RemoteInvoke.Net.Transport.Packets
                 {
                     // no sense creating a new object if we got weird data
                     packet = Packet.Create(packetType, packetData);
+
+                    // this is purely for consistency and debugging, header bytes aren't used for reading gener
+                    packet.SetHeaderBytes(header);
                 }
 
                 return validPacket;

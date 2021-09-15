@@ -185,7 +185,17 @@ namespace RemoteInvoke.Net.Transport
         public static Packet<TContext> Create<TContext>(TContext packetType, Span<byte> data)
             where TContext : Enum, IConvertible
         {
-            return new Packet<TContext>(packetType, data, 0);
+            return new Packet<TContext>(packetType, data, Packet<TContext>.DefaultHeaderSize);
+        }
+        public static Packet<TContext> Empty<TContext>(TContext packetType)
+            where TContext : Enum, IConvertible
+        {
+            return new Packet<TContext>()
+            {
+                HeaderSize = Packet<TContext>.DefaultHeaderSize,
+                Data = Span<byte>.Empty,
+                PacketType = packetType
+            };
         }
     }
 }

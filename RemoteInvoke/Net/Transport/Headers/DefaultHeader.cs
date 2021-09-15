@@ -129,10 +129,7 @@ namespace RemoteInvoke.Net.Transport
 
             header[0] = packet.PacketType.ToByte(null);
 
-            BitConverter.GetBytes(packet.Length).CopyTo(header.Slice(1, 2));
-
-            //header[1] = sizeBytes[0];
-            //header[2] = sizeBytes[1];
+            BitConverter.GetBytes((ushort)packet.Length).CopyTo(header.Slice(1, 2));
 
             header[3] = 0b_0000_0001;
         }
