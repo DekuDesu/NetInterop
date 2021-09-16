@@ -18,6 +18,6 @@ namespace RemoteInvoke.Net.Transport.Abstractions
         /// <typeparam name="T"></typeparam>
         /// <param name="value"></param>
         /// <returns>a by reference packet, by reference is enforced for performance reasons</returns>
-        ref Packet<TPacketType> Convert<T>(T value) where T : unmanaged;
+        Packet<TPacketType> Convert<T>(T value) where T : unmanaged;
     }
 }

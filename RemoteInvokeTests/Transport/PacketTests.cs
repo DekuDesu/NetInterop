@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using RemoteInvoke.Net.Transport.Packets.Extensions;
 
 namespace RemoteInvokeTests.Transport
 {
@@ -104,7 +105,7 @@ namespace RemoteInvokeTests.Transport
             Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
             Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
 
-            Span<byte> data = packet.RemoveStart(3);
+            Span<byte> data = packet.Remove(3);
 
             Assert.Equal(3, packet.StartOffset);
             Assert.Equal(1, data[0]);
@@ -116,6 +117,47 @@ namespace RemoteInvokeTests.Transport
             Assert.Equal(1, packet.Data[0 + sizeof(uint)]);
             Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
             Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
+        }
+
+        [Fact]
+        public void Test_Append_Array()
+        {
+            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+
+            Assert.Equal(10, packet.Length);
+            Assert.Equal(0, packet.EndOffset);
+
+            int[] data = new int[] { 1, 2, 3, 4, 5 };
+
+            packet.AppendArray(data);
+
+            // 4 for the size, 4 for header, data * 4 for length
+            Assert.Equal((data.Length * sizeof(int)) + 4 + sizeof(int), packet.ActualSize);
+
+
+        }
+
+        [Fact]
+        public void Test_Get_Array()
+        {
+            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+
+            Assert.Equal(10, packet.Length);
+            Assert.Equal(0, packet.EndOffset);
+
+            int[] data = new int[] { 1, 2, 3, 4, 5 };
+
+            packet.AppendArray(data);
+
+            // 4 for the size, 4 for header, data * 4 for length
+            Assert.Equal((data.Length * sizeof(int)) + 4 + sizeof(int), packet.ActualSize);
+
+            int[] actual = packet.GetIntArray();
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                Assert.True(data[i] == actual[i], $"Expected:\t{data[i]}\r\nActual:\t{actual[i]}\r\n\tat i={i}");
+            }
         }
     }
 }

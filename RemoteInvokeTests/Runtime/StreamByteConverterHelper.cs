@@ -210,5 +210,39 @@ namespace RemoteInvokeTests.Runtime
 
             Assert.Equal(0, stream.Length);
         }
+
+        [Fact]
+        public void TestTOSpanArray()
+        {
+            int[] data = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+            Span<byte> buffer = new byte[data.Length * sizeof(int)];
+
+            Span<byte> bytes = data.ToSpan(buffer, sizeof(int), SpanTypeConversionExtensions.ToSpan);
+
+            Assert.Equal(bytes.Length, data.Length * sizeof(int));
+
+            Assert.Equal(1, BitConverter.ToInt32(bytes.Slice(0, sizeof(int))));
+        }
+        [Fact]
+        public void Test_FromSpanArray()
+        {
+            int[] data = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+            Span<byte> buffer = new byte[data.Length * sizeof(int)];
+
+            Span<byte> bytes = data.ToSpan(buffer, sizeof(int), SpanTypeConversionExtensions.ToSpan);
+
+            Assert.Equal(bytes.Length, data.Length * sizeof(int));
+
+            Assert.Equal(1, BitConverter.ToInt32(bytes.Slice(0, sizeof(int))));
+
+            int[] actual = bytes.ToArray(sizeof(int), SpanTypeConversionExtensions.ToInt);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                Assert.True(data[i] == actual[i], $"Expected:\t{data[i]}\r\nActual:\t{actual[i]}\r\n\tat i={i}");
+            }
+        }
     }
 }

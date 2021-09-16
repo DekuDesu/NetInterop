@@ -30,6 +30,7 @@ namespace RemoteInvokeConsole
         static object readLock = new();
         static long totalRead = 0;
         static long totalWritten = 0;
+        static Random rng = new();
 
         static async Task Main()
         {
@@ -55,7 +56,7 @@ namespace RemoteInvokeConsole
 
             Console.WriteLine("Press any key to exit");
 
-            //StartDataRateLogger(TokenSource.Token);
+            StartDataRateLogger(TokenSource.Token);
 
             Console.ReadLine();
 
@@ -84,6 +85,12 @@ namespace RemoteInvokeConsole
 
         private static void StartDataRateLogger(CancellationToken token)
         {
+            string speedUnit = "MB";
+            int speedModifier = 1000000;
+
+            string totalUnit = "MB";
+            int totalModifier = 1000000;
+
             int interval = 1000;
 
             bool stopped = false;
@@ -113,7 +120,7 @@ namespace RemoteInvokeConsole
 
                 //Console.WriteLine($"{read}B:{written}B:{totalRead}B:{totalWritten}B");
 
-                Console.WriteLine($"Read: {read} B/s Write: {written} B/s Total RW ({totalRead / 1000}KB : {totalWritten / 1000}KB )");
+                Console.WriteLine($"Read: {read / speedModifier} {speedUnit}/s Write: {written / speedModifier} {speedUnit}/s Total RW ({totalRead / totalModifier}{totalUnit} : {totalWritten / totalModifier}{totalUnit} )");
             }
 
             System.Timers.Timer timer = new() { AutoReset = true, Enabled = true, Interval = interval };
@@ -151,6 +158,8 @@ namespace RemoteInvokeConsole
 
             IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
 
+            IPacketSender<PacketType> sender = new DefaultPacketSender<PacketType>(controller);
+
             var noneHandler = new ActionPacketHandler<PacketType>(PacketType.none, (ref Packet<PacketType> packet) =>
             {
                 // we read the header and packet at this point
@@ -159,21 +168,29 @@ namespace RemoteInvokeConsole
                 //return $"Client:  handled none";
             });
 
+            int[] randomNumbers = new int[(ushort.MaxValue / sizeof(int)) - 10];
+
+            for (int i = 0; i < randomNumbers.Length; i++)
+            {
+                randomNumbers[i] = rng.Next();
+            }
+
             var intHandler = new ActionPacketHandler<PacketType>(PacketType.ResponseGood, (ref Packet<PacketType> packet) =>
             {
                 // we read the header and packet at this point
                 IncrementRead(packet.ActualSize);
 
-                string message = "Hello World!";
-
-                packet = new(PacketType.String, Encoding.UTF8.GetByteCount(message) + sizeof(int));
-
-                packet.AppendInt(message.Length);
-                packet.AppendString(message, Encoding.UTF8);
+                sender.Send(new Message("Hello World!"));
 
                 IncrementWritten(packet.ActualSize);
 
-                controller.WriteBlindPacket(packet);
+                packet = Packet.Create(PacketType.IntArray);
+
+                packet.AppendArray(randomNumbers);
+
+                sender.Send(packet);
+
+                IncrementWritten(packet.ActualSize);
 
                 //return $"Client: received response good from worker";
             });
@@ -210,7 +227,26 @@ namespace RemoteInvokeConsole
             }
         }
 
-        enum PacketType : byte
+        public class Message : IPacketSerializable<PacketType>
+        {
+            public string Value { get; set; }
+
+            public Message(string value)
+            {
+                Value = value;
+            }
+
+            public PacketType PacketType { get; } = PacketType.String;
+
+            public int EstimatePacketSize() => Encoding.UTF8.GetByteCount(Value);
+
+            public void Serialize(ref Packet<PacketType> packetBuilder)
+            {
+                packetBuilder.AppendString(Value, Encoding.UTF8);
+            }
+        }
+
+        public enum PacketType : byte
         {
             none,
             Int,
@@ -264,6 +300,21 @@ namespace RemoteInvokeConsole
                 //return $"Handled: (int){packet.GetInt()}";
             });
 
+            var intArrayHandler = new ActionPacketHandler<PacketType>(PacketType.IntArray, (ref Packet<PacketType> packet) =>
+            {
+                // we read the header and packet at this point
+                IncrementRead(packet.ActualSize);
+
+                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
+
+                IncrementWritten(sizeof(uint));
+
+                int[] data = packet.GetIntArray();
+
+                _ = data[0];
+                //return $"Handled: (int[]){data.Length} First number: {data[0]}";
+            });
+
             var stringHandler = new ActionPacketHandler<PacketType>(PacketType.String, (ref Packet<PacketType> packet) =>
             {
                 // we read the header and packet at this point
@@ -273,14 +324,12 @@ namespace RemoteInvokeConsole
 
                 IncrementWritten(sizeof(uint));
 
-                int messageLength = packet.GetInt();
-
-                string message = packet.GetString(messageLength, Encoding.UTF8);
+                string message = packet.GetString(Encoding.UTF8);
 
                 //return $"Handled: (string){message}";
             });
 
-            var handlers = new IPacketHandler<PacketType>[] { noneHandler, intHandler, stringHandler };
+            var handlers = new IPacketHandler<PacketType>[] { noneHandler, intHandler, stringHandler, intArrayHandler };
 
             IPacketDispatcher<PacketType> dispatcher = new DefaultPacketDispatcher<PacketType>(handlers);
 

@@ -63,6 +63,8 @@ namespace RemoteInvoke.Net.Transport
 
         public const int DefaultHeaderSize = sizeof(uint);
 
+        private const int MaxPacketSize = DefaultHeaderSize + ushort.MaxValue;
+
         public Packet(TContext packetType, Span<byte> data, int headerSize = DefaultHeaderSize)
         {
             PacketType = packetType;
@@ -83,6 +85,19 @@ namespace RemoteInvoke.Net.Transport
         }
 
         /// <summary>
+        /// Gets a portion of the packet for manual appending of data
+        /// </summary>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public Span<byte> GetBuffer(int length)
+        {
+            // make sure we have adequet space
+            Extend(length);
+
+            return Data.Slice(EndOffset++ + HeaderSize, length);
+        }
+
+        /// <summary>
         /// Extends the end of the packet to allow additional data to be appended
         /// </summary>
         /// <param name="count"></param>
@@ -97,6 +112,12 @@ namespace RemoteInvoke.Net.Transport
             if (desiredLength <= Length)
             {
                 return;
+            }
+
+            // current max packet size is 65535
+            if (desiredLength >= MaxPacketSize)
+            {
+                throw new ArgumentOutOfRangeException($"Packet too large Size: {desiredLength}! Packets are limited to {ushort.MaxValue} bytes in length.");
             }
 
             // resize the span
@@ -128,7 +149,7 @@ namespace RemoteInvoke.Net.Transport
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
-        public Span<byte> RemoveStart(int length)
+        public Span<byte> Remove(int length)
         {
             length = Math.Min(Length, Math.Max(length, 0));
 
@@ -196,6 +217,11 @@ namespace RemoteInvoke.Net.Transport
                 Data = Span<byte>.Empty,
                 PacketType = packetType
             };
+        }
+        public static Packet<TContext> Create<TContext>(TContext packetType, int estimatedSize)
+            where TContext : Enum, IConvertible
+        {
+            return new Packet<TContext>(packetType, estimatedSize);
         }
     }
 }

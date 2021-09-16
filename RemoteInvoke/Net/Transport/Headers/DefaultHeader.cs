@@ -141,7 +141,7 @@ namespace RemoteInvoke.Net.Transport
 
         public int GetPacketSize(Span<byte> headerBytes)
         {
-            return BitConverter.ToInt16(headerBytes.Slice(1, 2));
+            return BitConverter.ToUInt16(headerBytes.Slice(1, 2));
         }
     }
 }

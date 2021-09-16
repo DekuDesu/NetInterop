@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -182,6 +183,150 @@ namespace RemoteInvoke.Net.Transport.Packets.Extensions
         public static Span<byte> ToSpan(this DateTime value)
         {
             return value.ToBinary().ToSpan();
+        }
+
+        public unsafe static Span<byte> ToFullyQualifiedSpan<T>(this T unmanagedObject) where T : unmanaged
+        {
+            Span<byte> result = new byte[sizeof(T) + 1];
+
+            result[0] = (byte)Type.GetTypeCode(typeof(T));
+
+            // i had a more elegant way of doing this, but this was 75% faster... :(
+            if (unmanagedObject is bool a)
+            {
+                a.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is sbyte b)
+            {
+                b.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is byte c)
+            {
+                c.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is short d)
+            {
+                d.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is ushort e)
+            {
+                e.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is int f)
+            {
+                f.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is uint g)
+            {
+                g.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is long h)
+            {
+                h.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is ulong i)
+            {
+                i.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is float j)
+            {
+                j.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is double k)
+            {
+                k.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is decimal l)
+            {
+                l.ToSpan().CopyTo(result.Slice(1));
+            }
+            else
+            if (unmanagedObject is DateTime m)
+            {
+                m.ToSpan().CopyTo(result.Slice(1));
+            }
+
+            return result;
+        }
+
+        public static object FromFullyQualifiedSpan<T>(this Span<byte> buffer)
+        {
+            TypeCode type = (TypeCode)buffer[0];
+
+            buffer = buffer.Slice(1);
+
+            switch (type)
+            {
+                case TypeCode.Boolean:
+                    return buffer.ToBool();
+                case TypeCode.Char:
+                    return (char)buffer.ToUShort();
+                case TypeCode.SByte:
+                    return (sbyte)buffer[0];
+                case TypeCode.Byte:
+                    return buffer[0];
+                case TypeCode.Int16:
+                    return buffer.ToShort();
+                case TypeCode.UInt16:
+                    return buffer.ToUShort();
+                case TypeCode.Int32:
+                    return buffer.ToInt();
+                case TypeCode.UInt32:
+                    return buffer.ToUInt();
+                case TypeCode.Int64:
+                    return buffer.ToLong();
+                case TypeCode.UInt64:
+                    return buffer.ToULong();
+                case TypeCode.Single:
+                    return buffer.ToFloat();
+                case TypeCode.Double:
+                    return buffer.ToDouble();
+                case TypeCode.Decimal:
+                    return buffer.ToDecimal();
+                case TypeCode.DateTime:
+                    return buffer.ToDateTime();
+                case TypeCode.String:
+                case TypeCode.Empty:
+                case TypeCode.Object:
+                case TypeCode.DBNull:
+                default:
+                    throw new InvalidOperationException($"Failed to convert non-managed type {type} to object.");
+            }
+        }
+
+        public static Span<byte> ToSpan<T>(this T[] value, Span<byte> buffer, int sizeOfT, ToSpanFunc<T, byte> toSpanConverter) where T : unmanaged
+        {
+            int index = 0;
+            for (int i = 0; i < buffer.Length; i += 4)
+            {
+                toSpanConverter(value[index++]).CopyTo(buffer.Slice(i, sizeOfT));
+            }
+
+            return buffer;
+        }
+
+        public static T[] ToArray<T>(this Span<byte> buffer, int sizeOfT, FromSpanFunc<byte, T> spanToObjectConverter)
+        {
+            T[] result = new T[buffer.Length / sizeOfT];
+
+            int index = 0;
+            for (int i = 0; i < buffer.Length; i += sizeOfT)
+            {
+                result[index++] = spanToObjectConverter(buffer.Slice(i, sizeOfT));
+            }
+
+            return result;
         }
     }
 }
