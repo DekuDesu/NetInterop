@@ -1,13 +1,12 @@
-﻿using System;
+﻿using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Transport.Core.Packets;
+using NetInterop.Transport.Core.Packets.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using RemoteInvoke.Net.Abstractions;
-using RemoteInvoke.Net.Transport.Packets;
-using RemoteInvoke.Net.Transport;
-using RemoteInvoke.Net.Transport.Packets.Extensions;
 namespace RemoteInvokeTests.Abstractions
 {
     public class PacketDeserializerTests
@@ -73,10 +72,16 @@ namespace RemoteInvokeTests.Abstractions
         public class OtherClass : IPacketSerializable<TestPacketTypes>, IPacketDeserializable<TestPacketTypes, int>
         {
             public int Value { get; set; } = 69;
+            public TestPacketTypes PacketType { get; }
 
             public int Deserialize(Packet<TestPacketTypes> packet)
             {
                 return packet.GetInt();
+            }
+
+            public int EstimatePacketSize()
+            {
+                throw new NotImplementedException();
             }
 
             public void Serialize(ref Packet<TestPacketTypes> builder)
@@ -87,6 +92,8 @@ namespace RemoteInvokeTests.Abstractions
         public class MyClass : IPacketDeserializable<TestPacketTypes, int>, IPacketSerializable<TestPacketTypes>, IPacketDeserializable<TestPacketTypes, int[]>
         {
             public int Value { get; set; }
+            public TestPacketTypes PacketType { get; }
+
             private readonly OtherClass other = new();
 
             public int Deserialize(Packet<TestPacketTypes> packet)
@@ -103,6 +110,11 @@ namespace RemoteInvokeTests.Abstractions
             int[] IPacketDeserializable<TestPacketTypes, int[]>.Deserialize(Packet<TestPacketTypes> packet)
             {
                 return new int[] { packet.GetInt(), packet.GetInt() };
+            }
+
+            public int EstimatePacketSize()
+            {
+                throw new NotImplementedException();
             }
         }
     }

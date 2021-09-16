@@ -1,12 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetInterop.Transport.Sockets\NetInterop.Transport.Sockets.csproj" />
     <ProjectReference Include="..\NetInterop.Transport\NetInterop.Transport.Core.csproj" />
   </ItemGroup>
 

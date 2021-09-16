@@ -6,17 +6,20 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using RemoteInvoke.Net;
-using RemoteInvoke.Net.Server;
-using RemoteInvoke.Net.Client;
 using System.Reflection;
 using System.IO;
 using System.Diagnostics;
-using RemoteInvoke.Net.Transport;
-using RemoteInvoke.Net.Transport.Extensions;
-using RemoteInvoke.Net.Transport.Packets;
-using RemoteInvoke.Net.Transport.Packets.Extensions;
-using RemoteInvoke.Net.Transport.Abstractions;
+using NetInterop.Transport.Core.Abstractions;
+using NetInterop.Transport.Servers;
+using NetInterop.Transport.Providers;
+using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Transport.Core.Packets;
+using NetInterop.Transport.Streams;
+using NetInterop.Transport.Core;
+using RNetInterop.Transport.Core.Packets;
+using NetInterop.Transport.Clients;
+using NetInterop.Transport.Core.Packets.Extensions;
+using NetInterop.Transport.Streams.Extensions;
 
 namespace RemoteInvokeConsole
 {

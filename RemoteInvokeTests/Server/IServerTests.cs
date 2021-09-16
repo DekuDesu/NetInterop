@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using RemoteInvoke.Net;
-using RemoteInvoke;
-using RemoteInvoke.Net.Server;
 using System.Threading;
+using NetInterop.Transport.Servers;
+using NetInterop.Transport.Core.Abstractions;
 
 namespace RemoteInvokeTests.Server
 {

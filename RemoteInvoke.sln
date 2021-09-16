@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RemoteInvokeTests", "Remote
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RemoteInvokeConsole", "RemoteInvokeConsole\RemoteInvokeConsole.csproj", "{8C490C9E-767B-4086-883E-063010614BB6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetInterop.Transport.Core", "NetInterop.Transport\NetInterop.Transport.Core.csproj", "{9453E14A-F1A4-4ACC-AE8D-3ACAA3913748}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetInterop.Transport.Sockets", "NetInterop.Transport.Sockets\NetInterop.Transport.Sockets.csproj", "{8FECD81C-1AF9-46FA-B50E-6258786D487C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{8C490C9E-767B-4086-883E-063010614BB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C490C9E-767B-4086-883E-063010614BB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C490C9E-767B-4086-883E-063010614BB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9453E14A-F1A4-4ACC-AE8D-3ACAA3913748}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9453E14A-F1A4-4ACC-AE8D-3ACAA3913748}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9453E14A-F1A4-4ACC-AE8D-3ACAA3913748}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9453E14A-F1A4-4ACC-AE8D-3ACAA3913748}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

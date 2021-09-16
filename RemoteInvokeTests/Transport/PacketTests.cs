@@ -1,11 +1,11 @@
-﻿using RemoteInvoke.Net.Transport;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using RemoteInvoke.Net.Transport.Packets.Extensions;
+using NetInterop.Transport.Core.Packets;
+using NetInterop.Transport.Core.Packets.Extensions;
 
 namespace RemoteInvokeTests.Transport
 {

@@ -26,6 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NetInterop.Transport.Sockets\NetInterop.Transport.Sockets.csproj" />
+    <ProjectReference Include="..\NetInterop.Transport\NetInterop.Transport.Core.csproj" />
     <ProjectReference Include="..\RemoteInvoke\RemoteInvoke.csproj" />
   </ItemGroup>
 

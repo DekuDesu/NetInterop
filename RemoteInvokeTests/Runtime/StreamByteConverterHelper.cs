@@ -6,8 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using System.Threading;
-using RemoteInvoke.Net.Transport.Extensions;
-using RemoteInvoke.Net.Transport.Packets.Extensions;
+using NetInterop.Transport.Core.Packets.Extensions;
 
 namespace RemoteInvokeTests.Runtime
 {

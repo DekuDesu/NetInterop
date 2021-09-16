@@ -4,7 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using RemoteInvoke.Net.Transport;
+using NetInterop.Transport.Core.Abstractions;
+using NetInterop.Transport.Core;
 
 namespace RemoteInvokeTests.Runtime
 {
