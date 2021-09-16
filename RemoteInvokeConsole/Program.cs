@@ -20,6 +20,8 @@ using RNetInterop.Transport.Core.Packets;
 using NetInterop.Transport.Clients;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Streams.Extensions;
+using NetInterop.Transport.Core.Abstractions.Server;
+using NetInterop.Transport.Sockets.Server;
 
 namespace RemoteInvokeConsole
 {
@@ -352,30 +354,36 @@ namespace RemoteInvokeConsole
 
         private static void StartServer(IPAddress address, int port, CancellationToken token)
         {
-
-            IServer<TcpClient> server = new LoggerServerWrapper<TcpClient>(new DefaultServer<TcpClient>(port, new TcpClientProvider(address, port)));
-
             List<Task> workers = new();
 
-            server.Start();
+            IClientHandler<TcpClient> handler = new DefaultClientHandler<TcpClient>((newClient, connection) =>
+            {
+                workers.Add(Task.Run(() => Worker(newClient, token), token));
+            });
 
-            ServerBarrier.SignalAndWait(token);
+            IClientDispatcher<TcpClient> dispatcher = new DefaultClientDispatcher<TcpClient>(handler);
+
+            IConnectionManager connectionManager = new DefaultTcpListenerConnectionManager(new TcpListener(address, port), dispatcher);
 
             try
             {
-                server.BeginAcceptingClients(newClient =>
+                connectionManager.StartConnecting();
+
+                ServerBarrier.SignalAndWait(token);
+
+                while (token.IsCancellationRequested is false)
                 {
-                    workers.Add(Task.Run(() => Worker(newClient, token), token));
-                }, token);
+                    Thread.Sleep(10);
+                }
             }
             finally
             {
-                server.CloseConnections();
-                server.Stop();
+                connectionManager.DisconnectAll();
             }
 
-            Console.WriteLine("Waiting for workers to end");
+            Console.WriteLine("Server: waiting for workers");
             Task.WaitAll(workers.ToArray(), CancellationToken.None);
+            Console.WriteLine($"Sever: all workers ended");
         }
     }
 }
