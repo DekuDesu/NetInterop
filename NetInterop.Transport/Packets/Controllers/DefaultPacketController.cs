@@ -14,12 +14,12 @@ namespace NetInterop.Transport.Core.Packets
     public class DefaultPacketController<T> : IPacketController<T> where T : Enum, IConvertible
     {
         private readonly IStream<byte> backingStream;
-        private readonly IPacketHeader headerParser;
+        private readonly IPacketHeader<T> headerParser;
         private const int PollingRate = 1;
         private readonly SemaphoreSlim locker = new(1, 1);
         public bool PendingPackets => backingStream.DataAvailable;
 
-        public DefaultPacketController(IStream<byte> backingStream, IPacketHeader headerParser)
+        public DefaultPacketController(IStream<byte> backingStream, IPacketHeader<T> headerParser)
         {
             this.backingStream = backingStream ?? throw new ArgumentNullException(nameof(backingStream));
             this.headerParser = headerParser ?? throw new ArgumentNullException(nameof(headerParser));
@@ -58,7 +58,7 @@ namespace NetInterop.Transport.Core.Packets
                     backingStream.Read(header);
 
                     // convert the int type to the actual packet type for compile type type safety and convenience
-                    T packetType = headerParser.GetHeaderType<T>(header);
+                    T packetType = headerParser.GetHeaderType(header);
 
                     // get the message size in bytes
                     int messageSize = headerParser.GetPacketSize(header);

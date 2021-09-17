@@ -48,10 +48,6 @@ namespace RemoteInvokeConsole
 
             int port = 13000;
 
-            //TestConnection(ip, port);
-
-            //return;
-
             List<Task> tasks = new();
 
             Task server = Task.Run(() => StartServer(ip, port, TokenSource.Token));
@@ -63,10 +59,6 @@ namespace RemoteInvokeConsole
                 Task client = Task.Run(() => StartClient(ip, port, TokenSource.Token));
                 tasks.Add(client);
             }
-
-            //Task random = Task.Run(() => RandomConnectionClient(ip, port, TokenSource.Token));
-
-            //tasks.Add(random);
 
             Console.WriteLine("Press any key to exit");
 
@@ -160,92 +152,6 @@ namespace RemoteInvokeConsole
             });
         }
 
-        private static void TestConnection(IPAddress address, int port)
-        {
-            // client
-            TcpClient client = new();
-
-            IConnection connection = new DefaultTcpConnection(client, address, port);
-
-            // server
-            IClientHandler<TcpClient> handler = new DefaultClientHandler<TcpClient>((newClient, connection) =>
-            {
-                connection.Disconnected += connection => Console.WriteLine("Server Connection: disconnected");
-            });
-
-            IClientDispatcher<TcpClient> dispatcher = new DefaultClientDispatcher<TcpClient>(handler);
-
-            TcpListener listener = new(address, port);
-
-            listener.Start();
-
-            connection.Connect();
-
-            TcpClient serverClient = listener.AcceptTcpClient();
-
-            serverClient.NoDelay = true;
-
-            //IConnection serverConnection = new DefaultTcpServerClientConnection(serverClient);
-
-            //serverConnection.Connect();
-
-            Thread.Sleep(1000);
-
-            connection.Disconnect();
-
-            Thread.Sleep(1000);
-
-            for (int i = 0; i < 5; i++)
-            {
-
-                if (serverClient.Connected)
-                {
-                    serverClient.GetStream().Write(new byte[] { 1 });
-                }
-
-                Thread.Sleep(1000);
-            }
-
-            _ = 10;
-
-            listener.Stop();
-            serverClient.Dispose();
-        }
-
-        private static void RandomConnectionClient(IPAddress address, int port, CancellationToken token)
-        {
-            // this tests random connecting and disconnecting to a server to test the servers tracking of clients
-
-            int time = 10;
-            while (token.IsCancellationRequested is false)
-            {
-                IConnection connection = new DefaultTcpConnection(new(), address, port);
-
-                try
-                {
-                    connection.Connect();
-
-
-
-                    Console.WriteLine($"Random Client: connected disconnecting in {time}ms");
-
-                    Thread.Sleep(time);
-
-                    connection.Disconnect();
-
-                    time = GetRandomNumber(100, 5000);
-
-                    Console.WriteLine($"Random Client: disconnected re-connecting in {time}ms");
-
-                    Thread.Sleep(time);
-                }
-                finally
-                {
-                    connection.Disconnect();
-                }
-            }
-        }
-
         private static void StartClient(IPAddress address, int port, CancellationToken token)
         {
             TcpClient client = new();
@@ -258,7 +164,7 @@ namespace RemoteInvokeConsole
 
             IStream<byte> stream = new DefaultTcpStream(client, connection);
 
-            IPacketHeader headerParser = new DefaultHeader();
+            IPacketHeader<PacketType> headerParser = new DefaultHeader<PacketType>(num => (PacketType)num);
 
             IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
 
@@ -358,6 +264,7 @@ namespace RemoteInvokeConsole
 
             public void Handle(ref Packet<PacketType> packet)
             {
+                //_ = packet.GetString(Encoding.UTF8);
                 Console.WriteLine($"{MessagePrefix}: {packet.GetString(Encoding.UTF8)}");
             }
         }
@@ -419,6 +326,7 @@ namespace RemoteInvokeConsole
 
             public void Handle(ref Packet<PacketType> packet)
             {
+                //_ = packet.GetInt();
                 Console.WriteLine($"{MessagePrefix}: {packet.GetInt()}");
             }
         }
@@ -465,7 +373,7 @@ namespace RemoteInvokeConsole
             public void Serialize(ref Packet<PacketType> packetBuilder) { }
         }
 
-        public enum PacketType : byte
+        public enum PacketType : ushort
         {
             none,
             Int,
@@ -490,7 +398,7 @@ namespace RemoteInvokeConsole
             Console.WriteLine("Worker: started");
             IStream<byte> stream = new DefaultTcpStream(client, connection);
 
-            IPacketHeader headerParser = new DefaultHeader();
+            IPacketHeader<PacketType> headerParser = new DefaultHeader<PacketType>((num) => (PacketType)num);
 
             IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
 
@@ -498,8 +406,6 @@ namespace RemoteInvokeConsole
             {
                 // we read the header and packet at this point
                 IncrementRead(packet.ActualSize);
-
-                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
 
                 IncrementWritten(sizeof(uint));
 
@@ -528,7 +434,7 @@ namespace RemoteInvokeConsole
                 while (token.IsCancellationRequested is false)
                 {
                     packet.NewNumber();
-                    Console.WriteLine($"Worker: {packet.Value}");
+                    //Console.WriteLine($"Worker: {packet.Value}");
                     sender.Send(packet);
                     Thread.Sleep(1);
                 }

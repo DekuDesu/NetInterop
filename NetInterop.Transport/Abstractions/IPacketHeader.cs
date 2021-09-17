@@ -4,14 +4,10 @@ using NetInterop.Transport.Core.Delegates;
 
 namespace NetInterop.Transport.Core.Abstractions
 {
-    public interface IPacketHeader
+    public interface IPacketHeader<TPacket> where TPacket : Enum, IConvertible
     {
-        uint CreateHeader(ushort packetSize, byte packetType);
-        uint CreateLargeHeader(int packetSize, byte packetType);
-        int GetPacketType(uint header);
-        int GetPacketSize(uint header);
-        void CreateHeader<TPacketType>(ref Packet<TPacketType> packet) where TPacketType : Enum, IConvertible;
+        void CreateHeader(ref Packet<TPacket> packet);
         int GetPacketSize(Span<byte> headerBytes);
-        TPacketType GetHeaderType<TPacketType>(Span<byte> headerBytes) where TPacketType : Enum, IConvertible;
+        TPacket GetHeaderType(Span<byte> headerBytes);
     }
 }
