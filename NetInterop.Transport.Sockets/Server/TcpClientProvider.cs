@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Providers
 {
-    public class TcpClientProvider : IClientProvider<TcpClient>
+    public class TcpClientProvider : IConnectionProviderOld<TcpClient>
     {
         private TcpListener server;
         private readonly IPAddress address;

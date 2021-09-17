@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core
 {
-    public class DefaultHeader : IHeaderParser
+    public class DefaultHeader : IPacketHeader
     {
         private const uint HeaderSizeTypeMask = 0x80000000;
         private const uint HeaderTypeMask = 0xFFFFFF00;

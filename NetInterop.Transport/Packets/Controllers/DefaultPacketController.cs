@@ -14,11 +14,12 @@ namespace NetInterop.Transport.Core.Packets
     public class DefaultPacketController<T> : IPacketController<T> where T : Enum, IConvertible
     {
         private readonly IStream<byte> backingStream;
-        private readonly IHeaderParser headerParser;
-        private readonly Type PacketEnumType = typeof(T);
+        private readonly IPacketHeader headerParser;
         private const int PollingRate = 1;
+        private readonly SemaphoreSlim locker = new(1, 1);
+        public bool PendingPackets => backingStream.DataAvailable;
 
-        public DefaultPacketController(IStream<byte> backingStream, IHeaderParser headerParser)
+        public DefaultPacketController(IStream<byte> backingStream, IPacketHeader headerParser)
         {
             this.backingStream = backingStream ?? throw new ArgumentNullException(nameof(backingStream));
             this.headerParser = headerParser ?? throw new ArgumentNullException(nameof(headerParser));
@@ -41,45 +42,57 @@ namespace NetInterop.Transport.Core.Packets
         public bool TryReadPacket(out Packet<T> packet)
         {
             packet = default;
-
-            if (backingStream.DataAvailable)
+            if (backingStream.DataAvailable is false)
             {
-                Span<byte> header = new byte[4];
+                return false;
+            }
 
-                // read the header, it contains the type of packet and the size of the packet
-                backingStream.Read(header);
-
-                // convert the int type to the actual packet type for compile type type safety and convenience
-                T packetType = headerParser.GetHeaderType<T>(header);
-
-                // get the message size in bytes
-                int messageSize = headerParser.GetPacketSize(header);
-
-                // this is for packets that hold no data and merely represent messages
-                // such as things like "response good" or "ping"
-                if (messageSize == 0)
+            locker.Wait();
+            try
+            {
+                if (backingStream.DataAvailable)
                 {
-                    packet = Packet.Empty(packetType);
+                    Span<byte> header = new byte[4];
 
-                    return true;
+                    // read the header, it contains the type of packet and the size of the packet
+                    backingStream.Read(header);
+
+                    // convert the int type to the actual packet type for compile type type safety and convenience
+                    T packetType = headerParser.GetHeaderType<T>(header);
+
+                    // get the message size in bytes
+                    int messageSize = headerParser.GetPacketSize(header);
+
+                    // this is for packets that hold no data and merely represent messages
+                    // such as things like "response good" or "ping"
+                    if (messageSize == 0)
+                    {
+                        packet = Packet.Empty(packetType);
+
+                        return true;
+                    }
+
+                    Span<byte> packetData = new byte[messageSize];
+
+                    int bytesRead = backingStream.Read(packetData);
+
+                    bool validPacket = bytesRead == messageSize;
+
+                    if (validPacket)
+                    {
+                        // no sense creating a new object if we got weird data
+                        packet = Packet.Create(packetType, packetData);
+
+                        // this is purely for consistency and debugging, header bytes aren't used for reading gener
+                        packet.SetHeaderBytes(header);
+                    }
+
+                    return validPacket;
                 }
-
-                Span<byte> packetData = new byte[messageSize];
-
-                int bytesRead = backingStream.Read(packetData);
-
-                bool validPacket = bytesRead == messageSize;
-
-                if (validPacket)
-                {
-                    // no sense creating a new object if we got weird data
-                    packet = Packet.Create(packetType, packetData);
-
-                    // this is purely for consistency and debugging, header bytes aren't used for reading gener
-                    packet.SetHeaderBytes(header);
-                }
-
-                return validPacket;
+            }
+            finally
+            {
+                locker.Release();
             }
 
             // if there was no data available then return false
@@ -101,5 +114,7 @@ namespace NetInterop.Transport.Core.Packets
 
             backingStream.Write(packet.Data);
         }
+
+
     }
 }

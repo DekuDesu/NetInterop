@@ -21,7 +21,7 @@ namespace RemoteInvokeTests.Runtime
             // convert string to uint
             uint header = Convert.ToUInt32(headerString, 2);
 
-            IHeaderParser parser = new DefaultHeader();
+            IPacketHeader parser = new DefaultHeader();
 
             int length = parser.GetPacketSize(header);
 
@@ -37,7 +37,7 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(65535, 255, "00000001111111111111111111111111")] // largest small packet
         public void Test_CreateHeader(ushort size, byte type, string expected)
         {
-            IHeaderParser parser = new DefaultHeader();
+            IPacketHeader parser = new DefaultHeader();
 
             uint header = parser.CreateHeader(size, type);
 
@@ -50,7 +50,7 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(65535 * 127, 255, "11111111111111111111111111111111")]
         public void Test_CreateHeaderLarge(int size, byte type, string expected)
         {
-            IHeaderParser parser = new DefaultHeader();
+            IPacketHeader parser = new DefaultHeader();
 
             uint header = parser.CreateLargeHeader(size, type);
 
@@ -64,7 +64,7 @@ namespace RemoteInvokeTests.Runtime
         [InlineData(0, 0)]
         public void Test_CreateRead(ushort expectedSize, byte expectedType)
         {
-            IHeaderParser parser = new DefaultHeader();
+            IPacketHeader parser = new DefaultHeader();
 
             uint header = parser.CreateHeader(expectedSize, expectedType);
 

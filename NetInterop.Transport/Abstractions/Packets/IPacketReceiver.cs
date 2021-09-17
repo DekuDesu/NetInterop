@@ -9,6 +9,7 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
 {
     public interface IPacketReceiver<TPacketType> where TPacketType : Enum, IConvertible
     {
-        void BeginReceiving(CancellationToken token);
+        void BeginReceiving();
+        void StopReceiving();
     }
 }

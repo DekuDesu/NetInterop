@@ -1,6 +1,7 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Server;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -22,20 +23,23 @@ namespace NetInterop.Transport.Sockets.Server
             this.port = port;
         }
 
-        public bool IsConnected => client.Connected;
+        public bool IsConnected => client.Connected && (client.Client?.Connected ?? false);
 
         public event Action<IConnection> Connected;
         public event Action<IConnection> Disconnected;
 
+        [DebuggerHidden]
         public void Connect()
         {
             client.Connect(address, port);
             Connected?.Invoke(this);
         }
 
+        [DebuggerHidden]
         public void Disconnect()
         {
             client.Close();
+            client.Dispose();
             Disconnected?.Invoke(this);
         }
     }

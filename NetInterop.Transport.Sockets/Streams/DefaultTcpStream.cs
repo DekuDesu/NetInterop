@@ -2,6 +2,7 @@
 using NetInterop.Transport.Core.Abstractions.Server;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -40,16 +41,22 @@ namespace NetInterop.Transport.Sockets.Server
         public bool CanWrite => stream.CanWrite;
         public bool DataAvailable => stream.DataAvailable;
 
+        [DebuggerHidden]
         public void Close() => connection.Disconnect();
 
+        [DebuggerHidden]
         public int Read(Span<byte> buffer) => stream.Read(buffer);
 
+        [DebuggerHidden]
         public int Read(byte[] buffer, int offset, int count) => stream.Read(buffer, offset, count);
 
+        [DebuggerHidden]
         public void Write(byte[] buffer, int offset, int count) => stream.Write(buffer, offset, count);
 
+        [DebuggerHidden]
         public void Write(byte[] buffer) => stream.Write(buffer);
 
+        [DebuggerHidden]
         public void Write(ReadOnlySpan<byte> buffer) => stream.Write(buffer);
     }
 }

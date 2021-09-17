@@ -6,7 +6,7 @@ namespace NetInterop.Transport.Core.Abstractions
     /// Responsible for actually providing clients to an <see cref="IServer{T}"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public interface IClientProvider<T>
+    public interface IConnectionProviderOld<T>
     {
         bool Pending();
         T AcceptClient();

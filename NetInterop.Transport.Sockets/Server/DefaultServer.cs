@@ -13,7 +13,7 @@ namespace NetInterop.Transport.Servers
 {
     public class DefaultServer<T> : IServer<T> where T : IDisposable
     {
-        private readonly IClientProvider<T> server;
+        private readonly IConnectionProviderOld<T> server;
         private readonly IList<T> _connectedClients = new List<T>();
         /// <summary>
         /// the time inbetween loop body iterations in this object
@@ -41,7 +41,7 @@ namespace NetInterop.Transport.Servers
         public event Action<T>? ClientConnected;
         public event Action? Cancelled;
 
-        public DefaultServer(int port, IClientProvider<T> clientProvider)
+        public DefaultServer(int port, IConnectionProviderOld<T> clientProvider)
         {
             Port = port;
             this.server = clientProvider;

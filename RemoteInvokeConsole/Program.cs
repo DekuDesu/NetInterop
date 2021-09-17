@@ -27,15 +27,16 @@ namespace RemoteInvokeConsole
 {
     class Program
     {
-        static int maxClients = 1;
-        static readonly Barrier ServerBarrier = new(2);
+        static int maxClients = 7;
+        static readonly Barrier ServerBarrier = new(8);
         static long bytesWritten = 0;
         static object writeLock = new();
         static long bytesRead = 0;
         static object readLock = new();
         static long totalRead = 0;
         static long totalWritten = 0;
-        static Random rng = new();
+        static object rngLock = new();
+        static Random randomGenerator = new();
 
         static async Task Main()
         {
@@ -46,6 +47,10 @@ namespace RemoteInvokeConsole
             var ip = host[0];
 
             int port = 13000;
+
+            //TestConnection(ip, port);
+
+            //return;
 
             List<Task> tasks = new();
 
@@ -59,6 +64,10 @@ namespace RemoteInvokeConsole
                 tasks.Add(client);
             }
 
+            //Task random = Task.Run(() => RandomConnectionClient(ip, port, TokenSource.Token));
+
+            //tasks.Add(random);
+
             Console.WriteLine("Press any key to exit");
 
             StartDataRateLogger(TokenSource.Token);
@@ -71,6 +80,14 @@ namespace RemoteInvokeConsole
             await Task.WhenAll(tasks);
 
             Console.WriteLine("Finished");
+        }
+
+        private static int GetRandomNumber(int lower = int.MinValue, int upper = int.MaxValue)
+        {
+            lock (rngLock)
+            {
+                return randomGenerator.Next(lower, upper);
+            }
         }
 
         private static void IncrementWritten(int value)
@@ -143,85 +160,139 @@ namespace RemoteInvokeConsole
             });
         }
 
+        private static void TestConnection(IPAddress address, int port)
+        {
+            // client
+            TcpClient client = new();
+
+            IConnection connection = new DefaultTcpConnection(client, address, port);
+
+            // server
+            IClientHandler<TcpClient> handler = new DefaultClientHandler<TcpClient>((newClient, connection) =>
+            {
+                connection.Disconnected += connection => Console.WriteLine("Server Connection: disconnected");
+            });
+
+            IClientDispatcher<TcpClient> dispatcher = new DefaultClientDispatcher<TcpClient>(handler);
+
+            TcpListener listener = new(address, port);
+
+            listener.Start();
+
+            connection.Connect();
+
+            TcpClient serverClient = listener.AcceptTcpClient();
+
+            serverClient.NoDelay = true;
+
+            //IConnection serverConnection = new DefaultTcpServerClientConnection(serverClient);
+
+            //serverConnection.Connect();
+
+            Thread.Sleep(1000);
+
+            connection.Disconnect();
+
+            Thread.Sleep(1000);
+
+            for (int i = 0; i < 5; i++)
+            {
+
+                if (serverClient.Connected)
+                {
+                    serverClient.GetStream().Write(new byte[] { 1 });
+                }
+
+                Thread.Sleep(1000);
+            }
+
+            _ = 10;
+
+            listener.Stop();
+            serverClient.Dispose();
+        }
+
+        private static void RandomConnectionClient(IPAddress address, int port, CancellationToken token)
+        {
+            // this tests random connecting and disconnecting to a server to test the servers tracking of clients
+
+            int time = 10;
+            while (token.IsCancellationRequested is false)
+            {
+                IConnection connection = new DefaultTcpConnection(new(), address, port);
+
+                try
+                {
+                    connection.Connect();
+
+
+
+                    Console.WriteLine($"Random Client: connected disconnecting in {time}ms");
+
+                    Thread.Sleep(time);
+
+                    connection.Disconnect();
+
+                    time = GetRandomNumber(100, 5000);
+
+                    Console.WriteLine($"Random Client: disconnected re-connecting in {time}ms");
+
+                    Thread.Sleep(time);
+                }
+                finally
+                {
+                    connection.Disconnect();
+                }
+            }
+        }
+
         private static void StartClient(IPAddress address, int port, CancellationToken token)
         {
-            //using IClient<NetworkStream> client = new LoggerClientWrapper<NetworkStream>(new DefaultTcpClient(address, port));
+            TcpClient client = new();
 
-            using IClient<NetworkStream> client = new DefaultTcpClient(address, port);
+            IConnection connection = new DefaultTcpConnection(client, address, port);
 
             ServerBarrier.SignalAndWait(token);
 
-            if (client.TryConnect(out _) is false)
-            {
-                throw new Exception("Client: Failed to connect");
-            }
+            connection.Connect();
 
-            //IStream<byte> stream = new LoggerStreamWrapper(new ManagedNetworkStream(client)) { MessagePrefix = "Client: " };
-            IStream<byte> stream = new ManagedNetworkStream(client);
+            IStream<byte> stream = new DefaultTcpStream(client, connection);
 
-            IHeaderParser headerParser = new DefaultHeader();
+            IPacketHeader headerParser = new DefaultHeader();
 
             IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
 
-            IPacketSender<PacketType> sender = new DefaultPacketSender<PacketType>(controller);
-
-            var noneHandler = new ActionPacketHandler<PacketType>(PacketType.none, (ref Packet<PacketType> packet) =>
-            {
-                // we read the header and packet at this point
-                IncrementRead(packet.ActualSize);
-
-                //return $"Client:  handled none";
-            });
+            IPacketSender<PacketType> sender = new PacketSenderSizeLogger(new DefaultPacketSender<PacketType>(controller));
 
             int[] randomNumbers = new int[(ushort.MaxValue / sizeof(int)) - 10];
 
             for (int i = 0; i < randomNumbers.Length; i++)
             {
-                randomNumbers[i] = rng.Next();
+                randomNumbers[i] = GetRandomNumber();
             }
 
-            var intHandler = new ActionPacketHandler<PacketType>(PacketType.ResponseGood, (ref Packet<PacketType> packet) =>
-            {
-                // we read the header and packet at this point
-                IncrementRead(packet.ActualSize);
+            var handlers = new IPacketHandler<PacketType>[] { new GoodResponseHandler(), new ConnectionAliveHandler(), new IntHandler("Client") };
 
-                sender.Send(new Message("Hello World!"));
+            IPacketDispatcher<PacketType> dispatcher = new PacketDispatcherSizeLogger(new DefaultPacketDispatcher<PacketType>(handlers));
 
-                IncrementWritten(packet.ActualSize);
+            IPacketReceiver<PacketType> receiver = new DefaultPacketReceiver<PacketType>(dispatcher, controller, connection);
 
-                packet = Packet.Create(PacketType.IntArray);
-
-                packet.AppendArray(randomNumbers);
-
-                sender.Send(packet);
-
-                IncrementWritten(packet.ActualSize);
-
-                //return $"Client: received response good from worker";
-            });
-
-            var handlers = new IPacketHandler<PacketType>[] { noneHandler, intHandler };
-
-
-            IPacketDispatcher<PacketType> dispatcher = new DefaultPacketDispatcher<PacketType>(handlers);
-
-            IPacketReceiver<PacketType> receiver = new DefaultPacketReceiver<PacketType>(dispatcher, controller);
+            var intArrayPacket = new IntArrayPacket(randomNumbers);
 
             try
             {
+                receiver.BeginReceiving();
 
-                var packet = Packet.Create(PacketType.Int);
-
-                packet.AppendInt(69);
-
-                IncrementWritten(packet.ActualSize);
-
-                controller.WriteBlindPacket(packet);
-
-                receiver.BeginReceiving(token);
+                while (token.IsCancellationRequested is false)
+                {
+                    sender.Send(new Message("Hello World!"));
+                    Thread.Sleep(1);
+                    sender.Send(intArrayPacket);
+                }
             }
             catch (Exception e)
             {
+
                 if (token.IsCancellationRequested)
                 {
                     Console.WriteLine("Error caught while token is cancelled:");
@@ -229,6 +300,29 @@ namespace RemoteInvokeConsole
                     return;
                 }
                 throw;
+            }
+            finally
+            {
+                receiver.StopReceiving();
+            }
+        }
+
+        public class IntArrayPacket : IPacketSerializable<PacketType>
+        {
+            private readonly int[] data;
+
+            public IntArrayPacket(int[] data)
+            {
+                this.data = data;
+            }
+
+            public PacketType PacketType { get; } = PacketType.IntArray;
+
+            public int EstimatePacketSize() => data.Length * sizeof(int);
+
+            public void Serialize(ref Packet<PacketType> packetBuilder)
+            {
+                packetBuilder.AppendArray(data);
             }
         }
 
@@ -251,6 +345,126 @@ namespace RemoteInvokeConsole
             }
         }
 
+        public class StringHandler : IPacketHandler<PacketType>
+        {
+            private readonly string MessagePrefix;
+
+            public StringHandler(string messagePrefix)
+            {
+                MessagePrefix = messagePrefix ?? throw new ArgumentNullException(nameof(messagePrefix));
+            }
+
+            public PacketType PacketType { get; } = PacketType.String;
+
+            public void Handle(ref Packet<PacketType> packet)
+            {
+                Console.WriteLine($"{MessagePrefix}: {packet.GetString(Encoding.UTF8)}");
+            }
+        }
+
+        public class PacketDispatcherSizeLogger : IPacketDispatcher<PacketType>
+        {
+            private readonly IPacketDispatcher<PacketType> dispatcher;
+
+            public PacketDispatcherSizeLogger(IPacketDispatcher<PacketType> dispatcher)
+            {
+                this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+            }
+
+            public void Dispatch(ref Packet<PacketType> packet)
+            {
+                IncrementRead(packet.ActualSize);
+                dispatcher.Dispatch(ref packet);
+            }
+        }
+
+        public class PacketSenderSizeLogger : IPacketSender<PacketType>
+        {
+            private readonly IPacketSender<PacketType> sender;
+
+            public PacketSenderSizeLogger(IPacketSender<PacketType> sender)
+            {
+                this.sender = sender;
+            }
+
+            public void Send(IPacketSerializable<PacketType> value)
+            {
+                IncrementWritten(value.EstimatePacketSize() + sizeof(uint));
+                sender.Send(value);
+            }
+
+            public void Send(Packet<PacketType> packet)
+            {
+                IncrementWritten(packet.ActualSize);
+                sender.Send(packet);
+            }
+
+            public void Send(PacketType packetType, Span<byte> data)
+            {
+                IncrementWritten(sizeof(uint) + data.Length);
+                sender.Send(packetType, data);
+            }
+        }
+
+        public class IntHandler : IPacketHandler<PacketType>
+        {
+            private readonly string MessagePrefix;
+
+            public IntHandler(string messagePrefix)
+            {
+                MessagePrefix = messagePrefix ?? throw new ArgumentNullException(nameof(messagePrefix));
+            }
+
+            public PacketType PacketType { get; } = PacketType.Int;
+
+            public void Handle(ref Packet<PacketType> packet)
+            {
+                Console.WriteLine($"{MessagePrefix}: {packet.GetInt()}");
+            }
+        }
+
+        public class IntPacket : IPacketSerializable<PacketType>
+        {
+            public int Value { get; private set; }
+            public PacketType PacketType { get; } = PacketType.Int;
+
+            public int EstimatePacketSize() => sizeof(int);
+
+
+            public void NewNumber()
+            {
+                Value = GetRandomNumber();
+            }
+
+            public void Serialize(ref Packet<PacketType> packetBuilder)
+            {
+                packetBuilder.AppendInt(Value);
+            }
+        }
+
+        public class GoodResponseHandler : IPacketHandler<PacketType>
+        {
+            public PacketType PacketType { get; } = PacketType.ResponseGood;
+
+            public void Handle(ref Packet<PacketType> packet) { }
+        }
+
+        public class ConnectionAliveHandler : IPacketHandler<PacketType>
+        {
+            public PacketType PacketType { get; } = PacketType.none;
+
+            public void Handle(ref Packet<PacketType> packet) { }
+        }
+
+        public class ConnectionAlivePacket : IPacketSerializable<PacketType>
+        {
+            public PacketType PacketType { get; } = PacketType.none;
+
+            public int EstimatePacketSize() => 0;
+
+            public void Serialize(ref Packet<PacketType> packetBuilder) { }
+        }
+
         public enum PacketType : byte
         {
             none,
@@ -271,39 +485,14 @@ namespace RemoteInvokeConsole
             Decimal
         }
 
-        private static void Worker(TcpClient client, CancellationToken token)
+        private static void Worker(IConnection connection, TcpClient client, CancellationToken token)
         {
             Console.WriteLine("Worker: started");
-            IStream<byte> stream = new DisposableNetworkStream(client.GetStream());
-            //IStream<byte> stream = new LoggerStreamWrapper(new DisposableNetworkStream(client.GetStream())) { MessagePrefix = "Worker: " };
+            IStream<byte> stream = new DefaultTcpStream(client, connection);
 
-            IHeaderParser headerParser = new DefaultHeader();
+            IPacketHeader headerParser = new DefaultHeader();
 
             IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
-
-            var noneHandler = new ActionPacketHandler<PacketType>(PacketType.none, (ref Packet<PacketType> packet) =>
-            {
-                // we read the header and packet at this point
-                IncrementRead(packet.ActualSize);
-
-                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
-
-                IncrementWritten(sizeof(uint));
-
-                //return $"Handled: none";
-            });
-
-            var intHandler = new ActionPacketHandler<PacketType>(PacketType.Int, (ref Packet<PacketType> packet) =>
-            {
-                // we read the header and packet at this point
-                IncrementRead(packet.ActualSize);
-
-                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
-
-                IncrementWritten(sizeof(uint));
-
-                //return $"Handled: (int){packet.GetInt()}";
-            });
 
             var intArrayHandler = new ActionPacketHandler<PacketType>(PacketType.IntArray, (ref Packet<PacketType> packet) =>
             {
@@ -320,32 +509,33 @@ namespace RemoteInvokeConsole
                 //return $"Handled: (int[]){data.Length} First number: {data[0]}";
             });
 
-            var stringHandler = new ActionPacketHandler<PacketType>(PacketType.String, (ref Packet<PacketType> packet) =>
-            {
-                // we read the header and packet at this point
-                IncrementRead(packet.ActualSize);
+            var connectionAliveHandler = new ConnectionAliveHandler();
 
-                stream.WriteUInt(headerParser.CreateHeader(0, (byte)PacketType.ResponseGood));
+            var handlers = new IPacketHandler<PacketType>[] { new StringHandler("Server"), intArrayHandler, connectionAliveHandler, new IntHandler("Server") };
 
-                IncrementWritten(sizeof(uint));
+            IPacketDispatcher<PacketType> dispatcher = new PacketDispatcherSizeLogger(new DefaultPacketDispatcher<PacketType>(handlers));
 
-                string message = packet.GetString(Encoding.UTF8);
+            IPacketReceiver<PacketType> receiver = new DefaultPacketReceiver<PacketType>(dispatcher, controller, connection);
 
-                //return $"Handled: (string){message}";
-            });
+            IPacketSender<PacketType> sender = new PacketSenderSizeLogger(new DefaultPacketSender<PacketType>(controller));
 
-            var handlers = new IPacketHandler<PacketType>[] { noneHandler, intHandler, stringHandler, intArrayHandler };
-
-            IPacketDispatcher<PacketType> dispatcher = new DefaultPacketDispatcher<PacketType>(handlers);
-
-            IPacketReceiver<PacketType> receiver = new DefaultPacketReceiver<PacketType>(dispatcher, controller);
+            var packet = new IntPacket();
 
             try
             {
-                receiver.BeginReceiving(token);
+                receiver.BeginReceiving();
+
+                while (token.IsCancellationRequested is false)
+                {
+                    packet.NewNumber();
+                    Console.WriteLine($"Worker: {packet.Value}");
+                    sender.Send(packet);
+                    Thread.Sleep(1);
+                }
             }
             finally
             {
+                receiver.StopReceiving();
                 client.Close();
                 client.Dispose();
                 Console.WriteLine("Worker: stopped");
@@ -358,12 +548,15 @@ namespace RemoteInvokeConsole
 
             IClientHandler<TcpClient> handler = new DefaultClientHandler<TcpClient>((newClient, connection) =>
             {
-                workers.Add(Task.Run(() => Worker(newClient, token), token));
+                connection.Disconnected += connection => Console.WriteLine("Server Connection: disconnected");
+                workers.Add(Task.Run(() => Worker(connection, newClient, token), token));
             });
 
             IClientDispatcher<TcpClient> dispatcher = new DefaultClientDispatcher<TcpClient>(handler);
 
-            IConnectionManager connectionManager = new DefaultTcpListenerConnectionManager(new TcpListener(address, port), dispatcher);
+            IConnectionManager connectionManager = new DefaultTcpListenerConnectionManager(new TcpListener(address, port), dispatcher, new DefaultClientProvider<TcpClient>((client) => new DefaultTcpServerClientConnection(client)));
+
+            connectionManager.Connected += connection => Console.WriteLine("Connection Manager: connected Client");
 
             try
             {

@@ -4,7 +4,7 @@ using NetInterop.Transport.Core.Delegates;
 
 namespace NetInterop.Transport.Core.Abstractions
 {
-    public interface IHeaderParser
+    public interface IPacketHeader
     {
         uint CreateHeader(ushort packetSize, byte packetType);
         uint CreateLargeHeader(int packetSize, byte packetType);

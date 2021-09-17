@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Server;
+﻿using NetInterop.Transport.Core.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +15,20 @@ namespace NetInterop.Transport.Sockets.Server
         private readonly List<IConnection> clients = new();
         private readonly TcpListener listener;
         private Timer acceptTimer;
-        private IClientDispatcher<TcpClient> dispatcher;
+        private readonly IClientDispatcher<TcpClient> dispatcher;
+        private readonly IConnectionProvider<TcpClient> connectionProvider;
+        private readonly object listSynchronizationObject = new();
 
-
-        public DefaultTcpListenerConnectionManager(TcpListener listener, IClientDispatcher<TcpClient> dispatcher)
+        public DefaultTcpListenerConnectionManager(TcpListener listener, IClientDispatcher<TcpClient> dispatcher, IConnectionProvider<TcpClient> connectionProvider)
         {
+            if (connectionProvider is null)
+            {
+                throw new ArgumentNullException(nameof(connectionProvider));
+            }
+
             this.listener = listener ?? throw new ArgumentNullException(nameof(listener));
             this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+            this.connectionProvider = connectionProvider;
         }
 
         /// <summary>
@@ -38,13 +46,16 @@ namespace NetInterop.Transport.Sockets.Server
 
         public void DisconnectAll()
         {
-            foreach (var item in clients)
+            lock (listSynchronizationObject)
             {
-                item.Disconnect();
+                foreach (var item in clients)
+                {
+                    item.Disconnect();
+                }
             }
             listener.Stop();
-            acceptTimer.Stop();
-            acceptTimer.Dispose();
+            acceptTimer?.Stop();
+            acceptTimer?.Dispose();
             Connecting = false;
         }
 
@@ -56,6 +67,7 @@ namespace NetInterop.Transport.Sockets.Server
         public void StopConnecting()
         {
             StopTimer();
+            Connecting = false;
         }
 
         private void StartTimer()
@@ -77,8 +89,8 @@ namespace NetInterop.Transport.Sockets.Server
 
         private void StopTimer()
         {
-            acceptTimer.Stop();
-            acceptTimer.Dispose();
+            acceptTimer?.Stop();
+            acceptTimer?.Dispose();
             acceptTimer = null;
             Connecting = false;
         }
@@ -90,27 +102,73 @@ namespace NetInterop.Transport.Sockets.Server
         /// <param name="e"></param>
         private void AcceptEvent(object sender, ElapsedEventArgs e)
         {
+            if (clients.Count != 0)
+            {
+                CheckClientConnections();
+            }
+
             // make sure we aren't accepting clients becuase of a timer race condition
             if (Connecting == false)
             {
-                StopTimer();
                 return;
             }
 
-            // check to see if there are any clients waiting to connect
-            if (listener.Pending())
+            bool pending;
+
+            try
             {
-                TcpClient client = listener.AcceptTcpClient();
+                pending = listener.Pending();
+            }
+            catch (ObjectDisposedException)
+            {
+                StopConnecting();
+                return;
+            }
 
-                IConnection connection = new DefaultTcpServerClientConnection(client);
+            if (pending)
+            {
+                TcpClient client = listener?.AcceptTcpClient();
 
-                connection.Disconnected += (connection) => clients.Remove(connection);
+                if (client is null)
+                {
+                    return;
+                }
 
-                clients.Add(connection);
+                IConnection connection = connectionProvider.CreateConnection(client);
+
+                connection.Connect();
+
+                lock (listSynchronizationObject)
+                {
+                    clients.Add(connection);
+                }
 
                 dispatcher.Dispatch(client, connection);
 
                 Connected?.Invoke(connection);
+            }
+        }
+
+        private void CheckClientConnections()
+        {
+            // this is unlikely to have a significant performance impact, each IConnection copied is only the size of a long
+            IConnection[] safeClientsCopy;
+
+            lock (listSynchronizationObject)
+            {
+                safeClientsCopy = clients.ToArray();
+            }
+
+            foreach (var item in safeClientsCopy)
+            {
+                if (item.IsConnected is false)
+                {
+                    lock (listSynchronizationObject)
+                    {
+                        item.Disconnect();
+                        clients.Remove(item);
+                    }
+                }
             }
         }
     }

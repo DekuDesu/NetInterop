@@ -13,6 +13,10 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// </summary>
     public interface IPacketController<TPacketType> where TPacketType : Enum, IConvertible
     {
+        /// <summary>
+        /// Whether or not there is a packet waiting to be consumed from the underlying stream
+        /// </summary>
+        bool PendingPackets { get; }
         bool TryReadPacket(out Packet<TPacketType> packet);
         bool TryWritePacket(Packet<TPacketType> packet, out Packet<TPacketType> responsePacket, CancellationToken token = default);
         Packet<TPacketType> WaitForPacket(CancellationToken token = default);

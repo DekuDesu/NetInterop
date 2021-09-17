@@ -12,7 +12,7 @@ namespace RemoteInvokeTests.Server
 {
     public class IServerTests
     {
-        private static readonly IClientProvider<DummyClient> s_clientProvider = new DummyProvider();
+        private static readonly IConnectionProviderOld<DummyClient> s_clientProvider = new DummyProvider();
 
         [Fact]
         public void Test_Start()
@@ -270,7 +270,7 @@ namespace RemoteInvokeTests.Server
                 IsDisposed = true;
             }
         }
-        private class DummyProvider : IClientProvider<DummyClient>
+        private class DummyProvider : IConnectionProviderOld<DummyClient>
         {
             public bool ShouldProvide { get; set; } = true;
             public bool Started { get; private set; }
