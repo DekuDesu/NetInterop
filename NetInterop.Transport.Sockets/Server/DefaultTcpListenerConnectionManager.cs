@@ -12,12 +12,12 @@ namespace NetInterop.Transport.Sockets.Server
 {
     public class DefaultTcpListenerConnectionManager : IConnectionManager
     {
-        private readonly List<IConnection> clients = new();
+        private readonly List<IConnection> clients = new List<IConnection>();
         private readonly TcpListener listener;
         private Timer acceptTimer;
         private readonly IClientDispatcher<TcpClient> dispatcher;
         private readonly IConnectionProvider<TcpClient> connectionProvider;
-        private readonly object listSynchronizationObject = new();
+        private readonly object listSynchronizationObject = new object();
 
         public DefaultTcpListenerConnectionManager(TcpListener listener, IClientDispatcher<TcpClient> dispatcher, IConnectionProvider<TcpClient> connectionProvider)
         {
@@ -34,7 +34,7 @@ namespace NetInterop.Transport.Sockets.Server
         /// <summary>
         /// The time inbetween connection attempts in ms (milliseconds).
         /// </summary>
-        public double ConnectionAttemptInterval { get; init; } = 100;
+        public double ConnectionAttemptInterval { get; set; } = 100;
 
         public int Count => clients.Count;
 
@@ -72,12 +72,12 @@ namespace NetInterop.Transport.Sockets.Server
 
         private void StartTimer()
         {
-            if (acceptTimer is not null)
+            if (acceptTimer != null)
             {
                 StopTimer();
             }
 
-            acceptTimer = new() { Interval = ConnectionAttemptInterval, AutoReset = true, Enabled = true };
+            acceptTimer = new System.Timers.Timer() { Interval = ConnectionAttemptInterval, AutoReset = true, Enabled = true };
             acceptTimer.Elapsed += AcceptEvent;
 
             listener.Start();

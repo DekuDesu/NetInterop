@@ -1,8 +1,6 @@
 ﻿using System;
-using NetInterop.Transport.Core.Packets;
-using NetInterop.Transport.Core.Delegates;
 
-namespace NetInterop.Transport.Core.Abstractions
+namespace NetInterop.Transport.Core.Abstractions.Packets
 {
     public interface IPacketHeader<TPacket> where TPacket : Enum, IConvertible
     {

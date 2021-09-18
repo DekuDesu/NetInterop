@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NetInterop.Transport.Core.Packets
+namespace NetInterop.Transport.Core.Abstractions.Packets
 {
     public interface IPacket<TContext> where TContext : Enum
     {

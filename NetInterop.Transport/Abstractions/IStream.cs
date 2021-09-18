@@ -13,11 +13,9 @@ namespace NetInterop.Transport.Core.Abstractions
         bool CanWrite { get; }
         bool DataAvailable { get; }
 
-        int Read(Span<T> buffer);
         int Read(T[] buffer, int offset, int count);
         void Write(T[] buffer, int offset, int count);
         void Write(T[] buffer);
-        void Write(ReadOnlySpan<T> buffer);
 
         void Close();
     }

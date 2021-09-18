@@ -44,8 +44,6 @@ namespace NetInterop.Transport.Sockets.Server
         [DebuggerHidden]
         public void Close() => connection.Disconnect();
 
-        [DebuggerHidden]
-        public int Read(Span<byte> buffer) => stream.Read(buffer);
 
         [DebuggerHidden]
         public int Read(byte[] buffer, int offset, int count) => stream.Read(buffer, offset, count);
@@ -54,9 +52,6 @@ namespace NetInterop.Transport.Sockets.Server
         public void Write(byte[] buffer, int offset, int count) => stream.Write(buffer, offset, count);
 
         [DebuggerHidden]
-        public void Write(byte[] buffer) => stream.Write(buffer);
-
-        [DebuggerHidden]
-        public void Write(ReadOnlySpan<byte> buffer) => stream.Write(buffer);
+        public void Write(byte[] buffer) => stream.Write(buffer, 0, buffer.Length);
     }
 }

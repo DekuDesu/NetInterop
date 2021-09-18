@@ -1,5 +1,5 @@
 ﻿using NetInterop.Transport.Core.Abstractions;
-using NetInterop.Transport.Core.Packets;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NetInterop.Transport.Core
+namespace NetInterop.Transport.Core.Packets.Headers
 {
     public unsafe class DefaultHeader<TPacket> : IPacketHeader<TPacket> where TPacket : Enum, IConvertible
     {

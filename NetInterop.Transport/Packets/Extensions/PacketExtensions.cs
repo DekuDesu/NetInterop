@@ -1,10 +1,7 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Delegates;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Packets.Extensions
 {
@@ -79,133 +76,129 @@ namespace NetInterop.Transport.Core.Packets.Extensions
 
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, sbyte[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(sbyte), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, byte[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(byte), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, ushort[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(ushort), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, short[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(short), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, int[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(int), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, uint[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(uint), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, long[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(long), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, ulong[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(ulong), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, float[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(float), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, double[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(double), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, decimal[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(decimal), PointerExtensions.Write);
         }
         public static void AppendArray<TPacket>(this IPacket<TPacket> packet, DateTime[] array) where TPacket : Enum, IConvertible
         {
-            AppendArray(packet, array, PointerExtensions.Write);
+            AppendArray(packet, array, sizeof(long), PointerExtensions.Write);
         }
 
         public static bool[] GetBoolArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToBool);
+            return GetArray(packet, sizeof(bool), PointerExtensions.ToBool);
         }
         public static sbyte[] GetArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToSByte);
+            return GetArray(packet, sizeof(sbyte), PointerExtensions.ToSByte);
         }
         public static byte[] GetByteArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToByte);
+            return GetArray(packet, sizeof(byte), PointerExtensions.ToByte);
         }
         public static short[] GetShortArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToShort);
+            return GetArray(packet, sizeof(short), PointerExtensions.ToShort);
         }
         public static ushort[] GetUShortArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToUShort);
+            return GetArray(packet, sizeof(ushort), PointerExtensions.ToUShort);
         }
         public static int[] GetIntArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToInt);
+            return GetArray(packet, sizeof(int), PointerExtensions.ToInt);
         }
         public static uint[] GetUIntArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToUInt);
+            return GetArray(packet, sizeof(uint), PointerExtensions.ToUInt);
         }
         public static long[] GetLongArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToLong);
+            return GetArray(packet, sizeof(long), PointerExtensions.ToLong);
         }
         public static ulong[] GetULongArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToULong);
+            return GetArray(packet, sizeof(ulong), PointerExtensions.ToULong);
         }
         public static float[] GetFloatArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToFloat);
+            return GetArray(packet, sizeof(float), PointerExtensions.ToFloat);
         }
         public static double[] GetDoubleArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToDouble);
+            return GetArray(packet, sizeof(double), PointerExtensions.ToDouble);
         }
         public static decimal[] GetDecimalArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToDecimal);
+            return GetArray(packet, sizeof(decimal), PointerExtensions.ToDecimal);
         }
         public static DateTime[] GetDateTimeArray<TPacket>(this IPacket<TPacket> packet) where TPacket : Enum, IConvertible
         {
-            return GetArray(packet, PointerExtensions.ToDateTime);
+            return GetArray(packet, sizeof(long), PointerExtensions.ToDateTime);
         }
 
-        public unsafe static void AppendArray<TPacket, T>(this IPacket<TPacket> packet, T[] array, PointerAction<T> objectAppender) where TPacket : Enum, IConvertible where T : unmanaged
+        public static void AppendArray<TPacket, T>(this IPacket<TPacket> packet, T[] array, int sizeOfT, PointerAction<T> objectAppender) where TPacket : Enum, IConvertible where T : unmanaged
         {
             // arrays should always 
             packet.AppendInt(array.Length);
 
-            int size = sizeof(T);
-
             for (int i = 0; i < array.Length; i++)
             {
-                ref byte ptr = ref packet.GetBuffer(size);
+                ref byte ptr = ref packet.GetBuffer(sizeOfT);
 
                 objectAppender(ref ptr, array[i]);
             }
         }
 
-        public unsafe static T[] GetArray<TPacket, T>(this IPacket<TPacket> packet, PointerFunc<T> ptrToObjectConverter) where TPacket : Enum, IConvertible where T : unmanaged
+        public static T[] GetArray<TPacket, T>(this IPacket<TPacket> packet, int sizeOfT, PointerFunc<T> ptrToObjectConverter) where TPacket : Enum, IConvertible where T : unmanaged
         {
             // get how many elements should be present
             int length = packet.GetInt();
 
             T[] result = new T[length];
 
-            int size = sizeof(T);
-
             for (int i = 0; i < length; i++)
             {
-                ref byte ptr = ref packet.Remove(size);
+                ref byte ptr = ref packet.Remove(sizeOfT);
 
                 result[i] = ptrToObjectConverter(ref ptr);
             }

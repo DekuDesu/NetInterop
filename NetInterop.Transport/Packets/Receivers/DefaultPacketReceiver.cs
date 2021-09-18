@@ -56,7 +56,7 @@ namespace NetInterop.Transport.Core.Packets
 
         private void StartTimer()
         {
-            packetAvailableTimer = new() { Interval = timerInterval, AutoReset = true, Enabled = true };
+            packetAvailableTimer = new System.Timers.Timer() { Interval = timerInterval, AutoReset = true, Enabled = true };
             packetAvailableTimer.Elapsed += TimerEvent;
             packetAvailableTimer.Start();
         }
@@ -68,7 +68,7 @@ namespace NetInterop.Transport.Core.Packets
             packetAvailableTimer = null;
         }
 
-        private void TimerEvent(object caller, ElapsedEventArgs args)
+        private void TimerEvent(object caller, object args)
         {
             if (connection.IsConnected is false)
             {

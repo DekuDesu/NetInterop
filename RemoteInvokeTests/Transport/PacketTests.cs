@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
+using NetInterop.Transport.Core.Factories;
 
 namespace RemoteInvokeTests.Transport
 {

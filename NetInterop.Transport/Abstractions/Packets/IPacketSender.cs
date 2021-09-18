@@ -9,10 +9,10 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
 {
     public interface IPacketSender<TPacket> where TPacket : Enum, IConvertible
     {
-        public void Send(IPacketSerializable<TPacket> value);
+        void Send(IPacketSerializable<TPacket> value);
 
-        public void Send(IPacket<TPacket> packet);
+        void Send(IPacket<TPacket> packet);
 
-        public void Send(TPacket packetType, byte[] data);
+        void Send(TPacket packetType, byte[] data);
     }
 }

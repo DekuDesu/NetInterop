@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RemoteInvokeTests", "RemoteInvokeTests\RemoteInvokeTests.csproj", "{2713BFA3-F1FE-4A32-BF9E-55A5FD3559E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetInterop.Tests", "RemoteInvokeTests\NetInterop.Tests.csproj", "{2713BFA3-F1FE-4A32-BF9E-55A5FD3559E7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RemoteInvokeConsole", "RemoteInvokeConsole\RemoteInvokeConsole.csproj", "{8C490C9E-767B-4086-883E-063010614BB6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetInterop.Console", "RemoteInvokeConsole\NetInterop.Console.csproj", "{8C490C9E-767B-4086-883E-063010614BB6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetInterop.Transport.Core", "NetInterop.Transport\NetInterop.Transport.Core.csproj", "{9453E14A-F1A4-4ACC-AE8D-3ACAA3913748}"
 EndProject

@@ -16,6 +16,7 @@ using NetInterop.Transport.Core;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Core.Abstractions.Server;
 using NetInterop.Transport.Sockets.Server;
+using NetInterop.Transport.Core.Packets.Headers;
 
 namespace RemoteInvokeConsole
 {

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using NetInterop.Transport.Core.Factories;
 namespace RemoteInvokeTests.Abstractions
 {
     public class PacketDeserializerTests

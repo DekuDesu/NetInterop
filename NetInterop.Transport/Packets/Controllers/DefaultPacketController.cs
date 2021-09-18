@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using NetInterop.Transport.Core.Packets;
 using NetInterop.Transport.Core.Abstractions;
+using NetInterop.Transport.Core.Factories;
 using NetInterop.Transport.Core.Abstractions.Packets;
 
-#nullable enable
 namespace NetInterop.Transport.Core.Packets
 {
     public class DefaultPacketController<T> : IPacketController<T> where T : Enum, IConvertible
@@ -16,27 +11,13 @@ namespace NetInterop.Transport.Core.Packets
         private readonly IStream<byte> backingStream;
         private readonly IPacketHeader<T> headerParser;
         private const int PollingRate = 1;
-        private readonly SemaphoreSlim locker = new(1, 1);
+        private readonly SemaphoreSlim locker = new SemaphoreSlim(1, 1);
         public bool PendingPackets => backingStream.DataAvailable;
 
         public DefaultPacketController(IStream<byte> backingStream, IPacketHeader<T> headerParser)
         {
             this.backingStream = backingStream ?? throw new ArgumentNullException(nameof(backingStream));
             this.headerParser = headerParser ?? throw new ArgumentNullException(nameof(headerParser));
-        }
-
-        public IPacket<T> WaitForPacket(CancellationToken token = default)
-        {
-            while (token.IsCancellationRequested is false)
-            {
-                if (TryReadPacket(out var packet))
-                {
-                    return packet;
-                }
-                Thread.Sleep(PollingRate);
-            }
-
-            return default;
         }
 
         public bool TryReadPacket(out IPacket<T> packet)
@@ -55,7 +36,7 @@ namespace NetInterop.Transport.Core.Packets
                     byte[] header = new byte[4];
 
                     // read the header, it contains the type of packet and the size of the packet
-                    backingStream.Read(header);
+                    backingStream.Read(header, 0, 4);
 
                     ref byte headerPtr = ref header[0];
 
@@ -76,7 +57,7 @@ namespace NetInterop.Transport.Core.Packets
 
                     byte[] packetData = new byte[messageSize];
 
-                    int bytesRead = backingStream.Read(packetData);
+                    int bytesRead = backingStream.Read(packetData, 0, messageSize);
 
                     bool validPacket = bytesRead == messageSize;
 
@@ -99,15 +80,6 @@ namespace NetInterop.Transport.Core.Packets
 
             // if there was no data available then return false
             return false;
-        }
-
-        public bool TryWritePacket(IPacket<T> packet, out IPacket<T> responsePacket, CancellationToken token = default)
-        {
-            WriteBlindPacket(packet);
-
-            responsePacket = WaitForPacket(token);
-
-            return responsePacket.PacketType.ToInt32(null) != 0;
         }
 
         public void WriteBlindPacket(IPacket<T> packet)

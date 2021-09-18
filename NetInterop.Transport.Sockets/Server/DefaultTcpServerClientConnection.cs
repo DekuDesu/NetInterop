@@ -44,7 +44,7 @@ namespace NetInterop.Transport.Sockets.Server
 
         private void StartTimer()
         {
-            if (connectedTimer is not null)
+            if (connectedTimer != null)
             {
                 StopTimer();
             }
@@ -76,7 +76,7 @@ namespace NetInterop.Transport.Sockets.Server
 
             try
             {
-                client.GetStream().Write(Array.Empty<byte>());
+                client.GetStream().Write(Array.Empty<byte>(), 0, 0);
             }
             catch (Exception)
             {

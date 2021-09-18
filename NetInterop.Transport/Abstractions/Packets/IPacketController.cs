@@ -18,8 +18,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// </summary>
         bool PendingPackets { get; }
         bool TryReadPacket(out IPacket<TPacketType> packet);
-        bool TryWritePacket(IPacket<TPacketType> packet, out IPacket<TPacketType> responsePacket, CancellationToken token = default);
-        IPacket<TPacketType> WaitForPacket(CancellationToken token = default);
         void WriteBlindPacket(IPacket<TPacketType> packet);
     }
 }

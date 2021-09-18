@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using NetInterop.Transport.Core.Packets;
-using NetInterop.Transport.Core.Abstractions;
 using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Transport.Core.Factories;
 
 namespace NetInterop.Transport.Core.Packets
 {
