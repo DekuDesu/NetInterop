@@ -17,9 +17,9 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// Whether or not there is a packet waiting to be consumed from the underlying stream
         /// </summary>
         bool PendingPackets { get; }
-        bool TryReadPacket(out Packet<TPacketType> packet);
-        bool TryWritePacket(Packet<TPacketType> packet, out Packet<TPacketType> responsePacket, CancellationToken token = default);
-        Packet<TPacketType> WaitForPacket(CancellationToken token = default);
-        void WriteBlindPacket(Packet<TPacketType> packet);
+        bool TryReadPacket(out IPacket<TPacketType> packet);
+        bool TryWritePacket(IPacket<TPacketType> packet, out IPacket<TPacketType> responsePacket, CancellationToken token = default);
+        IPacket<TPacketType> WaitForPacket(CancellationToken token = default);
+        void WriteBlindPacket(IPacket<TPacketType> packet);
     }
 }

@@ -16,7 +16,6 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets;
 using NetInterop.Transport.Streams;
 using NetInterop.Transport.Core;
-using RNetInterop.Transport.Core.Packets;
 using NetInterop.Transport.Clients;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Streams.Extensions;
@@ -27,8 +26,8 @@ namespace RemoteInvokeConsole
 {
     class Program
     {
-        static int maxClients = 7;
-        static readonly Barrier ServerBarrier = new(8);
+        static int maxClients = 1;
+        static readonly Barrier ServerBarrier = new(2);
         static long bytesWritten = 0;
         static object writeLock = new();
         static long bytesRead = 0;
@@ -226,9 +225,21 @@ namespace RemoteInvokeConsole
 
             public int EstimatePacketSize() => data.Length * sizeof(int);
 
-            public void Serialize(ref Packet<PacketType> packetBuilder)
+            public void Serialize(IPacket<PacketType> packetBuilder)
             {
                 packetBuilder.AppendArray(data);
+            }
+        }
+
+        public class IntArrayHandler : IPacketHandler<PacketType>
+        {
+            public PacketType PacketType { get; } = PacketType.IntArray;
+
+            public void Handle(IPacket<PacketType> packet)
+            {
+                int[] arr = packet.GetIntArray();
+
+                _ = arr[0];
             }
         }
 
@@ -245,7 +256,7 @@ namespace RemoteInvokeConsole
 
             public int EstimatePacketSize() => Encoding.UTF8.GetByteCount(Value);
 
-            public void Serialize(ref Packet<PacketType> packetBuilder)
+            public void Serialize(IPacket<PacketType> packetBuilder)
             {
                 packetBuilder.AppendString(Value, Encoding.UTF8);
             }
@@ -262,10 +273,10 @@ namespace RemoteInvokeConsole
 
             public PacketType PacketType { get; } = PacketType.String;
 
-            public void Handle(ref Packet<PacketType> packet)
+            public void Handle(IPacket<PacketType> packet)
             {
-                //_ = packet.GetString(Encoding.UTF8);
-                Console.WriteLine($"{MessagePrefix}: {packet.GetString(Encoding.UTF8)}");
+                _ = packet.GetString(Encoding.UTF8);
+                //Console.WriteLine($"{MessagePrefix}: {packet.GetString(Encoding.UTF8)}");
             }
         }
 
@@ -278,10 +289,10 @@ namespace RemoteInvokeConsole
                 this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
             }
 
-            public void Dispatch(ref Packet<PacketType> packet)
+            public void Dispatch(IPacket<PacketType> packet)
             {
                 IncrementRead(packet.ActualSize);
-                dispatcher.Dispatch(ref packet);
+                dispatcher.Dispatch(packet);
             }
         }
 
@@ -300,13 +311,13 @@ namespace RemoteInvokeConsole
                 sender.Send(value);
             }
 
-            public void Send(Packet<PacketType> packet)
+            public void Send(IPacket<PacketType> packet)
             {
                 IncrementWritten(packet.ActualSize);
                 sender.Send(packet);
             }
 
-            public void Send(PacketType packetType, Span<byte> data)
+            public void Send(PacketType packetType, byte[] data)
             {
                 IncrementWritten(sizeof(uint) + data.Length);
                 sender.Send(packetType, data);
@@ -324,10 +335,10 @@ namespace RemoteInvokeConsole
 
             public PacketType PacketType { get; } = PacketType.Int;
 
-            public void Handle(ref Packet<PacketType> packet)
+            public void Handle(IPacket<PacketType> packet)
             {
-                //_ = packet.GetInt();
-                Console.WriteLine($"{MessagePrefix}: {packet.GetInt()}");
+                _ = packet.GetInt();
+                //Console.WriteLine($"{MessagePrefix}: {packet.GetInt()}");
             }
         }
 
@@ -344,7 +355,7 @@ namespace RemoteInvokeConsole
                 Value = GetRandomNumber();
             }
 
-            public void Serialize(ref Packet<PacketType> packetBuilder)
+            public void Serialize(IPacket<PacketType> packetBuilder)
             {
                 packetBuilder.AppendInt(Value);
             }
@@ -354,14 +365,14 @@ namespace RemoteInvokeConsole
         {
             public PacketType PacketType { get; } = PacketType.ResponseGood;
 
-            public void Handle(ref Packet<PacketType> packet) { }
+            public void Handle(IPacket<PacketType> packet) { }
         }
 
         public class ConnectionAliveHandler : IPacketHandler<PacketType>
         {
             public PacketType PacketType { get; } = PacketType.none;
 
-            public void Handle(ref Packet<PacketType> packet) { }
+            public void Handle(IPacket<PacketType> packet) { }
         }
 
         public class ConnectionAlivePacket : IPacketSerializable<PacketType>
@@ -370,7 +381,7 @@ namespace RemoteInvokeConsole
 
             public int EstimatePacketSize() => 0;
 
-            public void Serialize(ref Packet<PacketType> packetBuilder) { }
+            public void Serialize(IPacket<PacketType> packetBuilder) { }
         }
 
         public enum PacketType : ushort
@@ -402,22 +413,9 @@ namespace RemoteInvokeConsole
 
             IPacketController<PacketType> controller = new DefaultPacketController<PacketType>(stream, headerParser);
 
-            var intArrayHandler = new ActionPacketHandler<PacketType>(PacketType.IntArray, (ref Packet<PacketType> packet) =>
-            {
-                // we read the header and packet at this point
-                IncrementRead(packet.ActualSize);
-
-                IncrementWritten(sizeof(uint));
-
-                int[] data = packet.GetIntArray();
-
-                _ = data[0];
-                //return $"Handled: (int[]){data.Length} First number: {data[0]}";
-            });
-
             var connectionAliveHandler = new ConnectionAliveHandler();
 
-            var handlers = new IPacketHandler<PacketType>[] { new StringHandler("Server"), intArrayHandler, connectionAliveHandler, new IntHandler("Server") };
+            var handlers = new IPacketHandler<PacketType>[] { new StringHandler("Server"), connectionAliveHandler, new IntHandler("Server"), new IntArrayHandler() };
 
             IPacketDispatcher<PacketType> dispatcher = new PacketDispatcherSizeLogger(new DefaultPacketDispatcher<PacketType>(handlers));
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetInterop.Transport.Core.Packets.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,31 +7,24 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    /// <summary>
-    /// Represents a wrapper around a <see cref="Span{byte}"/> with an indentifying number for the context the <see cref="Data"/> represents, this is highly optimized to reduce memory allocations when packets are being modified and used in the pipeline
-    /// </summary>
-    public ref struct Packet<TContext>
-        where TContext : Enum
+    public class DefaultPacket<TContext> : IPacket<TContext> where TContext : Enum
     {
+        private byte[] buffer;
+
         /// <summary>
         /// The type of packet this represents, this is enum whos value must be between 0 and 255(byte)
         /// </summary>
         public TContext PacketType { get; set; }
 
         /// <summary>
-        /// The data of the packet
-        /// </summary>
-        public Span<byte> Data;
-
-        /// <summary>
         /// The size of the span, does not indicate end of data within the span, use <see cref="EndOffset"/> for the location of the end of data
         /// </summary>
-        public int Length => Data.Length - HeaderSize;
+        public int Length => buffer.Length - HeaderSize;
 
         /// <summary>
         /// The actual size of the packet including the reserved space for the header
         /// </summary>
-        public int ActualSize => Data.Length;
+        public int ActualSize => buffer.Length;
 
         /// <summary>
         /// The offset from the start where appended data ends
@@ -58,27 +52,27 @@ namespace NetInterop.Transport.Core.Packets
         /// <summary>
         /// The size of the reserved header stored at the beginning of the packet
         /// </summary>
-        public int HeaderSize { get; init; }
+        public int HeaderSize { get; set; }
 
         public const int DefaultHeaderSize = sizeof(uint);
 
         private const int MaxPacketSize = DefaultHeaderSize + ushort.MaxValue;
 
-        public Packet(TContext packetType, Span<byte> data, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(TContext packetType, byte[] data, int headerSize = DefaultHeaderSize)
         {
             PacketType = packetType;
-            Data = new byte[data.Length + headerSize];
-            data.CopyTo(Data.Slice(headerSize));
-            EndOffset = Data.Length;
+            buffer = new byte[data.Length + headerSize];
+            data.CopyTo(buffer, headerSize);
+            EndOffset = buffer.Length;
             StartOffset = 0;
             HeaderSize = headerSize;
         }
 
-        public Packet(TContext packetType, int estimatedLength, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(TContext packetType, int estimatedLength, int headerSize = DefaultHeaderSize)
         {
             PacketType = packetType;
             HeaderSize = headerSize;
-            Data = new byte[estimatedLength + headerSize];
+            buffer = new byte[estimatedLength + headerSize];
             EndOffset = 0;
             StartOffset = 0;
         }
@@ -88,12 +82,21 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
-        public Span<byte> GetBuffer(int length)
+        public ref byte GetBuffer(int length)
         {
             // make sure we have adequet space
             Extend(length);
 
-            return Data.Slice(EndOffset++ + HeaderSize, length);
+            int offset = EndOffset;
+
+            EndOffset += length;
+
+            return ref buffer[HeaderSize + offset];
+        }
+
+        private ref byte GetPointer(int index)
+        {
+            return ref buffer[index];
         }
 
         /// <summary>
@@ -120,102 +123,56 @@ namespace NetInterop.Transport.Core.Packets
             }
 
             // resize the span
-            Span<byte> newSpan = new byte[desiredLength];
-
-            Data.CopyTo(newSpan);
-
-            Data = newSpan;
+            Array.Resize(ref buffer, desiredLength);
         }
 
         /// <summary>
         /// Appends the given data to the end of the packet, increments the position of the end of the packets data
         /// </summary>
         /// <param name="newData"></param>
-        public void Append(Span<byte> newData)
+        public void Append(byte[] newData)
         {
             int length = newData.Length;
 
             // make sure we have adequet space
             Extend(length);
 
-            newData.CopyTo(Data.Slice(EndOffset + HeaderSize, length));
+            ref byte ptr = ref GetPointer(EndOffset + HeaderSize);
+
+            ptr.Write(newData);
 
             EndOffset += length;
         }
+
 
         /// <summary>
         /// Reads the amount of data from the start of the packet and decrements the position of the end of the packet's data.
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
-        public Span<byte> Remove(int length)
+        public ref byte Remove(int length)
         {
             length = Math.Min(Length, Math.Max(length, 0));
 
-            Span<byte> result = Data.Slice(StartOffset + HeaderSize, length);
+            int index = StartOffset + HeaderSize;
 
             StartOffset += length;
 
-            return result;
+            return ref GetPointer(index);
         }
 
-        /// <summary>
-        /// Reads the amount of data from the end of the packet and decrements the position of the end of the packet's data.
-        /// </summary>
-        /// <param name="length"></param>
-        /// <returns></returns>
-        public Span<byte> RemoveEnd(int length)
+        public ref byte GetHeader()
         {
-            length = Math.Min(Length, length);
-
-            EndOffset = Math.Max(EndOffset - length, 0);
-
-            return Data.Slice(EndOffset + HeaderSize, length);
+            return ref buffer[0];
         }
 
-        /// <summary>
-        /// Gets the reserved bytes at the start of the packet that can only be written to using <see cref="SetHeaderBytes(Span{byte})"/>
-        /// </summary>
-        /// <returns></returns>
-        public Span<byte> GetHeaderBytes()
+        public void SetHeader(byte[] header)
         {
-            // we reserve space for, and hide the header bytes so we don't allocate another array when we send and receive the packet
-            return Data.Slice(0, HeaderSize);
+            ref byte ptr = ref buffer[0];
+
+            ptr.Write(header);
         }
 
-        /// <summary>
-        /// Sets the reserved bytes at the start of the packet that can only be read using <see cref="GetHeaderBytes"/>
-        /// </summary>
-        /// <param name="header"></param>
-        public void SetHeaderBytes(Span<byte> header)
-        {
-            // we reserve space for, and hide the header bytes so we don't allocate another array when we send and receive the packet
-            header.CopyTo(Data.Slice(0, HeaderSize));
-        }
-    }
-
-    public static class Packet
-    {
-        public static IPacket<TContext> Create<TContext>(TContext packetType)
-            where TContext : Enum, IConvertible
-        {
-            return new DefaultPacket<TContext>(packetType, 0);
-        }
-
-        public static IPacket<TContext> Create<TContext>(TContext packetType, byte[] data)
-            where TContext : Enum, IConvertible
-        {
-            return new DefaultPacket<TContext>(packetType, data, Packet<TContext>.DefaultHeaderSize);
-        }
-        public static IPacket<TContext> Empty<TContext>(TContext packetType)
-            where TContext : Enum, IConvertible
-        {
-            return new DefaultPacket<TContext>(packetType, Array.Empty<byte>(), sizeof(uint));
-        }
-        public static IPacket<TContext> Create<TContext>(TContext packetType, int estimatedSize)
-            where TContext : Enum, IConvertible
-        {
-            return new DefaultPacket<TContext>(packetType, estimatedSize);
-        }
+        public byte[] GetData() => buffer;
     }
 }

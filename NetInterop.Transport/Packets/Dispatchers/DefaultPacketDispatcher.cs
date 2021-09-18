@@ -22,9 +22,9 @@ namespace NetInterop.Transport.Core.Packets
             this.handlers = handlers.ToDictionary(handler => handler.PacketType);
         }
 
-        public void Dispatch(ref Packet<TPacketType> packet)
+        public void Dispatch(IPacket<TPacketType> packet)
         {
-            handlers[packet.PacketType].Handle(ref packet);
+            handlers[packet.PacketType].Handle(packet);
         }
     }
 }

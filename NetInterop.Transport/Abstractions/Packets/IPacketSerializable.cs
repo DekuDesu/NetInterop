@@ -28,6 +28,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// Serializes this object to a packet to be sent with a IPacketSender
         /// </summary>
         /// <returns></returns>
-        void Serialize(ref Packet<TPacket> packetBuilder);
+        void Serialize(IPacket<TPacket> packetBuilder);
     }
 }

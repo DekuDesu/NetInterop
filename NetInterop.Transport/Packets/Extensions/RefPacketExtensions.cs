@@ -63,21 +63,6 @@ namespace NetInterop.Transport.Core.Packets.Extensions
 
         public static DateTime GetDateTime<T>(this ref Packet<T> packet) where T : Enum, IConvertible => packet.Remove(sizeof(long)).ToDateTime();
         public static void AppendDateTime<T>(this ref Packet<T> packet, DateTime value) where T : Enum, IConvertible => packet.Append(value.ToSpan());
-
-        public static void AppendSerializable<T>(this ref Packet<T> packet, IPacketSerializable<T> serializableValue) where T : Enum
-        {
-            if (serializableValue is null)
-            {
-                throw new NullReferenceException(nameof(serializableValue));
-            }
-            serializableValue.Serialize(ref packet);
-        }
-
-        public static T GetDeserializable<TPacket, T>(this ref Packet<TPacket> packet, IPacketDeserializable<TPacket, T> deserializableReference) where TPacket : Enum
-        {
-            return deserializableReference.Deserialize(packet);
-        }
-
         public static void AppendArray<TPacket>(this ref Packet<TPacket> packet, sbyte[] array) where TPacket : Enum, IConvertible
         {
             AppendArray(ref packet, array, SpanTypeConversionExtensions.ToSpan);

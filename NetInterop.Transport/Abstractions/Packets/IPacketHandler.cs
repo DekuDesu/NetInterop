@@ -20,6 +20,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// Consumes the provided packet that was dispatched from the packet dispatcher
         /// </summary>
         /// <param name="packet"></param>
-        void Handle(ref Packet<TPacketType> packet);
+        void Handle(IPacket<TPacketType> packet);
     }
 }

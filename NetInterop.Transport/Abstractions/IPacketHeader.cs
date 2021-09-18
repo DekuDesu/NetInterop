@@ -6,8 +6,8 @@ namespace NetInterop.Transport.Core.Abstractions
 {
     public interface IPacketHeader<TPacket> where TPacket : Enum, IConvertible
     {
-        void CreateHeader(ref Packet<TPacket> packet);
-        int GetPacketSize(Span<byte> headerBytes);
-        TPacket GetHeaderType(Span<byte> headerBytes);
+        void CreateHeader(IPacket<TPacket> packet);
+        int GetPacketSize(ref byte headerPtr);
+        TPacket GetHeaderType(ref byte headerPtr);
     }
 }

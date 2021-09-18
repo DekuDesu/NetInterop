@@ -9,13 +9,15 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core
 {
-    public class DefaultHeader<TPacket> : IPacketHeader<TPacket> where TPacket : Enum, IConvertible
+    public unsafe class DefaultHeader<TPacket> : IPacketHeader<TPacket> where TPacket : Enum, IConvertible
     {
         private readonly Func<int, TPacket> converter;
+        private readonly Func<TPacket, ushort> toNumberConverter;
 
-        public DefaultHeader(Func<int, TPacket> converter = null)
+        public DefaultHeader(Func<int, TPacket> converter = null, Func<TPacket, ushort> toNumberConverter = null)
         {
             this.converter = converter ?? ((num) => (TPacket)Enum.ToObject(typeof(TPacket), num));
+            this.toNumberConverter = toNumberConverter ?? ((packetType) => packetType.ToUInt16(null));
         }
 
         /*
@@ -30,23 +32,55 @@ namespace NetInterop.Transport.Core
             ****This is implementation defined, header specification does not require any information or care about any information within these bytes
         */
 
-        public void CreateHeader(ref Packet<TPacket> packet)
+        public void CreateHeader(IPacket<TPacket> packet)
         {
-            Span<byte> header = packet.GetHeaderBytes();
+            ref byte headerPtr = ref packet.GetHeader();
 
-            packet.PacketType.ToUInt16(null).ToSpan().CopyTo(header.Slice(2, 2));
+            headerPtr.Write((ushort)packet.Length);
 
-            BitConverter.GetBytes((ushort)packet.Length).CopyTo(header.Slice(0, 2));
+            ushort packetType = toNumberConverter(packet.PacketType); ;
+
+            fixed (byte* p = &headerPtr)
+            {
+                byte* headerOffsetPtr = p;
+                byte* packetTypePtr = (byte*)&packetType;
+
+                // packet type should come after the message size
+                headerOffsetPtr += 2;
+
+                *headerOffsetPtr = *packetTypePtr;
+
+                headerOffsetPtr++;
+                packetTypePtr++;
+
+                *headerOffsetPtr = *packetTypePtr;
+            }
         }
 
-        public TPacket GetHeaderType(Span<byte> headerBytes)
+        public TPacket GetHeaderType(ref byte headerPtr)
         {
-            return converter(headerBytes.Slice(2, 2).ToUShort());
+            fixed (byte* ptr = &headerPtr)
+            {
+                byte* p = ptr;
+
+                p += 2;
+
+                ushort result = *(ushort*)p;
+
+                return converter(result);
+            }
         }
 
-        public int GetPacketSize(Span<byte> headerBytes)
+        public int GetPacketSize(ref byte headerPtr)
         {
-            return BitConverter.ToUInt16(headerBytes.Slice(0, 2));
+            fixed (byte* ptr = &headerPtr)
+            {
+                byte* p = ptr;
+
+                ushort* result = (ushort*)p;
+
+                return (int)*result;
+            }
         }
     }
 }

@@ -17,6 +17,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// Dispatches the provided packet to the appropriate handler to eventually be consumed.
         /// </summary>
         /// <param name="packet"></param>
-        void Dispatch(ref Packet<TPacketType> packet);
+        void Dispatch(IPacket<TPacketType> packet);
     }
 }

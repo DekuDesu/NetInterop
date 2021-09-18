@@ -11,8 +11,8 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     {
         public void Send(IPacketSerializable<TPacket> value);
 
-        public void Send(Packet<TPacket> packet);
+        public void Send(IPacket<TPacket> packet);
 
-        public void Send(TPacket packetType, Span<byte> data);
+        public void Send(TPacket packetType, byte[] data);
     }
 }

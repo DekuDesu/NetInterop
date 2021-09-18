@@ -15,6 +15,6 @@ namespace NetInterop.Transport.Sockets.Packets
 
         public int EstimatePacketSize() => 0;
 
-        public void Serialize(ref Packet<DefaultPacketTypes> packetBuilder) { }
+        public void Serialize(IPacket<DefaultPacketTypes> packetBuilder) { }
     }
 }

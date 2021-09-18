@@ -25,7 +25,7 @@ namespace NetInterop.Transport.Core.Packets
             this.headerParser = headerParser ?? throw new ArgumentNullException(nameof(headerParser));
         }
 
-        public Packet<T> WaitForPacket(CancellationToken token = default)
+        public IPacket<T> WaitForPacket(CancellationToken token = default)
         {
             while (token.IsCancellationRequested is false)
             {
@@ -39,7 +39,7 @@ namespace NetInterop.Transport.Core.Packets
             return default;
         }
 
-        public bool TryReadPacket(out Packet<T> packet)
+        public bool TryReadPacket(out IPacket<T> packet)
         {
             packet = default;
             if (backingStream.DataAvailable is false)
@@ -52,16 +52,18 @@ namespace NetInterop.Transport.Core.Packets
             {
                 if (backingStream.DataAvailable)
                 {
-                    Span<byte> header = new byte[4];
+                    byte[] header = new byte[4];
 
                     // read the header, it contains the type of packet and the size of the packet
                     backingStream.Read(header);
 
+                    ref byte headerPtr = ref header[0];
+
                     // convert the int type to the actual packet type for compile type type safety and convenience
-                    T packetType = headerParser.GetHeaderType(header);
+                    T packetType = headerParser.GetHeaderType(ref headerPtr);
 
                     // get the message size in bytes
-                    int messageSize = headerParser.GetPacketSize(header);
+                    int messageSize = headerParser.GetPacketSize(ref headerPtr);
 
                     // this is for packets that hold no data and merely represent messages
                     // such as things like "response good" or "ping"
@@ -72,7 +74,7 @@ namespace NetInterop.Transport.Core.Packets
                         return true;
                     }
 
-                    Span<byte> packetData = new byte[messageSize];
+                    byte[] packetData = new byte[messageSize];
 
                     int bytesRead = backingStream.Read(packetData);
 
@@ -84,7 +86,7 @@ namespace NetInterop.Transport.Core.Packets
                         packet = Packet.Create(packetType, packetData);
 
                         // this is purely for consistency and debugging, header bytes aren't used for reading gener
-                        packet.SetHeaderBytes(header);
+                        packet.SetHeader(header);
                     }
 
                     return validPacket;
@@ -99,7 +101,7 @@ namespace NetInterop.Transport.Core.Packets
             return false;
         }
 
-        public bool TryWritePacket(Packet<T> packet, out Packet<T> responsePacket, CancellationToken token = default)
+        public bool TryWritePacket(IPacket<T> packet, out IPacket<T> responsePacket, CancellationToken token = default)
         {
             WriteBlindPacket(packet);
 
@@ -108,13 +110,11 @@ namespace NetInterop.Transport.Core.Packets
             return responsePacket.PacketType.ToInt32(null) != 0;
         }
 
-        public void WriteBlindPacket(Packet<T> packet)
+        public void WriteBlindPacket(IPacket<T> packet)
         {
-            headerParser.CreateHeader(ref packet);
+            headerParser.CreateHeader(packet);
 
-            backingStream.Write(packet.Data);
+            backingStream.Write(packet.GetData());
         }
-
-
     }
 }

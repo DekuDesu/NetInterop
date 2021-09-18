@@ -47,9 +47,9 @@ namespace NetInterop.Transport.Core.Packets
         {
             if (controller.PendingPackets)
             {
-                if (controller.TryReadPacket(out Packet<TPacketType> packet))
+                if (controller.TryReadPacket(out IPacket<TPacketType> packet))
                 {
-                    dispatcher.Dispatch(ref packet);
+                    dispatcher.Dispatch(packet);
                 }
             }
         }

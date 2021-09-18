@@ -25,14 +25,14 @@ namespace NetInterop.Transport.Core.Packets
 
             var packet = Packet.Create(value.PacketType, size);
 
-            value.Serialize(ref packet);
+            value.Serialize(packet);
 
             controller.WriteBlindPacket(packet);
         }
 
-        public void Send(Packet<TPacket> packet) => controller.WriteBlindPacket(packet);
+        public void Send(IPacket<TPacket> packet) => controller.WriteBlindPacket(packet);
 
-        public void Send(TPacket packetType, Span<byte> data)
+        public void Send(TPacket packetType, byte[] data)
         {
             var packet = Packet.Create(packetType, data);
 

@@ -16,9 +16,9 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            Packet<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
 
-            value.Serialize(ref packet);
+            value.Serialize(packet);
 
             Assert.Equal(12, packet.GetInt());
         }
@@ -28,7 +28,7 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            Packet<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
 
             packet.AppendInt(12);
 
@@ -40,9 +40,9 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            Packet<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
 
-            value.Serialize(ref packet);
+            value.Serialize(packet);
 
             Assert.Equal(12, packet.GetInt());
             Assert.Equal(69, packet.GetInt());
@@ -53,9 +53,9 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            Packet<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
 
-            value.Serialize(ref packet);
+            value.Serialize(packet);
 
             int[] deserialized = ((IPacketDeserializable<TestPacketTypes, int[]>)Activator.CreateInstance(value.GetType())).Deserialize(packet);
 
@@ -74,7 +74,7 @@ namespace RemoteInvokeTests.Abstractions
             public int Value { get; set; } = 69;
             public TestPacketTypes PacketType { get; }
 
-            public int Deserialize(Packet<TestPacketTypes> packet)
+            public int Deserialize(IPacket<TestPacketTypes> packet)
             {
                 return packet.GetInt();
             }
@@ -84,7 +84,7 @@ namespace RemoteInvokeTests.Abstractions
                 throw new NotImplementedException();
             }
 
-            public void Serialize(ref Packet<TestPacketTypes> builder)
+            public void Serialize(IPacket<TestPacketTypes> builder)
             {
                 builder.AppendInt(Value);
             }
@@ -96,18 +96,18 @@ namespace RemoteInvokeTests.Abstractions
 
             private readonly OtherClass other = new();
 
-            public int Deserialize(Packet<TestPacketTypes> packet)
+            public int Deserialize(IPacket<TestPacketTypes> packet)
             {
                 return packet.GetInt();
             }
 
-            public void Serialize(ref Packet<TestPacketTypes> builder)
+            public void Serialize(IPacket<TestPacketTypes> builder)
             {
                 builder.AppendInt(Value);
                 builder.AppendSerializable(other);
             }
 
-            int[] IPacketDeserializable<TestPacketTypes, int[]>.Deserialize(Packet<TestPacketTypes> packet)
+            int[] IPacketDeserializable<TestPacketTypes, int[]>.Deserialize(IPacket<TestPacketTypes> packet)
             {
                 return new int[] { packet.GetInt(), packet.GetInt() };
             }

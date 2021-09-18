@@ -9,6 +9,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
 {
     public interface IPacketDeserializable<TPacketType, out T> where TPacketType : Enum
     {
-        public T Deserialize(Packet<TPacketType> packet);
+        public T Deserialize(IPacket<TPacketType> packet);
     }
 }

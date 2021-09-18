@@ -14,7 +14,7 @@ namespace RemoteInvokeTests.Transport
         [Fact]
         public void Test_PacketCreate()
         {
-            Packet<TypeCode> packet = Packet.Create(TypeCode.Byte);
+            IPacket<TypeCode> packet = Packet.Create(TypeCode.Byte);
 
             Assert.Equal(TypeCode.Byte, packet.PacketType);
         }
