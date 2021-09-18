@@ -19,7 +19,7 @@ namespace NetInterop.Transport.Core.Packets
             this.primitiveConverter = primitiveConverter;
         }
 
-        public Packet<TPacketType> Convert<T>(T value) where T : unmanaged
+        public IPacket<TPacketType> Convert<T>(T value) where T : unmanaged
         {
             // we know that if the object is unmanaged then all the types that it contains are also unmanaged
             // so either we use primitive packet converter or recurse to this method to pack the type

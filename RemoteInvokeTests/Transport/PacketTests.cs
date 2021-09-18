@@ -22,21 +22,21 @@ namespace RemoteInvokeTests.Transport
         [Fact]
         public void Test_PacketInitialize()
         {
-            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+            var packet = new DefaultPacket<TypeCode>(TypeCode.Byte, 10);
 
             Assert.Equal(TypeCode.Byte, packet.PacketType);
             Assert.Equal(10, packet.Length);
 
             // the backing span has 4 bytes reserved for the packet header, this reduces allocations when we send the packet to the server
             // these 4 bytes are hidden from getting and setting other than using the dedicated methods
-            Assert.Equal(14, packet.Data.Length);
+            Assert.Equal(14, packet.GetData().Length);
             Assert.Equal(0, packet.EndOffset);
         }
 
         [Fact]
         public void Test_PacketAppend()
         {
-            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+            var packet = new DefaultPacket<TypeCode>(TypeCode.Byte, 10);
 
             Assert.Equal(10, packet.Length);
             Assert.Equal(0, packet.EndOffset);
@@ -47,9 +47,9 @@ namespace RemoteInvokeTests.Transport
             // since the amount of data we appended was less than the array size we should verify a new buffer was not allocated
             Assert.Equal(10, packet.Length);
             Assert.Equal(3, packet.EndOffset);
-            Assert.Equal(1, packet.Data[0 + sizeof(uint)]);
-            Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
-            Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
+            Assert.Equal(1, packet.GetData()[0 + sizeof(uint)]);
+            Assert.Equal(2, packet.GetData()[1 + sizeof(uint)]);
+            Assert.Equal(3, packet.GetData()[2 + sizeof(uint)]);
 
             // append data to the END of the buffer but not exceeding make sure the buffer again does not extend
             packet.Append(new byte[] { 4, 5, 6, 7, 8, 9, 10 });
@@ -57,16 +57,16 @@ namespace RemoteInvokeTests.Transport
             Assert.Equal(10, packet.Length);
             Assert.Equal(10, packet.EndOffset);
 
-            Assert.Equal(1, packet.Data[0 + sizeof(uint)]);
-            Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
-            Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
-            Assert.Equal(4, packet.Data[3 + sizeof(uint)]);
-            Assert.Equal(5, packet.Data[4 + sizeof(uint)]);
-            Assert.Equal(6, packet.Data[5 + sizeof(uint)]);
-            Assert.Equal(7, packet.Data[6 + sizeof(uint)]);
-            Assert.Equal(8, packet.Data[7 + sizeof(uint)]);
-            Assert.Equal(9, packet.Data[8 + sizeof(uint)]);
-            Assert.Equal(10, packet.Data[9 + sizeof(uint)]);
+            Assert.Equal(1, packet.GetData()[0 + sizeof(uint)]);
+            Assert.Equal(2, packet.GetData()[1 + sizeof(uint)]);
+            Assert.Equal(3, packet.GetData()[2 + sizeof(uint)]);
+            Assert.Equal(4, packet.GetData()[3 + sizeof(uint)]);
+            Assert.Equal(5, packet.GetData()[4 + sizeof(uint)]);
+            Assert.Equal(6, packet.GetData()[5 + sizeof(uint)]);
+            Assert.Equal(7, packet.GetData()[6 + sizeof(uint)]);
+            Assert.Equal(8, packet.GetData()[7 + sizeof(uint)]);
+            Assert.Equal(9, packet.GetData()[8 + sizeof(uint)]);
+            Assert.Equal(10, packet.GetData()[9 + sizeof(uint)]);
 
             // append more than the backing array's size and ensure the backing array was resized and existing data was copied over
             packet.Append(new byte[] { 11 });
@@ -74,23 +74,23 @@ namespace RemoteInvokeTests.Transport
             Assert.Equal(11, packet.Length);
             Assert.Equal(11, packet.EndOffset);
 
-            Assert.Equal(1, packet.Data[0 + sizeof(uint)]);
-            Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
-            Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
-            Assert.Equal(4, packet.Data[3 + sizeof(uint)]);
-            Assert.Equal(5, packet.Data[4 + sizeof(uint)]);
-            Assert.Equal(6, packet.Data[5 + sizeof(uint)]);
-            Assert.Equal(7, packet.Data[6 + sizeof(uint)]);
-            Assert.Equal(8, packet.Data[7 + sizeof(uint)]);
-            Assert.Equal(9, packet.Data[8 + sizeof(uint)]);
-            Assert.Equal(10, packet.Data[9 + sizeof(uint)]);
-            Assert.Equal(11, packet.Data[10 + sizeof(uint)]);
+            Assert.Equal(1, packet.GetData()[0 + sizeof(uint)]);
+            Assert.Equal(2, packet.GetData()[1 + sizeof(uint)]);
+            Assert.Equal(3, packet.GetData()[2 + sizeof(uint)]);
+            Assert.Equal(4, packet.GetData()[3 + sizeof(uint)]);
+            Assert.Equal(5, packet.GetData()[4 + sizeof(uint)]);
+            Assert.Equal(6, packet.GetData()[5 + sizeof(uint)]);
+            Assert.Equal(7, packet.GetData()[6 + sizeof(uint)]);
+            Assert.Equal(8, packet.GetData()[7 + sizeof(uint)]);
+            Assert.Equal(9, packet.GetData()[8 + sizeof(uint)]);
+            Assert.Equal(10, packet.GetData()[9 + sizeof(uint)]);
+            Assert.Equal(11, packet.GetData()[10 + sizeof(uint)]);
         }
 
         [Fact]
         public void Test_Remove()
         {
-            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+            var packet = new DefaultPacket<TypeCode>(TypeCode.Byte, 10);
 
             Assert.Equal(10, packet.Length);
             Assert.Equal(0, packet.EndOffset);
@@ -101,11 +101,11 @@ namespace RemoteInvokeTests.Transport
             // make sure the values we expect exist in their intended locations
             Assert.Equal(10, packet.Length);
             Assert.Equal(3, packet.EndOffset);
-            Assert.Equal(1, packet.Data[0 + sizeof(uint)]);
-            Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
-            Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
+            Assert.Equal(1, packet.GetData()[0 + sizeof(uint)]);
+            Assert.Equal(2, packet.GetData()[1 + sizeof(uint)]);
+            Assert.Equal(3, packet.GetData()[2 + sizeof(uint)]);
 
-            Span<byte> data = packet.Remove(3);
+            var data = packet.Remove(3).ToArray(3);
 
             Assert.Equal(3, packet.StartOffset);
             Assert.Equal(1, data[0]);
@@ -114,15 +114,15 @@ namespace RemoteInvokeTests.Transport
 
 
             // make sure the old data is still there, only internal state change should have been position
-            Assert.Equal(1, packet.Data[0 + sizeof(uint)]);
-            Assert.Equal(2, packet.Data[1 + sizeof(uint)]);
-            Assert.Equal(3, packet.Data[2 + sizeof(uint)]);
+            Assert.Equal(1, packet.GetData()[0 + sizeof(uint)]);
+            Assert.Equal(2, packet.GetData()[1 + sizeof(uint)]);
+            Assert.Equal(3, packet.GetData()[2 + sizeof(uint)]);
         }
 
         [Fact]
         public void Test_Append_Array()
         {
-            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+            var packet = new DefaultPacket<TypeCode>(TypeCode.Byte, 10);
 
             Assert.Equal(10, packet.Length);
             Assert.Equal(0, packet.EndOffset);
@@ -140,7 +140,7 @@ namespace RemoteInvokeTests.Transport
         [Fact]
         public void Test_Get_Array()
         {
-            Packet<TypeCode> packet = new(TypeCode.Byte, 10);
+            var packet = new DefaultPacket<TypeCode>(TypeCode.Byte, 10);
 
             Assert.Equal(10, packet.Length);
             Assert.Equal(0, packet.EndOffset);

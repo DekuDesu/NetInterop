@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Packets.Extensions
 {
-    public static class IPacketExtensions
+    public static class PacketExtensions
     {
         public static bool GetBool<T>(this IPacket<T> packet) where T : Enum, IConvertible => packet.Remove(sizeof(bool)).ToBool();
         public static void AppendBool<T>(this IPacket<T> packet, bool value) where T : Enum, IConvertible => packet.GetBuffer(sizeof(bool)).Write(value);

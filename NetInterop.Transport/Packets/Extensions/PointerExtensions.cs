@@ -31,21 +31,23 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
-        public static void Write(this ref byte buffer, byte* data, int length)
+        public static byte[] ToArray(this ref byte buffer, int length)
         {
-            fixed (byte* array = &buffer)
+            byte[] result = new byte[length];
+
+            fixed (byte* ptr = &buffer)
             {
-                byte* arrayPointer = array;
-                byte* otherPointer = data;
+                byte* iterator = ptr;
 
                 for (int i = 0; i < length; i++)
                 {
-                    *arrayPointer = *otherPointer;
+                    result[i] = *iterator;
 
-                    arrayPointer++;
-                    otherPointer++;
+                    iterator++;
                 }
             }
+
+            return result;
         }
 
         public static sbyte ToSByte(this ref byte buffer)

@@ -19,6 +19,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// <typeparam name="T"></typeparam>
         /// <param name="value"></param>
         /// <returns>a by reference packet, by reference is enforced for performance reasons</returns>
-        Packet<TPacketType> Convert<T>(T value) where T : unmanaged;
+        IPacket<TPacketType> Convert<T>(T value) where T : unmanaged;
     }
 }
