@@ -17,7 +17,7 @@ namespace NetInterop.Transport.Core.Packets
         private readonly IConnection connection;
         private readonly IPacketDispatcher<TPacketType> dispatcher;
         private System.Timers.Timer packetAvailableTimer;
-        private double timerInterval = 1000 / 60;
+        private readonly double timerInterval = 1000 / 60;
         public DefaultPacketReceiver(IPacketDispatcher<TPacketType> dispatcher, IPacketController<TPacketType> controller, IConnection connection)
         {
             if (connection is null)
@@ -43,19 +43,25 @@ namespace NetInterop.Transport.Core.Packets
             StopTimer();
         }
 
-        private void TryConsumePacket()
+        private bool TryConsumePacket()
         {
             if (controller.PendingPackets)
             {
                 if (controller.TryReadPacket(out IPacket<TPacketType> packet))
                 {
                     dispatcher.Dispatch(packet);
+                    return true;
                 }
             }
+            return false;
         }
 
         private void StartTimer()
         {
+            if (packetAvailableTimer != null)
+            {
+                StopTimer();
+            }
             packetAvailableTimer = new System.Timers.Timer() { Interval = timerInterval, AutoReset = true, Enabled = true };
             packetAvailableTimer.Elapsed += TimerEvent;
             packetAvailableTimer.Start();
@@ -76,6 +82,37 @@ namespace NetInterop.Transport.Core.Packets
                 return;
             }
             TryConsumePacket();
+        }
+
+        public bool Receive()
+        {
+            return TryConsumePacket();
+        }
+
+        public async Task ReceiveAsync(CancellationToken token)
+        {
+            while (token.IsCancellationRequested is false)
+            {
+                TryConsumePacket();
+                await Task.Delay(1);
+            }
+        }
+
+        public void ReceiveMany(CancellationToken token)
+        {
+            while (token.IsCancellationRequested is false)
+            {
+                TryConsumePacket();
+                Thread.Sleep(1);
+            }
+        }
+
+        public IEnumerator<bool> ReceiveMany()
+        {
+            while (true)
+            {
+                yield return TryConsumePacket();
+            }
         }
     }
 }
