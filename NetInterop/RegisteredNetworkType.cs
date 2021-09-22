@@ -8,8 +8,9 @@ using System.Collections.Concurrent;
 
 namespace NetInterop
 {
-    public class RegisteredNetworkType<T> : INetworkType, ITypeSafeNetworkType<T>
+    public class RegisteredNetworkType<T> : INetworkType, INetworkType<T>
     {
+        private readonly IPointerProvider pointerProvider;
         private readonly Func<T> instantiator;
         private readonly bool isDisposable;
         private ConcurrentBag<ushort> freedIds = new ConcurrentBag<ushort>();
@@ -19,9 +20,9 @@ namespace NetInterop
         private T[] instances = new T[ushort.MaxValue];
         private object locker = new object();
 
-        public int Id { get; set; }
+        public ushort Id { get; set; }
 
-        public RegisteredNetworkType(int id, Func<T> instantiator = null, Action<T> disposer = null)
+        public RegisteredNetworkType(ushort id, Func<T> instantiator = null, Action<T> disposer = null)
         {
             this.instantiator = instantiator ?? DefaultInstantiator;
             this.Id = id;
@@ -29,35 +30,69 @@ namespace NetInterop
             this.disposer = disposer;
         }
 
-        public ushort Alloc()
+        public INetPtr AllocPtr()
         {
-            ushort id = GetNewAddress();
+            ushort instance = GetNewAddress();
 
             T newInstance = instantiator();
 
             lock (locker)
             {
-                instances[id] = newInstance;
+                instances[instance] = newInstance;
             }
 
-            return id;
+            return pointerProvider.Create<T>(Id, instance, (ptr, value) => SetPtr(ptr, value), (ptr) => GetPtr(ptr));
         }
 
-        public T Reference(ushort ptr)
+        public T GetPtr(INetPtr<T> ptr)
         {
             lock (locker)
             {
-                return instances[ptr];
+                return instances[ptr.InstancePtr];
             }
         }
 
-        object INetworkType.Reference(ushort ptr) => Reference(ptr);
-
-        public void Free(ushort ptr)
+        public void SetPtr(INetPtr ptr, object value)
         {
-            DisposeManagedT(Reference(ptr));
+            if (ptr.PtrType == 0)
+            {
+                throw new NullReferenceException($"Provided ptr was null: {ptr}");
+            }
+            if (value is T isT)
+            {
+                SetPtr(ptr, isT);
+            }
+            else
+            {
+                throw new InvalidCastException($"Failed to cast pointer {ptr} to {typeof(T).FullName}, expected type {this.Id} got {ptr.PtrType} ({value})");
+            }
+        }
 
-            freedIds.Add(ptr);
+        public void SetPtr(INetPtr<T> ptr, T value)
+        {
+            lock (locker)
+            {
+                instances[ptr.InstancePtr] = value;
+            }
+        }
+
+        object INetworkType.GetPtr(INetPtr ptr)
+        {
+            lock (locker)
+            {
+                return instances[ptr.InstancePtr];
+            }
+        }
+
+        public void Free(INetPtr ptr)
+        {
+            if (ptr is INetPtr<T> isTypedNetPtr)
+            {
+                DisposeManagedT(this.GetPtr(isTypedNetPtr));
+            }
+
+
+            freedIds.Add(ptr.InstancePtr);
         }
 
         public void FreeAll()

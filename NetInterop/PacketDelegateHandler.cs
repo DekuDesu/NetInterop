@@ -8,15 +8,11 @@ using System.Threading.Tasks;
 
 namespace NetInterop
 {
-    public class NetworkCallbackRegistrar<TPacket> : INetworkCallbackRegistrar<TPacket> where TPacket : Enum, IConvertible
+    public class PacketDelegateHandler<TPacket> : IDelegateHandler<bool, IPacket<TPacket>> where TPacket : Enum, IConvertible
     {
         private readonly IDictionary<ushort, Action<bool, IPacket<TPacket>>> callbacks = new ConcurrentDictionary<ushort, Action<bool, IPacket<TPacket>>>();
         private ushort nextId = 0;
         private readonly ConcurrentBag<ushort> freedIds = new ConcurrentBag<ushort>();
-
-        public ushort Register(Action callback) => Register((goodResponse, packet) => callback());
-
-        public ushort Register(Action<bool> callback) => Register((goodResponse, packet) => callback(goodResponse));
 
         public ushort Register(Action<bool, IPacket<TPacket>> callback)
         {
@@ -27,29 +23,35 @@ namespace NetInterop
             return id;
         }
 
-        public void InvokeAndFree(ushort id, bool response, IPacket<TPacket> packet)
+        public ushort Register(Action<bool> invokable) => Register((boolArg, packetArg) => invokable(boolArg));
+
+        ushort IDelegateHandler.Register<T>(T invokable) => Register((boolArg, packetArg) => invokable.DynamicInvoke());
+
+        public void Invoke(ushort id)
         {
             if (callbacks.ContainsKey(id))
             {
                 var invokable = callbacks[id];
 
-                FreeId(id);
-
-                invokable(response, packet);
+                invokable(false, null);
             }
         }
 
-        public void Invoke(ushort id, bool response, IPacket<TPacket> packet)
+        public void Invoke(ushort id, bool arg, IPacket<TPacket> arg1)
         {
             if (callbacks.ContainsKey(id))
             {
                 var invokable = callbacks[id];
 
-                invokable(response, packet);
+                Remove(id);
+
+                invokable(arg, arg1);
             }
         }
 
-        public void FreeId(ushort id)
+        public void Invoke(ushort id, bool arg) => Invoke(id, arg, null);
+
+        private void Remove(ushort id)
         {
             freedIds.Add(id);
             callbacks.Remove(id);

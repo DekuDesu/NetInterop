@@ -1,5 +1,4 @@
-﻿using NetInterop.Abstractions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -10,9 +9,15 @@ using NetInterop.Attributes;
 
 namespace NetInterop
 {
-    public class NetworkHeap : INetworkHeap
+    public class NetworkTypeHandler : INetworkTypeHandler
     {
         private readonly IDictionary<ushort, INetworkType> registeredTypes = new Dictionary<ushort, INetworkType>();
+        private readonly IDictionary<Type, ushort> idRegistry = new Dictionary<Type, ushort>();
+
+        public void RegisterUnmanagedTypes()
+        {
+            this.RegisterType<int>((ushort)Type.GetTypeCode(typeof(int)));
+        }
 
         public ushort RegisterType(Type type, ushort explicitId, object instantiator)
         {
@@ -37,24 +42,42 @@ namespace NetInterop
         public ushort RegisterType(Type type) => RegisterType(type, 0, null);
         public ushort RegisterType(Type type, ushort explicitId) => RegisterType(type, explicitId, null);
 
-        public ITypeSafeNetworkType<T> GetNetworkType<T>(ushort id)
+        public INetworkType<T> GetNetworkType<T>()
         {
+            ushort id = idRegistry[typeof(T)];
+
             if (registeredTypes.ContainsKey(id))
             {
                 INetworkType possiblyRegisteredType = registeredTypes[id];
 
-                if (possiblyRegisteredType is ITypeSafeNetworkType<T> isRegisteredType)
+                if (possiblyRegisteredType is INetworkType<T> isRegisteredType)
+                {
+                    return isRegisteredType;
+                }
+            }
+
+            return null;
+        }
+
+        public INetworkType<T> GetNetworkType<T>(INetPtr<T> id)
+        {
+            if (registeredTypes.ContainsKey(id.PtrType))
+            {
+                INetworkType possiblyRegisteredType = registeredTypes[id.PtrType];
+
+                if (possiblyRegisteredType is INetworkType<T> isRegisteredType)
                 {
                     return isRegisteredType;
                 }
             }
             return null;
         }
-        public INetworkType GetAmbiguousNetworkType(ushort id)
+
+        public INetworkType GetAmbiguousNetworkType(INetPtr id)
         {
-            if (registeredTypes.ContainsKey(id))
+            if (registeredTypes.ContainsKey(id.PtrType))
             {
-                return registeredTypes[id];
+                return registeredTypes[id.PtrType];
             }
             return null;
         }
@@ -66,11 +89,15 @@ namespace NetInterop
         public ushort RegisterType<T>(Func<T> instantiator, Action<T> disposer) => RegisterType(0, instantiator, disposer);
         public ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer)
         {
-            explicitId = GetId(typeof(T), explicitId);
+            Type tType = typeof(T);
+
+            explicitId = GetId(tType, explicitId);
 
             var newRegistration = new RegisteredNetworkType<T>(explicitId, instantiator, disposer);
 
             registeredTypes.Add(explicitId, newRegistration);
+
+            idRegistry.Add(tType, explicitId);
 
             return explicitId;
         }
@@ -103,5 +130,7 @@ namespace NetInterop
 
             return explicitId;
         }
+
+
     }
 }

@@ -18,5 +18,7 @@ namespace NetInterop
         {
             return deserializerFunc(packet);
         }
+
+        object IPacketDeserializer<TPacket>.AmbiguousDeserialize(IPacket<TPacket> packet) => this.Deserialize(packet);
     }
 }

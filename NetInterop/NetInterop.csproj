@@ -19,8 +19,4 @@
 		<ProjectReference Include="..\NetInterop.Transport\NetInterop.Transport.Core.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="Abstractions\" />
-	</ItemGroup>
-
 </Project>
