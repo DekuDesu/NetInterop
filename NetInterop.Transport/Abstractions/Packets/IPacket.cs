@@ -2,11 +2,15 @@
 
 namespace NetInterop.Transport.Core.Abstractions.Packets
 {
-    public interface IPacket<TContext> where TContext : Enum
+    public interface IPacket<TContext> : IPacket where TContext : Enum
+    {
+        TContext PacketType { get; set; }
+    }
+
+    public interface IPacket
     {
         int ActualSize { get; }
         int Length { get; }
-        TContext PacketType { get; set; }
 
         byte[] GetData();
 

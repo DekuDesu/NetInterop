@@ -24,7 +24,7 @@ namespace NetInterop
             explicitId = GetId(type, explicitId);
 
             // create the network register type
-            var constructedGeneric = typeof(RegisteredNetworkType<>).MakeGenericType(new Type[] { type });
+            var constructedGeneric = typeof(DefaultNetworkType<>).MakeGenericType(new Type[] { type });
 
             Type instantiatorType = instantiator.GetType().GetGenericArguments().FirstOrDefault() ?? type;
 
@@ -93,7 +93,7 @@ namespace NetInterop
 
             explicitId = GetId(tType, explicitId);
 
-            var newRegistration = new RegisteredNetworkType<T>(explicitId, instantiator, disposer);
+            var newRegistration = new DefaultNetworkType<T>(explicitId, instantiator, disposer);
 
             registeredTypes.Add(explicitId, newRegistration);
 

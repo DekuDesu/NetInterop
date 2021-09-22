@@ -11,13 +11,15 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// Defines an object implements functionality to serialize itself into <typeparamref name="TResult"/>
     /// </summary>
     /// <typeparam name="TResult"></typeparam>
-    public interface IPacketSerializable<TPacket> where TPacket : Enum, IConvertible
+    public interface IPacketSerializable<TPacket> : IPacketSerializable where TPacket : Enum, IConvertible
     {
         /// <summary>
         /// The type or context of this object that should be appended to the header of the packet
         /// </summary>
         TPacket PacketType { get; }
-
+    }
+    public interface IPacketSerializable
+    {
         /// <summary>
         /// Returns the estimated size of the packet when this object is serialized
         /// </summary>
@@ -28,6 +30,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// Serializes this object to a packet to be sent with a IPacketSender
         /// </summary>
         /// <returns></returns>
-        void Serialize(IPacket<TPacket> packetBuilder);
+        void Serialize(IPacket packetBuilder);
     }
 }

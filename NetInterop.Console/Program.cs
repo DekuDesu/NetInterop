@@ -221,7 +221,7 @@ namespace RemoteInvokeConsole
 
             public int EstimatePacketSize() => data.Length * sizeof(int);
 
-            public void Serialize(IPacket<PacketType> packetBuilder)
+            public void Serialize(IPacket packetBuilder)
             {
                 packetBuilder.AppendArray(data);
             }
@@ -252,7 +252,7 @@ namespace RemoteInvokeConsole
 
             public int EstimatePacketSize() => Encoding.UTF8.GetByteCount(Value);
 
-            public void Serialize(IPacket<PacketType> packetBuilder)
+            public void Serialize(IPacket packetBuilder)
             {
                 packetBuilder.AppendString(Value, Encoding.UTF8);
             }
@@ -351,7 +351,7 @@ namespace RemoteInvokeConsole
                 Value = GetRandomNumber();
             }
 
-            public void Serialize(IPacket<PacketType> packetBuilder)
+            public void Serialize(IPacket packetBuilder)
             {
                 packetBuilder.AppendInt(Value);
             }
@@ -377,7 +377,7 @@ namespace RemoteInvokeConsole
 
             public int EstimatePacketSize() => 0;
 
-            public void Serialize(IPacket<PacketType> packetBuilder) { }
+            public void Serialize(IPacket packetBuilder) { }
         }
 
         public enum PacketType : ushort

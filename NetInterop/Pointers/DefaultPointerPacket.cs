@@ -10,9 +10,9 @@ namespace NetInterop
     {
         private readonly PointerOperations operation;
         private readonly INetPtr ptr;
-        private readonly IPacketSerializable<TPacket> additionalPacketData;
+        private readonly IPacketSerializable additionalPacketData;
 
-        public DefaultPointerPacket(PointerOperations operation, INetPtr ptr, IPacketSerializable<TPacket> additionalPacketData = null)
+        public DefaultPointerPacket(PointerOperations operation, INetPtr ptr, IPacketSerializable additionalPacketData = null)
         {
             this.operation = operation;
             this.ptr = ptr;
@@ -23,7 +23,7 @@ namespace NetInterop
 
         public int EstimatePacketSize() => 1 + sizeof(ushort) + (ptr.InstancePtr > 0 ? sizeof(ushort) : 0) + (additionalPacketData?.EstimatePacketSize() ?? 0);
 
-        public void Serialize(IPacket<TPacket> packetBuilder)
+        public void Serialize(IPacket packetBuilder)
         {
             packetBuilder.AppendByte((byte)operation);
 

@@ -10,10 +10,8 @@ namespace NetInterop.Pointers
     {
         private INetworkTypeHandler typeHandler;
         private IPointerProvider pointerProvider;
-        private
 
-        public TPacket PacketType
-        { get; } = default;
+        public TPacket PacketType { get; } = default;
 
         public void Handle(IPacket<TPacket> packet)
         {
@@ -58,9 +56,11 @@ namespace NetInterop.Pointers
 
                     object value = type.GetPtr(ptr);
 
-                    IPacketSerializer < TPacket >
+                    //IPacketSerializer < TPacket >
 
                     throw new NotImplementedException();
+                    break;
+                case PointerOperations.Invoke:
                     break;
             }
 

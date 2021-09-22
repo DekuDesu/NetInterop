@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Abstractions.Packets
 {
-    public interface IPacketDeserializable<TPacketType, out T> where TPacketType : Enum
+    public interface IPacketDeserializable<out T>
     {
-        T Deserialize(IPacket<TPacketType> packet);
+        T Deserialize(IPacket packet);
     }
 }

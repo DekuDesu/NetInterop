@@ -9,12 +9,12 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// </summary>
     /// <typeparam name="TPacket"></typeparam>
     /// <typeparam name="TResult"></typeparam>
-    public interface IPacketDeserializer<TPacket, TResult> : IPacketDeserializer<TPacket> where TPacket : Enum, IConvertible
+    public interface IPacketDeserializer<TResult> : IPacketDeserializer
     {
-        TResult Deserialize(IPacket<TPacket> packet);
+        TResult Deserialize(IPacket packet);
     }
-    public interface IPacketDeserializer<TPacket> where TPacket : Enum, IConvertible
+    public interface IPacketDeserializer
     {
-        object AmbiguousDeserialize(IPacket<TPacket> packet);
+        object AmbiguousDeserialize(IPacket packet);
     }
 }

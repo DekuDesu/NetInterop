@@ -5,20 +5,20 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class DefaultDeserializer<TPacket, TResult> : IPacketDeserializer<TPacket, TResult> where TPacket : Enum, IConvertible
+    public class DefaultDeserializer<TResult> : IPacketDeserializer<TResult>
     {
-        private readonly Func<IPacket<TPacket>, TResult> deserializerFunc;
+        private readonly Func<IPacket, TResult> deserializerFunc;
 
-        public DefaultDeserializer(Func<IPacket<TPacket>, TResult> deserializerFunc)
+        public DefaultDeserializer(Func<IPacket, TResult> deserializerFunc)
         {
             this.deserializerFunc = deserializerFunc ?? throw new ArgumentNullException(nameof(deserializerFunc));
         }
 
-        public TResult Deserialize(IPacket<TPacket> packet)
+        public object AmbiguousDeserialize(IPacket packet) => this.Deserialize(packet);
+
+        public TResult Deserialize(IPacket packet)
         {
             return deserializerFunc(packet);
         }
-
-        object IPacketDeserializer<TPacket>.AmbiguousDeserialize(IPacket<TPacket> packet) => this.Deserialize(packet);
     }
 }

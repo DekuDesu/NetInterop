@@ -5,16 +5,16 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class DefaultSerializer<TPacket, T> : IPacketSerializer<TPacket, T> where TPacket : Enum, IConvertible
+    public class DefaultSerializer<T> : IPacketSerializer<T>
     {
-        private readonly Action<T, IPacket<TPacket>> serializeAction;
+        private readonly Action<T, IPacket> serializeAction;
 
-        public DefaultSerializer(Action<T, IPacket<TPacket>> serializeAction)
+        public DefaultSerializer(Action<T, IPacket> serializeAction)
         {
             this.serializeAction = serializeAction ?? throw new ArgumentNullException(nameof(serializeAction));
         }
 
-        public void Serialize(T value, IPacket<TPacket> packetBuilder)
+        public void Serialize(T value, IPacket packetBuilder)
         {
             serializeAction(value, packetBuilder);
         }

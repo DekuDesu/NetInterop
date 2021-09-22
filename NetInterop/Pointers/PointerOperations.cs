@@ -9,6 +9,7 @@ namespace NetInterop
         none,
         Alloc,
         Set,
-        Get
+        Get,
+        Invoke
     }
 }

@@ -5,24 +5,24 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections.Concurrent;
+using NetInterop.Transport.Core.Abstractions.Packets;
 
 namespace NetInterop
 {
-    public class RegisteredNetworkType<T> : INetworkType, INetworkType<T>
+    public class DefaultNetworkType<T> : INetworkType, INetworkType<T>
     {
         private readonly IPointerProvider pointerProvider;
         private readonly Func<T> instantiator;
         private readonly bool isDisposable;
         private ConcurrentBag<ushort> freedIds = new ConcurrentBag<ushort>();
         private readonly Action<T> disposer;
-
         private ushort instanceIndex = 0;
         private T[] instances = new T[ushort.MaxValue];
-        private object locker = new object();
+        private readonly object locker = new object();
 
         public ushort Id { get; set; }
 
-        public RegisteredNetworkType(ushort id, Func<T> instantiator = null, Action<T> disposer = null)
+        public DefaultNetworkType(ushort id, Func<T> instantiator = null, Action<T> disposer = null)
         {
             this.instantiator = instantiator ?? DefaultInstantiator;
             this.Id = id;
