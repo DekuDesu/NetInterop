@@ -6,10 +6,15 @@ using System.Text;
 namespace NetInterop
 {
     public interface ISerializableNetworkType<T> :
+        ISerializableNetworkType,
         INetworkType<T>,
         IPacketSerializer<T>,
+        IPacketDeserializer<T>
+    {
+    }
+    public interface ISerializableNetworkType :
+        INetworkType,
         IPacketSerializer,
-        IPacketDeserializer<T>,
         IPacketDeserializer
     {
     }

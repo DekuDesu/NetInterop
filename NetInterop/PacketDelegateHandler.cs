@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace NetInterop
 {
-    public class PacketDelegateHandler<TPacket> : IDelegateHandler<bool, IPacket<TPacket>> where TPacket : Enum, IConvertible
+    public class PacketDelegateHandler : IDelegateHandler<bool, IPacket>
     {
-        private readonly IDictionary<ushort, Action<bool, IPacket<TPacket>>> callbacks = new ConcurrentDictionary<ushort, Action<bool, IPacket<TPacket>>>();
+        private readonly IDictionary<ushort, Action<bool, IPacket>> callbacks = new ConcurrentDictionary<ushort, Action<bool, IPacket>>();
         private ushort nextId = 0;
         private readonly ConcurrentBag<ushort> freedIds = new ConcurrentBag<ushort>();
 
-        public ushort Register(Action<bool, IPacket<TPacket>> callback)
+        public ushort Register(Action<bool, IPacket> callback)
         {
             ushort id = GetId();
 
@@ -37,7 +37,7 @@ namespace NetInterop
             }
         }
 
-        public void Invoke(ushort id, bool arg, IPacket<TPacket> arg1)
+        public void Invoke(ushort id, bool arg, IPacket arg1)
         {
             if (callbacks.ContainsKey(id))
             {

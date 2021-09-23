@@ -231,7 +231,7 @@ namespace RemoteInvokeConsole
         {
             public PacketType PacketType { get; } = PacketType.IntArray;
 
-            public void Handle(IPacket<PacketType> packet)
+            public void Handle(IPacket packet)
             {
                 int[] arr = packet.GetIntArray();
 
@@ -269,7 +269,7 @@ namespace RemoteInvokeConsole
 
             public PacketType PacketType { get; } = PacketType.String;
 
-            public void Handle(IPacket<PacketType> packet)
+            public void Handle(IPacket packet)
             {
                 _ = packet.GetString(Encoding.UTF8);
                 //Console.WriteLine($"{MessagePrefix}: {packet.GetString(Encoding.UTF8)}");
@@ -331,7 +331,7 @@ namespace RemoteInvokeConsole
 
             public PacketType PacketType { get; } = PacketType.Int;
 
-            public void Handle(IPacket<PacketType> packet)
+            public void Handle(IPacket packet)
             {
                 _ = packet.GetInt();
                 //Console.WriteLine($"{MessagePrefix}: {packet.GetInt()}");
@@ -361,14 +361,14 @@ namespace RemoteInvokeConsole
         {
             public PacketType PacketType { get; } = PacketType.ResponseGood;
 
-            public void Handle(IPacket<PacketType> packet) { }
+            public void Handle(IPacket packet) { }
         }
 
         public class ConnectionAliveHandler : IPacketHandler<PacketType>
         {
             public PacketType PacketType { get; } = PacketType.none;
 
-            public void Handle(IPacket<PacketType> packet) { }
+            public void Handle(IPacket packet) { }
         }
 
         public class ConnectionAlivePacket : IPacketSerializable<PacketType>
