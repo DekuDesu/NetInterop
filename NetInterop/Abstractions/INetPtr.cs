@@ -9,7 +9,8 @@ namespace NetInterop
     public interface INetPtr : IPacketSerializable
     {
         ushort PtrType { get; }
-        ushort InstancePtr { get; }
+        ushort PtrAddress { get; }
+        INetPtr<T> As<T>();
     }
     public interface INetPtr<T> : INetPtr
     {

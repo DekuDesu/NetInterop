@@ -7,8 +7,8 @@ namespace NetInterop
 {
     public interface IPointerResponseSender
     {
-        void SendBadResponse();
-        void SendGoodResponse();
-        void SendResponse(bool goodResponse, IPacketSerializable packetBuilder);
+        void SendBadResponse(ushort callbackId);
+        void SendGoodResponse(ushort callbackId);
+        void SendResponse(ushort callbackId, bool goodResponse, IPacketSerializable packetBuilder);
     }
 }

@@ -22,10 +22,11 @@ namespace NetInterop
 
         public ushort Id { get; set; }
 
-        public DefaultNetworkType(ushort id, Func<T> instantiator = null, Action<T> disposer = null)
+        public DefaultNetworkType(ushort id, IPointerProvider pointerProvider, Func<T> instantiator = null, Action<T> disposer = null)
         {
             this.instantiator = instantiator ?? DefaultInstantiator;
             this.Id = id;
+            this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             isDisposable = typeof(T).GetInterface(nameof(IDisposable)) != null;
             this.disposer = disposer;
         }
@@ -41,14 +42,14 @@ namespace NetInterop
                 instances[instance] = newInstance;
             }
 
-            return pointerProvider.Create<T>(Id, instance, (ptr, value) => SetPtr(ptr, value), (ptr) => GetPtr(ptr));
+            return pointerProvider.Create<T>(Id, instance);
         }
 
         public T GetPtr(INetPtr<T> ptr)
         {
             lock (locker)
             {
-                return instances[ptr.InstancePtr];
+                return instances[ptr.PtrAddress];
             }
         }
 
@@ -60,7 +61,10 @@ namespace NetInterop
             }
             if (value is T isT)
             {
-                SetPtr(ptr, isT);
+                lock (locker)
+                {
+                    instances[ptr.PtrAddress] = isT;
+                }
             }
             else
             {
@@ -72,7 +76,7 @@ namespace NetInterop
         {
             lock (locker)
             {
-                instances[ptr.InstancePtr] = value;
+                instances[ptr.PtrAddress] = value;
             }
         }
 
@@ -80,19 +84,15 @@ namespace NetInterop
         {
             lock (locker)
             {
-                return instances[ptr.InstancePtr];
+                return instances[ptr.PtrAddress];
             }
         }
 
         public void Free(INetPtr ptr)
         {
-            if (ptr is INetPtr<T> isTypedNetPtr)
-            {
-                DisposeManagedT(this.GetPtr(isTypedNetPtr));
-            }
+            DisposeManagedT(this.GetPtr(ptr.As<T>()));
 
-
-            freedIds.Add(ptr.InstancePtr);
+            freedIds.Add(ptr.PtrAddress);
         }
 
         public void FreeAll()

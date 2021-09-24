@@ -6,37 +6,40 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class AllocPointerHandler : IPacketHandler<PointerOperations>
+    public class FreePointerHandler : IPacketHandler<PointerOperations>
     {
         private readonly INetworkTypeHandler typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public AllocPointerHandler(INetworkTypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
+        public FreePointerHandler(INetworkTypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
         }
 
-        public PointerOperations PacketType { get; } = PointerOperations.Alloc;
+        public PointerOperations PacketType { get; } = PointerOperations.Free;
 
         public void Handle(IPacket packet)
         {
+            ushort callbackId = packet.GetUShort();
+
             // get the type we should create
-            INetPtr typePtr = pointerProvider.Create(packet.GetUShort(), 0);
+            INetPtr ptr = pointerProvider.Deserialize(packet);
 
-            // try to get the type and alloc a new object
-            if (typeHandler.TryGetAmbiguousType(typePtr, out var type))
+            if (ptr != null)
             {
-                INetPtr newPtr = type.AllocPtr();
-
-                if (newPtr != null)
+                // try to get the type and alloc a new object
+                if (typeHandler.TryGetAmbiguousType(ptr, out var type))
                 {
-                    sender.SendResponse(true, newPtr);
+                    type.Free(ptr);
+
+                    sender.SendGoodResponse(callbackId);
+                    return;
                 }
             }
-            sender.SendBadResponse();
+            sender.SendBadResponse(callbackId);
         }
     }
 }

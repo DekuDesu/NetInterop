@@ -1,4 +1,5 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,16 +19,17 @@ namespace NetInterop
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
         }
 
-        public PointerOperations PacketType { get; } = PointerOperations.Set;
+        public PointerOperations PacketType { get; } = PointerOperations.Get;
 
         public void Handle(IPacket packet)
         {
+            ushort callbackId = packet.GetUShort();
             // get the type we should create
             INetPtr ptr = pointerProvider.Deserialize(packet);
 
             if (ptr is null)
             {
-                sender.SendBadResponse();
+                sender.SendBadResponse(callbackId);
             }
 
             // try to get the type and alloc a new object
@@ -35,15 +37,13 @@ namespace NetInterop
             {
                 object value = type.GetPtr(ptr);
 
-                if (value is null)
+                if (value != null)
                 {
-                    sender.SendBadResponse();
+                    sender.SendResponse(callbackId, true, new PacketSerializerProxy(value, type));
+                    return;
                 }
-
-                sender.SendResponse(true, new PacketSerializerProxy(value, type));
             }
-
-            sender.SendBadResponse();
+            sender.SendBadResponse(callbackId);
         }
     }
 }

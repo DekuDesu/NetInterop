@@ -13,6 +13,9 @@ namespace NetInterop
         bool TryGetSerializableType<T>(INetPtr<T> id, out ISerializableNetworkType<T> serializableNetworkType);
         bool TryGetAmbiguousSerializableType(INetPtr id, out ISerializableNetworkType serializableNetworkType);
 
+        bool TryGetTypePtr<T>(out ushort ptr);
+        bool TryGetTypePtr(Type type, out ushort ptr);
+
         [System.Obsolete("Use RegisterType<T> instead for type safety, if available. This is remains for niche compatibility.")]
         ushort RegisterType(Type type);
         [System.Obsolete("Use RegisterType<T> instead for type safety, if available. This is remains for niche compatibility.")]

@@ -12,6 +12,13 @@ namespace NetInterop
 {
     public class DefaultNetworkTypeHandler : INetworkTypeHandler
     {
+        private readonly IPointerProvider pointerProvider;
+
+        public DefaultNetworkTypeHandler(IPointerProvider pointerProvider)
+        {
+            this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
+        }
+
         private readonly IDictionary<ushort, INetworkType> registeredTypes = new Dictionary<ushort, INetworkType>();
         private readonly IDictionary<Type, ushort> idRegistry = new Dictionary<Type, ushort>();
 
@@ -55,11 +62,11 @@ namespace NetInterop
 
             if (serializer != null && deserializer != null)
             {
-                newRegistration = new DefaultSerializableNetworkType<T>(new DefaultNetworkType<T>(explicitId, instantiator, disposer), deserializer, serializer);
+                newRegistration = new DefaultSerializableNetworkType<T>(new DefaultNetworkType<T>(explicitId, pointerProvider, instantiator, disposer), deserializer, serializer);
             }
             else
             {
-                newRegistration = new DefaultNetworkType<T>(explicitId, instantiator, disposer);
+                newRegistration = new DefaultNetworkType<T>(explicitId, pointerProvider, instantiator, disposer);
             }
 
             registeredTypes.Add(explicitId, newRegistration);
@@ -190,6 +197,29 @@ namespace NetInterop
             }
 
             type = default;
+            return false;
+        }
+
+        public bool TryGetTypePtr<T>(out ushort ptr)
+        {
+            Type t = typeof(T);
+            ptr = 0;
+            if (idRegistry.ContainsKey(t))
+            {
+                ptr = idRegistry[t];
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryGetTypePtr(Type type, out ushort ptr)
+        {
+            ptr = 0;
+            if (idRegistry.ContainsKey(type))
+            {
+                ptr = idRegistry[type];
+                return true;
+            }
             return false;
         }
     }

@@ -8,6 +8,6 @@ namespace NetInterop
     public interface IPointerProvider : IPacketSerializer<INetPtr>, IPacketDeserializer<INetPtr>
     {
         INetPtr Create(ushort typeId, ushort instanceId);
-        INetPtr<T> Create<T>(ushort typeId, ushort instanceId, Action<INetPtr<T>, T> setter, Func<INetPtr<T>, T> getter);
+        INetPtr<T> Create<T>(ushort typeId, ushort instanceId);
     }
 }

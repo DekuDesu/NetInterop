@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 
 namespace NetInterop
 {
-    public class PacketDelegateHandler : IDelegateHandler<bool, IPacket>
+    public class DefaultPacketDelegateHandler : IDelegateHandler<bool, IPacket>
     {
         private readonly IDictionary<ushort, Action<bool, IPacket>> callbacks = new ConcurrentDictionary<ushort, Action<bool, IPacket>>();
         private ushort nextId = 0;
         private readonly ConcurrentBag<ushort> freedIds = new ConcurrentBag<ushort>();
+
+        public int Count => callbacks.Count;
 
         public ushort Register(Action<bool, IPacket> callback)
         {

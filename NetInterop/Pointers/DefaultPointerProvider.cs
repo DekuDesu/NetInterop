@@ -12,12 +12,23 @@ namespace NetInterop
 
         public INetPtr Create(ushort typeId, ushort instanceId) => new NetPtr(typeId, instanceId);
 
-        public INetPtr<T> Create<T>(ushort typeId, ushort instanceId, Action<INetPtr<T>, T> setter, Func<INetPtr<T>, T> getter)
+        public INetPtr<T> Create<T>(ushort typeId, ushort instanceId)
         {
-            throw new NotImplementedException();
+            return new NetPtr<T>(typeId, instanceId);
         }
 
-        public INetPtr Deserialize(IPacket packet) => new NetPtr(packet.GetUShort(), packet.GetUShort());
+        public INetPtr Deserialize(IPacket packet)
+        {
+            try
+            {
+                return new NetPtr(packet.GetUShort(), packet.GetUShort());
+            }
+            // IORE is thrown if the packet does not contain enough bytes to form two ushorts
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
+        }
 
         public void Serialize(INetPtr value, IPacket packetBuilder) => packetBuilder.AppendSerializable(value);
     }

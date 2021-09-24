@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace NetInterop.Callbacks
+namespace NetInterop
 {
     public class CallbackPacketHandler : IPointerResponseHandler
     {

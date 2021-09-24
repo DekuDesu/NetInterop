@@ -21,7 +21,7 @@ namespace NetInterop
 
         public TPacket PacketType { get; } = default;
 
-        public int EstimatePacketSize() => 1 + sizeof(ushort) + (ptr.InstancePtr > 0 ? sizeof(ushort) : 0) + (additionalPacketData?.EstimatePacketSize() ?? 0);
+        public int EstimatePacketSize() => 1 + sizeof(ushort) + (ptr.PtrAddress > 0 ? sizeof(ushort) : 0) + (additionalPacketData?.EstimatePacketSize() ?? 0);
 
         public void Serialize(IPacket packetBuilder)
         {
@@ -29,7 +29,7 @@ namespace NetInterop
 
             packetBuilder.AppendUShort(ptr.PtrType);
 
-            if (ptr.InstancePtr != 0)
+            if (ptr.PtrAddress != 0)
             {
                 packetBuilder.AppendUShort(ptr.PtrType);
             }

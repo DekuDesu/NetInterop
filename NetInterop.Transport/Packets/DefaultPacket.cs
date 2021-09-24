@@ -1,6 +1,7 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
+using System.Diagnostics;
 
 namespace NetInterop.Transport.Core.Packets
 {
@@ -79,6 +80,7 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
+        [DebuggerHidden]
         public ref byte GetBuffer(int length)
         {
             // make sure we have adequet space
@@ -90,7 +92,7 @@ namespace NetInterop.Transport.Core.Packets
 
             return ref buffer[HeaderSize + offset];
         }
-
+        [DebuggerHidden]
         private ref byte GetPointer(int index)
         {
             return ref buffer[index];
@@ -101,6 +103,7 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="count"></param>
         /// <returns>The index of the last element within the span, this can be used to immediately insert data to the end within re-finding the end of the span</returns>
+        [DebuggerHidden]
         private void Extend(int count)
         {
             int desiredLength = EndOffset + HeaderSize + count;
@@ -127,6 +130,7 @@ namespace NetInterop.Transport.Core.Packets
         /// Appends the given data to the end of the packet, increments the position of the end of the packets data
         /// </summary>
         /// <param name="newData"></param>
+        [DebuggerHidden]
         public void Append(byte[] newData)
         {
             int length = newData.Length;
@@ -147,6 +151,7 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
+        [DebuggerHidden]
         public ref byte Remove(int length)
         {
             length = Math.Min(Length, Math.Max(length, 0));
@@ -158,18 +163,21 @@ namespace NetInterop.Transport.Core.Packets
             return ref GetPointer(index);
         }
 
+        [DebuggerHidden]
         public ref byte GetHeader()
         {
             return ref buffer[0];
         }
 
+
+        [DebuggerHidden]
         public void SetHeader(byte[] header)
         {
             ref byte ptr = ref buffer[0];
 
             ptr.Write(header);
         }
-
+        [DebuggerHidden]
         public byte[] GetData() => buffer;
     }
 }

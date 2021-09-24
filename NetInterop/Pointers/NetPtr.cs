@@ -8,52 +8,65 @@ namespace NetInterop
 {
     public class NetPtr : INetPtr
     {
-        public ushort InstancePtr { get; }
+        public ushort PtrAddress { get; }
         public ushort PtrType { get; } = 0;
 
         public NetPtr() { }
 
-        public NetPtr(ushort ptrType, ushort instancePtr)
+        public NetPtr(ushort ptrType, ushort ptrAddress)
         {
             PtrType = ptrType;
-            InstancePtr = instancePtr;
+            PtrAddress = ptrAddress;
         }
 
         public override bool Equals(object obj)
         {
             if (obj is NetPtr isNetPtr)
             {
-                return isNetPtr.PtrType == this.PtrType && isNetPtr.InstancePtr == this.InstancePtr;
+                return isNetPtr.PtrType == this.PtrType && isNetPtr.PtrAddress == this.PtrAddress;
+            }
+            else if (obj is int number)
+            {
+                return this.GetHashCode() == number;
             }
             return false;
         }
 
         public override int GetHashCode()
         {
-            return (PtrType << 16) + InstancePtr;
+            return (PtrType << 16) | PtrAddress;
         }
 
         public override string ToString()
         {
-            return $"{PtrType:X}{InstancePtr:X}";
+            return $"{string.Format("{0:X}", PtrType).PadLeft(2, '0')}{string.Format("{0:X}", PtrAddress).PadLeft(2, '0')}";
         }
         public int EstimatePacketSize() => sizeof(ushort) * 2;
 
         public void Serialize(IPacket packetBuilder)
         {
             packetBuilder.AppendUShort(PtrType);
-            packetBuilder.AppendUShort(InstancePtr);
+            packetBuilder.AppendUShort(PtrAddress);
         }
 
         public INetPtr Deserialize(IPacket packet)
         {
             return new NetPtr(packet.GetUShort(), packet.GetUShort());
         }
+
+        public INetPtr<T> As<T>()
+        {
+            if (this is INetPtr<T> netPtr)
+            {
+                return netPtr;
+            }
+            return new NetPtr<T>(PtrType, PtrAddress);
+        }
     }
-    public class NetPtr<T> : NetPtr
+    public class NetPtr<T> : NetPtr, INetPtr<T>
     {
         public T Value { get; set; }
 
-        public NetPtr(ushort ptrType, ushort instancePtr) : base(ptrType, instancePtr) { }
+        public NetPtr(ushort ptrType, ushort ptrAddress) : base(ptrType, ptrAddress) { }
     }
 }

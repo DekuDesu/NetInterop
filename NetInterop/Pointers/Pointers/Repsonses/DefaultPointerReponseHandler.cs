@@ -7,11 +7,11 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class DefaultOperationResultHandler : IPacketHandler<PointerOperations>
+    public class DefaultPointerReponseHandler : IPacketHandler<PointerOperations>
     {
         private readonly IPointerResponseHandler handler;
 
-        public DefaultOperationResultHandler(IPointerResponseHandler handler)
+        public DefaultPointerReponseHandler(IPointerResponseHandler handler)
         {
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }

@@ -23,8 +23,7 @@ namespace NetInterop
 
         public void Serialize(IPacket packetBuilder)
         {
-            packetBuilder.AppendByte((byte)PointerOperations.OperationResult);
-
+            // this packet should be wrapped with a PointerOperationPacket so it is dispatched from the P
             PointerResponses response = goodResponse ? PointerResponses.GoodResponse : PointerResponses.BadResponse;
 
             if (data != null)

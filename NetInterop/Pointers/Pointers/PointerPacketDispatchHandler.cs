@@ -8,14 +8,14 @@ using System.Text;
 namespace NetInterop
 {
     /// <summary>
-    /// Dispatches pointer operations packets to individual handlers
+    /// Dispatches pointer operations packets to individual handlers, pointer packets are wrapped with PointerOperationPackets
     /// </summary>
     /// <typeparam name="TPacket"></typeparam>
     public class PointerPacketDispatchHandler<TPacket> : IPacketHandler<TPacket> where TPacket : Enum, IConvertible
     {
         private readonly IDictionary<PointerOperations, IPacketHandler<PointerOperations>> handlers;
 
-        public PointerPacketDispatchHandler(IEnumerable<IPacketHandler<PointerOperations>> handlers)
+        public PointerPacketDispatchHandler(params IPacketHandler<PointerOperations>[] handlers)
         {
             this.handlers = handlers.ToDictionary(x => x.PacketType);
         }
