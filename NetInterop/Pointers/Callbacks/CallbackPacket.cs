@@ -22,8 +22,8 @@ namespace NetInterop
         /// <typeparam name="TPacket"></typeparam>
         public CallbackPacket(Action<bool, IPacket> callback, IPacketSerializable packet, IDelegateHandler<bool, IPacket> packetCallbackHandler)
         {
-            this.packet = packet;
-            this.packetCallbackHandler = packetCallbackHandler;
+            this.packet = packet ?? throw new ArgumentNullException(nameof(packet));
+            this.packetCallbackHandler = packetCallbackHandler ?? throw new ArgumentNullException(nameof(packetCallbackHandler));
             this.callback = callback;
         }
 

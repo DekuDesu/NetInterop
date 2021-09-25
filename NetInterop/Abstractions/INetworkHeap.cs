@@ -1,39 +1,87 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using NetInterop.Transport.Core.Abstractions.Packets;
+using System;
 
 namespace NetInterop
 {
+    /// <summary>
+    /// Controls registered interop types on a remote client
+    /// </summary>
     public interface INetworkHeap
     {
-        /// <summary>
-        /// Creates the provided type on the remote client
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns><see cref="INetPtr"/> network pointer to the object on the remote server</returns>
-        INetPtr CreateType<T>();
+        IPointerProvider PointerProvider { get; set; }
 
         /// <summary>
-        /// Destroys the target object on the remote client
+        /// Instantiates an instance of <see cref="{T}"/> on the remote client. 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="callback"></param>
+        void Create<T>(Action<INetPtr<T>> callback);
+
+        /// <summary>
+        /// Instantiates an instance of the object who's type is defined within the provided <see cref="INetPtr"/>, on the remote client. 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="callback"></param>
+        void Create(INetPtr typePtr, Action<INetPtr> callback);
+
+        /// <summary>
+        /// Destroyes and Diposes the object on the remote client, if defined. For value types where no instantiator, or disposer are defined when they are registered, they're <see cref="INetPtr"/> addresses are made available for re-use - but their values remain until written over with new data.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Destroy<T>(INetPtr<T> ptr);
+
+        /// <summary>
+        /// Destroyes and Diposes the object on the remote client, if defined. For value types where no instantiator, or disposer are defined when they are registered, they're <see cref="INetPtr"/> addresses are made available for re-use - but their values remain until written over with new data.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
         void Destroy(INetPtr ptr);
 
         /// <summary>
-        /// Sets the target ptr to the provided value on the remote client
+        /// Retrieves a value from the remote client
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        /// <param name="callback"></param>
+        void Get<T>(INetPtr<T> ptr, Action<T> callback);
+
+        /// <summary>
+        /// Retrieves a value from the remote client
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        /// <param name="callback"></param>
+        void Get(INetPtr ptr, Action<object> callback);
+
+        /// <summary>
+        /// Invokes the provided method pointer on the remote client;
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr<T> ptr);
+
+        /// <summary>
+        /// Invokes the provided method pointer on the remote client;
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke(INetPtr ptr);
+
+        /// <summary>
+        /// Sets the value at the provided <see cref="INetPtr"/> on the remote client
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
         /// <param name="value"></param>
-        void Set<T>(INetPtr ptr, T value);
+        void Set<T>(INetPtr<T> ptr, T value);
 
         /// <summary>
-        /// Gets the value of the object on the remote client
+        /// Sets the value at the provided <see cref="INetPtr"/> on the remote client
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
-        /// <returns></returns>
-        T Get<T>(INetPtr ptr);
+        /// <param name="value"></param>
+        void Set(INetPtr ptr, object value);
     }
 }

@@ -26,11 +26,6 @@ namespace NetInterop
             // this packet should be wrapped with a PointerOperationPacket so it is dispatched from the P
             PointerResponses response = goodResponse ? PointerResponses.GoodResponse : PointerResponses.BadResponse;
 
-            if (data != null)
-            {
-                response |= PointerResponses.HasData;
-            }
-
             packetBuilder.AppendByte((byte)response);
 
             data?.Serialize(packetBuilder);

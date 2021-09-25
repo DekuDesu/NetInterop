@@ -30,7 +30,7 @@ namespace NetInterop.Tests.CallbackTests
 
             IPacketSender<TypeCode> sender = new PacketSenderStub<TypeCode>();
 
-            IPointerResponseSender pointerSender = new DefaultPointerResponseSender<TypeCode>(sender);
+            IPointerResponseSender pointerSender = new ResponseSenderStub<TypeCode>(sender);
 
             IPacketHandler<PointerOperations> allocOperation = new AllocPointerHandler(typeHandler, pointerProvider, pointerSender);
             IPacketHandler<PointerOperations> setOperation = new SetPointerHandler(typeHandler, pointerProvider, pointerSender);
@@ -267,6 +267,140 @@ namespace NetInterop.Tests.CallbackTests
         }
 
         [Fact]
+        public void Test_GetNetworkHeap()
+        {
+
+            TestObjects<TypeCode> test = new();
+
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+
+            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+
+            test.NetworkType.SetPtr(ptr, 32);
+
+            // now we have alloced the value attempt to set it's value
+            IPacketSerializable pointer = ptr;
+
+            int value = 0;
+
+            heap.Get(ptr, (val) => value = val);
+
+            // this is the packet as decoded by the server
+            IPacket sent = test.Receive();
+
+            // sort the packet into the correct handler
+            // this should route to Alloc handler and should alloc a new int ptr
+            // it should then respond with a ptr back
+            test.OperationHandler.Handle(sent);
+
+            IPacket responsePacket = test.Receive();
+
+            Assert.NotNull(responsePacket);
+
+            test.RepsonseHandler.Handle(responsePacket);
+
+            Assert.Equal(32, value);
+        }
+
+        [Fact]
+        public void Test_SetNetworkHeap()
+        {
+            TestObjects<TypeCode> test = new();
+
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+
+            // get a ptr to set the value of
+            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+
+            heap.Set<int>(ptr, 22);
+
+            // this is the packet as decoded by the server
+            IPacket sent = test.Receive();
+
+            // sort the packet into the correct handler
+            // this should route to Alloc handler and should alloc a new int ptr
+            // it should then respond with a ptr back
+            test.OperationHandler.Handle(sent);
+
+            IPacket responsePacket = test.Receive();
+
+            Assert.NotNull(responsePacket);
+
+            test.RepsonseHandler.Handle(responsePacket);
+
+            Assert.NotNull(responsePacket);
+
+            Assert.Equal(22, test.NetworkType.GetPtr(ptr));
+        }
+
+        [Fact]
+        public void Test_FreeNetworkHeap()
+        {
+            TestObjects<TypeCode> test = new();
+
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+
+            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+
+            test.NetworkType.SetPtr(ptr, 32);
+
+            heap.Destroy(ptr);
+
+            // this is the packet as decoded by the server
+            IPacket sent = test.Receive();
+
+            // sort the packet into the correct handler
+            // this should route to Alloc handler and should alloc a new int ptr
+            // it should then respond with a ptr back
+            test.OperationHandler.Handle(sent);
+
+            IPacket responsePacket = test.Receive();
+
+            Assert.NotNull(responsePacket);
+
+            test.RepsonseHandler.Handle(responsePacket);
+
+            // becuase int is a value type "freeing" it is just forgeting it's there, write over the value and check to see if the value was freed
+            var newPtr = test.NetworkType.AllocPtr().As<int>();
+
+            Assert.Equal(newPtr, ptr);
+
+            // set the value of the new ptr and then check the old pointer and verify that we wrote over the value at the address of the old pointer
+            test.NetworkType.SetPtr(newPtr, 0);
+
+            Assert.Equal(0, test.NetworkType.GetPtr(ptr));
+        }
+
+        [Fact]
+        public void Test_AllocNetworkHeap()
+        {
+            TestObjects<TypeCode> test = new();
+
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+
+            INetPtr<int> ptr = default;
+
+            heap.Create<int>((resultPtr) => ptr = resultPtr);
+
+            // this is the packet as decoded by the server
+            IPacket sent = test.Receive();
+
+            // sort the packet into the correct handler
+            // this should route to Alloc handler and should alloc a new int ptr
+            // it should then respond with a ptr back
+            test.OperationHandler.Handle(sent);
+
+            IPacket responsePacket = test.Receive();
+
+            Assert.NotNull(responsePacket);
+
+            test.RepsonseHandler.Handle(responsePacket);
+
+            // first ptr should be 0100
+            Assert.Equal("0100", ptr.ToString());
+        }
+
+        [Fact]
         public void Test_VerifySetup()
         {
             // we should make sure our test method itself is not flawed
@@ -393,7 +527,7 @@ namespace NetInterop.Tests.CallbackTests
 
                 Sender = new PacketSenderStub<TPacket>();
 
-                PointerSender = new DefaultPointerResponseSender<TPacket>(Sender);
+                PointerSender = new ResponseSenderStub<TPacket>(Sender);
 
                 AllocOperation = new AllocPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 SetOperation = new SetPointerHandler(TypeHandler, PointerProvider, PointerSender);
