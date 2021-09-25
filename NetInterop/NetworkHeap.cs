@@ -136,85 +136,215 @@ namespace NetInterop
             throw new InvalidOperationException($"Failed to get a remote instance of net interop pointer {ptr}, it was not registered in the {nameof(typeHandler)}, use INetworkTypeHandler.Register<T>(id) to register the type as a network type ensure a valid IPacketDeserializer is registered to properly deserialize the type.");
         }
 
-        public void Invoke(INetPtr methodPtr)
+        public void InvokeStatic(INetPtr methodPtr)
         {
             sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(null, methodPtr, callbackDelegateHandler)));
         }
 
-        public void Invoke<T>(INetPtr methodPtr, Action<T> callback)
+        public void InvokeStatic<T>(INetPtr methodPtr, Action<T> callback)
         {
-            if (typeHandler.TryGetSerializableType<T>(out var serializer))
+            if (typeHandler.TryGetSerializableType<T>(out var serializer) is false)
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
-                    (goodResponse, packet) =>
-                    {
-                        if (goodResponse)
-                        {
-                            callback(serializer.Deserialize(packet));
-                            return;
-                        }
-
-                        callback(default(T));
-                    },
-                    methodPtr,
-                    callbackDelegateHandler
-                )));
-                return;
+                throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
             }
-            throw new InvalidOperationException($"Failed to invoke and retrieve a value for a remote instance of type {typeof(T).FullName}, it was not registered in the {nameof(typeHandler)}, use INetworkTypeHandler.Register<T>(id) to register the type as a network type ensure a valid IPacketDeserializer is registered to properly deserialize the type.");
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                (goodResponse, packet) =>
+                {
+                    if (goodResponse)
+                    {
+                        callback(serializer.Deserialize(packet));
+                        return;
+                    }
+
+                    callback(default(T));
+                },
+                methodPtr,
+                callbackDelegateHandler
+            )));
         }
 
-        public void Invoke<T>(INetPtr methodPtr, params object[] parameters)
+        public void InvokeStatic(INetPtr methodPtr, params object[] parameters)
         {
+            if (methodHandler.TryGetSerializer(methodPtr, out var parameterSerializer) is false)
+            {
+                throw GenerateMissingMethodSerializerException(methodPtr.ToString());
+            }
 
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                null,
+                new InvokePointerWithParametersPacket(methodPtr, parameterSerializer, parameters),
+                callbackDelegateHandler
+            )));
+
+        }
+
+        public void InvokeStatic<T>(INetPtr methodPtr, Action<T> callback, params object[] parameters)
+        {
+            if (methodHandler.TryGetSerializer(methodPtr, out var serializer) is false)
+            {
+                throw GenerateMissingMethodSerializerException(methodPtr.ToString());
+            }
+
+            if (typeHandler.TryGetSerializableType<T>(out var resultSerializer) is false)
+            {
+                throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
+            }
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                (goodResponse, packet) =>
+                {
+                    if (goodResponse)
+                    {
+                        callback(resultSerializer.Deserialize(packet));
+                        return;
+                    }
+
+                    callback(default(T));
+                },
+                new InvokePointerWithParametersPacket(methodPtr, serializer, parameters),
+                callbackDelegateHandler
+            )));
         }
 
         public void Invoke<T>(INetPtr methodPtr, Action<T> callback, params object[] parameters)
         {
-            if (typeHandler.TryGetSerializableType<T>(out var serializer))
+            if (methodHandler.TryGetSerializer(methodPtr, out var parametersSerializer) is false)
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                throw GenerateMissingMethodSerializerException(methodPtr.ToString());
+            }
+
+            if (typeHandler.TryGetSerializableType<T>(out var resultSerializer) is false)
+            {
+                throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
+            }
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
                     (goodResponse, packet) =>
                     {
                         if (goodResponse)
                         {
-                            callback(serializer.Deserialize(packet));
+                            callback(resultSerializer.Deserialize(packet));
                             return;
                         }
 
                         callback(default(T));
                     },
-                    methodPtr,
+                    new InvokePointerWithParametersPacket(methodPtr, parametersSerializer, parameters),
                     callbackDelegateHandler
                 )));
-                return;
-            }
-            throw new InvalidOperationException($"Failed to invoke and retrieve a value for a remote instance of type {typeof(T).FullName}, it was not registered in the {nameof(typeHandler)}, use INetworkTypeHandler.Register<T>(id) to register the type as a network type ensure a valid IPacketDeserializer is registered to properly deserialize the type.");
+
         }
 
-        public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr)
-        {
-            throw new NotImplementedException();
-        }
+        public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr) => Invoke(methodPtr, (INetPtr)instancePtr);
 
         public void Invoke(INetPtr methodPtr, INetPtr instancePtr)
         {
-            throw new NotImplementedException();
+            if (methodPtr.PtrType != instancePtr.PtrType)
+            {
+                throw new InvalidCastException($"Can't invoke method {methodPtr} on instance {instancePtr} since the instance type is not the declaring type that defines the method. If the method is static use InvokeStatic(methodPtr) instead.");
+            }
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                null,
+                new InvokePointerWithInstance(methodPtr, instancePtr),
+                callbackDelegateHandler
+            )));
         }
 
         public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, Action<T> callback)
         {
-            throw new NotImplementedException();
+            if (methodPtr.PtrType != instancePtr.PtrType)
+            {
+                throw GenerateMethodDeclaringTypeMismatchException(methodPtr.ToString(), instancePtr.ToString());
+            }
+
+            if (typeHandler.TryGetSerializableType<T>(out var resultSerializer) is false)
+            {
+                throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
+            }
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                (goodResponse, packet) =>
+                {
+                    if (goodResponse)
+                    {
+                        callback(resultSerializer.Deserialize(packet));
+                        return;
+                    }
+
+                    callback(default(T));
+                },
+                new InvokePointerWithInstance(methodPtr, instancePtr),
+                callbackDelegateHandler
+            )));
         }
 
         public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, params object[] parameters)
         {
-            throw new NotImplementedException();
+            if (methodPtr.PtrType != instancePtr.PtrType)
+            {
+                throw GenerateMethodDeclaringTypeMismatchException(methodPtr.ToString(), instancePtr.ToString());
+            }
+
+            if (methodHandler.TryGetSerializer(methodPtr, out var serializer) is false)
+            {
+                throw GenerateMissingMethodSerializerException(methodPtr.ToString());
+            }
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                null,
+                new InvokePointerWithInstanceAndParametersPacket(methodPtr, instancePtr, serializer, parameters),
+                callbackDelegateHandler
+            )));
         }
 
         public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, Action<T> callback, params object[] parameters)
         {
-            throw new NotImplementedException();
+            if (methodPtr.PtrType != instancePtr.PtrType)
+            {
+                throw GenerateMethodDeclaringTypeMismatchException(methodPtr.ToString(), instancePtr.ToString());
+            }
+
+            if (methodHandler.TryGetSerializer(methodPtr, out var serializer) is false)
+            {
+                throw GenerateMissingMethodSerializerException(methodPtr.ToString());
+            }
+
+            if (typeHandler.TryGetSerializableType<T>(out var resultSerializer) is false)
+            {
+                throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
+            }
+
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                (goodResponse, packet) =>
+                {
+                    if (goodResponse)
+                    {
+                        callback(resultSerializer.Deserialize(packet));
+                        return;
+                    }
+
+                    callback(default(T));
+                },
+                new InvokePointerWithInstanceAndParametersPacket(methodPtr, instancePtr, serializer, parameters),
+                callbackDelegateHandler
+            )));
+        }
+
+        private Exception GenerateMissingMethodSerializerException(string methodPtr)
+        {
+            return new MissingMemberException($"Missing serializer and/or deserializer. The method {methodPtr} is either not registered, or is missing serializers and/or deserializers for some of its parameters and they were not found within the {nameof(INetworkTypeHandler)}. Use {nameof(INetworkMethodHandler.Register)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {methodPtr}.");
+        }
+
+        private Exception GenerateMissingReturnTypeSerializerException(string typeName)
+        {
+            return new MissingMemberException($"Missing serializer and/or deserializer. The type {typeName} was not found within the {typeHandler} with a registered serializer and deserializer. Use {nameof(INetworkTypeHandler.RegisterType)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {typeName}.");
+        }
+
+        private Exception GenerateMethodDeclaringTypeMismatchException(string methodPtr, string instancePtr)
+        {
+            return new InvalidCastException($"Can't invoke method {methodPtr} on instance {instancePtr} since the instance type is not the declaring type that defines the method. If the method is static use InvokeStatic(methodPtr) instead.");
         }
     }
 }

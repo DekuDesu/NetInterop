@@ -59,21 +59,21 @@ namespace NetInterop
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
-        void Invoke(INetPtr methodPtr);
+        void InvokeStatic(INetPtr methodPtr);
 
         /// <summary>
         /// Invokes the provided static method pointer on the remote client with no parameters and invokes the callback with the result of the method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
-        void Invoke<T>(INetPtr methodPtr, Action<T> callback);
+        void InvokeStatic<T>(INetPtr methodPtr, Action<T> callback);
 
         /// <summary>
         /// Invokes the provided static method pointer on the remote client with no parameters and invokes the callback with the result of the method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
-        void Invoke<T>(INetPtr methodPtr, params object[] parameters);
+        void InvokeStatic(INetPtr methodPtr, params object[] parameters);
 
         /// <summary>
         /// Invokes the provided static method pointer on the remote client with no parameters and invokes the callback with the result of the method

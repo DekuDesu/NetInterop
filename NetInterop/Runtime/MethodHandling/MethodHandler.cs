@@ -63,11 +63,33 @@ namespace NetInterop.Runtime.MethodHandling
 
             RegisteredMethod registration = new RegisteredMethod(method, returnParam, parameters.ToArray(), pointerProvider, declaringNetwork);
 
-            INetPtr ptr = pointerProvider.Create(0, nextId++);
+            INetPtr ptr = pointerProvider.Create(declaringNetwork?.Id ?? 0, nextId++);
 
             registeredMethods.Add(ptr, registration);
 
             return ptr;
+        }
+
+        public bool TryGetSerializer(INetPtr ptr, out IPacketSerializer<object[]> serializer)
+        {
+            serializer = default;
+            if (registeredMethods.ContainsKey(ptr))
+            {
+                serializer = registeredMethods[ptr];
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryGetDeserializer(INetPtr ptr, out IPacketDeserializer<object[]> deserializer)
+        {
+            deserializer = default;
+            if (registeredMethods.ContainsKey(ptr))
+            {
+                deserializer = registeredMethods[ptr];
+                return true;
+            }
+            return false;
         }
 
         private MethodParameter EnsureRegistered(ParameterInfo info, MethodInfo method)

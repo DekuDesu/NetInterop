@@ -6,7 +6,7 @@ using System.Text;
 
 namespace NetInterop.Runtime.MethodHandling
 {
-    public class RegisteredMethod
+    public class RegisteredMethod : IPacketSerializer<object[]>, IPacketDeserializer<object[]>
     {
         private readonly IPointerProvider pointerProvider;
         private readonly INetworkType declaringNetworkType;
@@ -52,28 +52,13 @@ namespace NetInterop.Runtime.MethodHandling
                 throw new NullReferenceException($"Failed to get an instance of an object to invoke {method.Name} on the remote client. Missing or malformed Net Interop Pointer at the start of the packet.");
             }
 
-            int lastSucessfulDeserializationIndex = 0;
-            try
+            object[] methodParams = Deserialize(packet);
+
+            object result = method.Invoke(instance, methodParams);
+
+            if (result != null && packetBuilder != null)
             {
-                object[] methodParams = new object[parameters.Length];
-
-                for (int i = 0; i < methodParams.Length; i++)
-                {
-                    methodParams[i] = parameters[i].AmbiguousDeserialize(packet);
-                    lastSucessfulDeserializationIndex = i;
-                }
-
-                object result = method.Invoke(instance, methodParams);
-
-                if (result != null && packetBuilder != null)
-                {
-                    returnType.AmbiguousSerialize(result, packetBuilder);
-                }
-            }
-            catch (IndexOutOfRangeException)
-            {
-
-                throw GenerateDetailedParameterException(lastSucessfulDeserializationIndex);
+                returnType.AmbiguousSerialize(result, packetBuilder);
             }
         }
 
@@ -109,5 +94,36 @@ namespace NetInterop.Runtime.MethodHandling
 
             return new NullReferenceException(builder.ToString());
         }
+
+        public void Serialize(object[] value, IPacket packetBuilder)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                parameters[i].AmbiguousSerialize(value[i], packetBuilder);
+            }
+        }
+
+        public object[] Deserialize(IPacket packet)
+        {
+            int lastSucessfulDeserializationIndex = 0;
+            try
+            {
+                object[] methodParams = new object[parameters.Length];
+
+                for (int i = 0; i < methodParams.Length; i++)
+                {
+                    methodParams[i] = parameters[i].AmbiguousDeserialize(packet);
+                    lastSucessfulDeserializationIndex = i;
+                }
+
+                return methodParams;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw GenerateDetailedParameterException(lastSucessfulDeserializationIndex);
+            }
+        }
+
+        public object AmbiguousDeserialize(IPacket packet) => Deserialize(packet);
     }
 }

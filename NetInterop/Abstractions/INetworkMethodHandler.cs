@@ -12,5 +12,7 @@ namespace NetInterop
         INetPtr Register(MethodInfo method);
         void Invoke(INetPtr methodPtr, IPacket packet);
         void Invoke(INetPtr methodPtr, IPacket packet, IPacket packetBuilder);
+        bool TryGetSerializer(INetPtr ptr, out IPacketSerializer<object[]> serializer);
+        bool TryGetDeserializer(INetPtr ptr, out IPacketDeserializer<object[]> deserializer);
     }
 }
