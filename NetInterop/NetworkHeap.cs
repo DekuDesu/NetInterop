@@ -7,24 +7,24 @@ namespace NetInterop
 {
     public class NetworkHeap<TPacket> : INetworkHeap where TPacket : Enum, IConvertible
     {
+        private readonly INetworkMethodHandler methodHandler;
         private readonly INetworkTypeHandler typeHandler;
         private readonly IPacketSender<TPacket> sender;
         private readonly IDelegateHandler<bool, IPacket> callbackDelegateHandler;
-        public NetworkHeap(INetworkTypeHandler typeHandler, IPacketSender<TPacket> sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler)
+        public NetworkHeap(INetworkTypeHandler typeHandler, IPacketSender<TPacket> sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, INetworkMethodHandler methodHandler)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
             this.callbackDelegateHandler = callbackDelegateHandler ?? throw new ArgumentNullException(nameof(callbackDelegateHandler));
+            this.methodHandler = methodHandler ?? throw new ArgumentNullException(nameof(methodHandler));
         }
 
         public IPointerProvider PointerProvider { get; set; } = new DefaultPointerProvider();
 
         public void Create<T>(Action<INetPtr<T>> callback)
         {
-            if (typeHandler.TryGetTypePtr<T>(out ushort typePtr))
+            if (typeHandler.TryGetTypePtr<T>(out INetPtr<T> ptr))
             {
-                INetPtr<T> ptr = PointerProvider.Create<T>(typePtr, 0);
-
                 sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Alloc, new CallbackPacket<TPacket>(
                     (goodResponse, packet) =>
                     {
@@ -136,12 +136,83 @@ namespace NetInterop
             throw new InvalidOperationException($"Failed to get a remote instance of net interop pointer {ptr}, it was not registered in the {nameof(typeHandler)}, use INetworkTypeHandler.Register<T>(id) to register the type as a network type ensure a valid IPacketDeserializer is registered to properly deserialize the type.");
         }
 
-        public void Invoke<T>(INetPtr<T> ptr)
+        public void Invoke(INetPtr methodPtr)
+        {
+            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(null, methodPtr, callbackDelegateHandler)));
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, Action<T> callback)
+        {
+            if (typeHandler.TryGetSerializableType<T>(out var serializer))
+            {
+                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                    (goodResponse, packet) =>
+                    {
+                        if (goodResponse)
+                        {
+                            callback(serializer.Deserialize(packet));
+                            return;
+                        }
+
+                        callback(default(T));
+                    },
+                    methodPtr,
+                    callbackDelegateHandler
+                )));
+                return;
+            }
+            throw new InvalidOperationException($"Failed to invoke and retrieve a value for a remote instance of type {typeof(T).FullName}, it was not registered in the {nameof(typeHandler)}, use INetworkTypeHandler.Register<T>(id) to register the type as a network type ensure a valid IPacketDeserializer is registered to properly deserialize the type.");
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, params object[] parameters)
+        {
+
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, Action<T> callback, params object[] parameters)
+        {
+            if (typeHandler.TryGetSerializableType<T>(out var serializer))
+            {
+                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+                    (goodResponse, packet) =>
+                    {
+                        if (goodResponse)
+                        {
+                            callback(serializer.Deserialize(packet));
+                            return;
+                        }
+
+                        callback(default(T));
+                    },
+                    methodPtr,
+                    callbackDelegateHandler
+                )));
+                return;
+            }
+            throw new InvalidOperationException($"Failed to invoke and retrieve a value for a remote instance of type {typeof(T).FullName}, it was not registered in the {nameof(typeHandler)}, use INetworkTypeHandler.Register<T>(id) to register the type as a network type ensure a valid IPacketDeserializer is registered to properly deserialize the type.");
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr)
         {
             throw new NotImplementedException();
         }
 
-        public void Invoke(INetPtr ptr)
+        public void Invoke(INetPtr methodPtr, INetPtr instancePtr)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, Action<T> callback)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, params object[] parameters)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, Action<T> callback, params object[] parameters)
         {
             throw new NotImplementedException();
         }

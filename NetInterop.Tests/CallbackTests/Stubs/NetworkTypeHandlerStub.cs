@@ -36,46 +36,52 @@ namespace NetInterop.Tests.CallbackTests.Stubs
             return explicitId;
         }
 
-        public ushort RegisterType<T>(ushort explicitId)
+        public INetPtr<T> RegisterType<T>(ushort explicitId)
         {
             registeredTypes.Add(typeof(T));
-            return explicitId;
+            return new NetPtr<T>(explicitId, 0);
         }
 
-        public ushort RegisterType<T>(Func<T> instantiator)
+        public INetPtr<T> RegisterType<T>(Func<T> instantiator)
         {
             registeredTypes.Add(typeof(T));
-            return (ushort)(registeredTypes.Count - 1);
+            return new NetPtr<T>((ushort)(registeredTypes.Count - 1), 0);
         }
 
-        public ushort RegisterType<T>(Action<T> disposer)
+        public INetPtr<T> RegisterType<T>(Action<T> disposer)
         {
             registeredTypes.Add(typeof(T));
-            return (ushort)(registeredTypes.Count - 1);
+            return new NetPtr<T>((ushort)(registeredTypes.Count - 1), 0);
         }
 
-        public ushort RegisterType<T>(Func<T> instantiator, Action<T> disposer)
+        public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer)
         {
             registeredTypes.Add(typeof(T));
-            return (ushort)(registeredTypes.Count - 1);
+            return new NetPtr<T>((ushort)(registeredTypes.Count - 1), 0);
         }
 
-        public ushort RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public INetPtr<T> RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             registeredTypes.Add(typeof(T));
-            return explicitId;
+            return new NetPtr<T>(explicitId, 0);
         }
 
-        public ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer)
+        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer)
         {
             registeredTypes.Add(typeof(T));
-            return explicitId;
+            return new NetPtr<T>(explicitId, 0);
         }
 
-        public ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             registeredTypes.Add(typeof(T));
-            return explicitId;
+            return new NetPtr<T>(explicitId, 0);
+        }
+
+        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator)
+        {
+            registeredTypes.Add(typeof(T));
+            return new NetPtr<T>(explicitId, 0);
         }
 
         public bool TryGetAmbiguousSerializableType(INetPtr id, out ISerializableNetworkType serializableNetworkType)
@@ -134,15 +140,15 @@ namespace NetInterop.Tests.CallbackTests.Stubs
             return true;
         }
 
-        public bool TryGetTypePtr<T>(out ushort ptr)
+        public bool TryGetTypePtr<T>(out INetPtr<T> ptr)
         {
-            ptr = 1;
+            ptr = new NetPtr<T>(1, 0); ;
             return true;
         }
 
-        public bool TryGetTypePtr(Type type, out ushort ptr)
+        public bool TryGetTypePtr(Type type, out INetPtr ptr)
         {
-            ptr = 1;
+            ptr = new NetPtr(1, 0); ;
             return true;
         }
     }

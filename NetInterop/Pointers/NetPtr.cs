@@ -25,16 +25,16 @@ namespace NetInterop
             {
                 return isNetPtr.PtrType == this.PtrType && isNetPtr.PtrAddress == this.PtrAddress;
             }
-            else if (obj is int number)
+            else if (obj is ushort number)
             {
-                return this.GetHashCode() == number;
+                return this.PtrType == number;
             }
             return false;
         }
 
         public override int GetHashCode()
         {
-            return (PtrType << 16) | PtrAddress;
+            return (((int)PtrType) << 16) | PtrAddress;
         }
 
         public override string ToString()

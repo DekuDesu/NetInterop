@@ -55,18 +55,67 @@ namespace NetInterop
         void Get(INetPtr ptr, Action<object> callback);
 
         /// <summary>
-        /// Invokes the provided method pointer on the remote client;
+        /// Invokes the provided static method pointer on the remote client with no parameters
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
-        void Invoke<T>(INetPtr<T> ptr);
+        void Invoke(INetPtr methodPtr);
 
         /// <summary>
-        /// Invokes the provided method pointer on the remote client;
+        /// Invokes the provided static method pointer on the remote client with no parameters and invokes the callback with the result of the method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ptr"></param>
-        void Invoke(INetPtr ptr);
+        void Invoke<T>(INetPtr methodPtr, Action<T> callback);
+
+        /// <summary>
+        /// Invokes the provided static method pointer on the remote client with no parameters and invokes the callback with the result of the method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr methodPtr, params object[] parameters);
+
+        /// <summary>
+        /// Invokes the provided static method pointer on the remote client with no parameters and invokes the callback with the result of the method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr methodPtr, Action<T> callback, params object[] parameters);
+
+        /// <summary>
+        /// Invokes the provided method on the provided instance with no parameters
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr);
+
+        /// <summary>
+        /// Invokes the provided method on the provided instance with no parameters
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke(INetPtr methodPtr, INetPtr instancePtr);
+
+        /// <summary>
+        /// Invokes the provided method on the provided instance with no paramaters, when the method is invoked the callback is invoked with the return value of the method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, Action<T> callback);
+
+        /// <summary>
+        /// Invokes the provided method on the provided instance with parameters
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, params object[] parameters);
+
+        /// <summary>
+        /// Invokes the provided method on the provided instance with parameters, when the method is invoked the callback is invoked with the return value of the method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ptr"></param>
+        void Invoke<T>(INetPtr methodPtr, INetPtr<T> instancePtr, Action<T> callback, params object[] parameters);
 
         /// <summary>
         /// Sets the value at the provided <see cref="INetPtr"/> on the remote client

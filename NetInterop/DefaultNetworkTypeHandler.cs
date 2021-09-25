@@ -45,13 +45,14 @@ namespace NetInterop
         public ushort RegisterType(Type type) => RegisterType(type, 0, null);
         public ushort RegisterType(Type type, ushort explicitId) => RegisterType(type, explicitId, null);
 
-        public ushort RegisterType<T>(ushort explicitId) => RegisterType<T>(explicitId, null, null, null, null);
-        public ushort RegisterType<T>(Func<T> instantiator) => RegisterType<T>(0, instantiator, null, null, null);
-        public ushort RegisterType<T>(Action<T> disposer) => RegisterType<T>(0, null, disposer, null, null);
-        public ushort RegisterType<T>(Func<T> instantiator, Action<T> disposer) => RegisterType(0, instantiator, disposer, null, null);
-        public ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer) => RegisterType<T>(explicitId, instantiator, disposer, null, null);
-        public ushort RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType<T>(explicitId, null, null, serializer, deserializer);
-        public ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public INetPtr<T> RegisterType<T>(ushort explicitId) => RegisterType<T>(explicitId, null, null, null, null);
+        public INetPtr<T> RegisterType<T>(Func<T> instantiator) => RegisterType<T>(0, instantiator, null, null, null);
+        public INetPtr<T> RegisterType<T>(Action<T> disposer) => RegisterType<T>(0, null, disposer, null, null);
+        public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer) => RegisterType(0, instantiator, disposer, null, null);
+        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer) => RegisterType<T>(explicitId, instantiator, disposer, null, null);
+        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator) => RegisterType<T>(explicitId, instantiator, null, null, null);
+        public INetPtr<T> RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType<T>(explicitId, null, null, serializer, deserializer);
+        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             Type tType = typeof(T);
 
@@ -73,7 +74,7 @@ namespace NetInterop
 
             idRegistry.Add(tType, explicitId);
 
-            return explicitId;
+            return pointerProvider.Create<T>(explicitId, 0);
         }
 
         public void Clear()
@@ -200,27 +201,33 @@ namespace NetInterop
             return false;
         }
 
-        public bool TryGetTypePtr<T>(out ushort ptr)
+        public bool TryGetTypePtr<T>(out INetPtr<T> ptr)
         {
             Type t = typeof(T);
-            ptr = 0;
             if (idRegistry.ContainsKey(t))
             {
-                ptr = idRegistry[t];
+                ushort id = idRegistry[t];
+
+                ptr = pointerProvider.Create<T>(id, 0);
                 return true;
             }
+            ptr = pointerProvider.Create<T>(0, 0);
             return false;
         }
 
-        public bool TryGetTypePtr(Type type, out ushort ptr)
+        public bool TryGetTypePtr(Type type, out INetPtr ptr)
         {
-            ptr = 0;
             if (idRegistry.ContainsKey(type))
             {
-                ptr = idRegistry[type];
+                ushort id = idRegistry[type];
+
+                ptr = pointerProvider.Create(id, 0);
                 return true;
             }
+            ptr = pointerProvider.Create(0, 0);
             return false;
         }
+
+
     }
 }

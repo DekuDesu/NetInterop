@@ -43,9 +43,9 @@ namespace NetInterop.Tests
 
             Assert.Equal(1, netType.Id);
 
-            Assert.True(typeHandler.TryGetTypePtr<int>(out ushort ptr));
+            Assert.True(typeHandler.TryGetTypePtr<int>(out INetPtr<int> ptr));
 
-            Assert.Equal(1, ptr);
+            Assert.Equal(1, ptr.PtrType);
         }
 
         [Fact]

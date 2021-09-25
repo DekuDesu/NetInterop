@@ -13,8 +13,8 @@ namespace NetInterop
         bool TryGetSerializableType<T>(INetPtr<T> id, out ISerializableNetworkType<T> serializableNetworkType);
         bool TryGetAmbiguousSerializableType(INetPtr id, out ISerializableNetworkType serializableNetworkType);
 
-        bool TryGetTypePtr<T>(out ushort ptr);
-        bool TryGetTypePtr(Type type, out ushort ptr);
+        bool TryGetTypePtr<T>(out INetPtr<T> ptr);
+        bool TryGetTypePtr(Type type, out INetPtr ptr);
 
         [System.Obsolete("Use RegisterType<T> instead for type safety, if available. This is remains for niche compatibility.")]
         ushort RegisterType(Type type);
@@ -24,13 +24,14 @@ namespace NetInterop
         ushort RegisterType(Type type, ushort explicitId, object instantiator);
 
 
-        ushort RegisterType<T>(ushort explicitId);
-        ushort RegisterType<T>(Func<T> instantiator);
-        ushort RegisterType<T>(Action<T> disposer);
-        ushort RegisterType<T>(Func<T> instantiator, Action<T> disposer);
-        ushort RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
-        ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer);
-        ushort RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
+        INetPtr<T> RegisterType<T>(ushort explicitId);
+        INetPtr<T> RegisterType<T>(Func<T> instantiator);
+        INetPtr<T> RegisterType<T>(Action<T> disposer);
+        INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer);
+        INetPtr<T> RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
+        INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer);
+        INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator);
+        INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
 
         void Clear();
     }

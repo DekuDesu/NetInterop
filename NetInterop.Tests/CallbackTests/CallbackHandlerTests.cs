@@ -9,6 +9,7 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Tests.CallbackTests.Stubs;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Core.Factories;
+using NetInterop.Runtime.MethodHandling;
 
 namespace NetInterop.Tests.CallbackTests
 {
@@ -272,7 +273,7 @@ namespace NetInterop.Tests.CallbackTests
 
             TestObjects<TypeCode> test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
 
@@ -307,7 +308,7 @@ namespace NetInterop.Tests.CallbackTests
         {
             TestObjects<TypeCode> test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             // get a ptr to set the value of
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
@@ -338,7 +339,7 @@ namespace NetInterop.Tests.CallbackTests
         {
             TestObjects<TypeCode> test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
 
@@ -376,7 +377,7 @@ namespace NetInterop.Tests.CallbackTests
         {
             TestObjects<TypeCode> test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler);
+            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             INetPtr<int> ptr = default;
 
@@ -507,11 +508,12 @@ namespace NetInterop.Tests.CallbackTests
             public IPacketHandler<PointerOperations> SetOperation { get; set; }
             public IPacketHandler<PointerOperations> GetOperation { get; set; }
             public IPacketHandler<PointerOperations> FreeOperation { get; set; }
+            public IPacketHandler<PointerOperations> InvokeOperation { get; set; }
             public IPacketHandler OperationHandler { get; set; }
             public IDelegateHandler<bool, IPacket> DelegateHandler { get; set; }
             public IPointerResponseHandler PointerCallbackHandler { get; set; }
             public IPacketHandler<PointerOperations> RepsonseHandler { get; set; }
-
+            public INetworkMethodHandler MethodHandler { get; set; }
             public TestObjects()
             {
                 IntSerializer = new DefaultSerializer<int>((num, packet) => packet.AppendInt(num));
@@ -527,12 +529,15 @@ namespace NetInterop.Tests.CallbackTests
 
                 Sender = new PacketSenderStub<TPacket>();
 
+                MethodHandler = new DefaultMethodHandler(PointerProvider, TypeHandler);
+
                 PointerSender = new ResponseSenderStub<TPacket>(Sender);
 
                 AllocOperation = new AllocPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 SetOperation = new SetPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 GetOperation = new GetPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 FreeOperation = new FreePointerHandler(TypeHandler, PointerProvider, PointerSender);
+                InvokeOperation = new InvokePointerHandler(TypeHandler, PointerProvider, PointerSender, MethodHandler);
 
                 OperationHandler = new PointerPacketDispatchHandler<TPacket>(AllocOperation, SetOperation, GetOperation, FreeOperation);
 
