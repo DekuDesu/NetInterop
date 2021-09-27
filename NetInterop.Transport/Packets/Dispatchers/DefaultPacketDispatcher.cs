@@ -1,5 +1,6 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets;
+using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacketDispatcher<TPacketType> : IPacketDispatcher<TPacketType> where TPacketType : Enum, IConvertible
+    public class DefaultPacketDispatcher<TPacketType> : IPacketDispatcher
     {
         private readonly IDictionary<TPacketType, IPacketHandler<TPacketType>> handlers;
 
@@ -22,9 +23,10 @@ namespace NetInterop.Transport.Core.Packets
             this.handlers = handlers.ToDictionary(handler => handler.PacketType);
         }
 
-        public void Dispatch(IPacket<TPacketType> packet)
+        public void Dispatch(IPacket packet)
         {
-            handlers[packet.PacketType].Handle(packet);
+            byte packetType = packet.GetByte();
+            handlers[packet].Handle(packet);
         }
     }
 }

@@ -11,14 +11,14 @@ using System.Timers;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacketReceiver<TPacketType> : IPacketReceiver<TPacketType> where TPacketType : Enum, IConvertible
+    public class DefaultPacketReceiver : IPacketReceiver
     {
-        private readonly IPacketController<TPacketType> controller;
+        private readonly IPacketController controller;
         private readonly IConnection connection;
-        private readonly IPacketDispatcher<TPacketType> dispatcher;
+        private readonly IPacketDispatcher dispatcher;
         private System.Timers.Timer packetAvailableTimer;
         private readonly double timerInterval = 1000 / 60;
-        public DefaultPacketReceiver(IPacketDispatcher<TPacketType> dispatcher, IPacketController<TPacketType> controller, IConnection connection)
+        public DefaultPacketReceiver(IPacketDispatcher dispatcher, IPacketController controller, IConnection connection)
         {
             if (connection is null)
             {
@@ -47,7 +47,7 @@ namespace NetInterop.Transport.Core.Packets
         {
             if (controller.PendingPackets)
             {
-                if (controller.TryReadPacket(out IPacket<TPacketType> packet))
+                if (controller.TryReadPacket(out IPacket packet))
                 {
                     dispatcher.Dispatch(packet);
                     return true;

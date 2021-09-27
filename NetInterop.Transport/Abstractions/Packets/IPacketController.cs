@@ -13,11 +13,17 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// </summary>
     public interface IPacketController<TPacketType> where TPacketType : Enum, IConvertible
     {
+        bool PendingPackets { get; }
+        bool TryReadPacket(out IPacket<TPacketType> packet);
+        void WriteBlindPacket(IPacket<TPacketType> packet);
+    }
+    public interface IPacketController
+    {
         /// <summary>
         /// Whether or not there is a packet waiting to be consumed from the underlying stream
         /// </summary>
         bool PendingPackets { get; }
-        bool TryReadPacket(out IPacket<TPacketType> packet);
-        void WriteBlindPacket(IPacket<TPacketType> packet);
+        bool TryReadPacket(out IPacket packet);
+        void WritePacket(IPacket packet);
     }
 }

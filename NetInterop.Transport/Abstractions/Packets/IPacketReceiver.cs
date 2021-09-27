@@ -11,7 +11,7 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// Defines an object that determines if data is available, and if it is, is incharge of sending the data and subsequent packets to an <see cref="IPacketDispatcher{TPacketType}"/> to be dispatched
     /// </summary>
     /// <typeparam name="TPacketType"></typeparam>
-    public interface IPacketReceiver<TPacketType> where TPacketType : Enum, IConvertible
+    public interface IPacketReceiver
     {
         /// <summary>
         /// Blocking; Checks if data is available synchronously, if data is available a single packet is dispatched

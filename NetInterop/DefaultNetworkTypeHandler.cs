@@ -93,7 +93,7 @@ namespace NetInterop
                 // a type must have a GUID or InteropId to be registered
                 InteropIdAttribute interopId = type.GetCustomAttribute<InteropIdAttribute>();
 
-                return interopId?.Id ?? 0;
+                explicitId = interopId?.Id ?? 0;
 
                 if (explicitId == 0)
                 {

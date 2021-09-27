@@ -10,7 +10,7 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// Defines an object that implements functionaility to consume and handle a packet's contents
     /// </summary>
     /// <typeparam name="TPacketType"></typeparam>
-    public interface IPacketHandler<TPacketType> : IPacketHandler where TPacketType : Enum
+    public interface IPacketHandler<TPacketType> : IPacketHandler
     {
         /// <summary>
         /// The packet type this handler should ideally handle
