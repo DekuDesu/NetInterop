@@ -6,7 +6,7 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class DefaultPointerPacket<TPacket> : IPacketSerializable<TPacket> where TPacket : Enum, IConvertible
+    public class DefaultPointerPacket : IPacketSerializable
     {
         private readonly PointerOperations operation;
         private readonly INetPtr ptr;
@@ -18,8 +18,6 @@ namespace NetInterop
             this.ptr = ptr;
             this.additionalPacketData = additionalPacketData;
         }
-
-        public TPacket PacketType { get; } = default;
 
         public int EstimatePacketSize() => 1 + sizeof(ushort) + (ptr.PtrAddress > 0 ? sizeof(ushort) : 0) + (additionalPacketData?.EstimatePacketSize() ?? 0);
 
