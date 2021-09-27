@@ -13,7 +13,6 @@ namespace NetInterop.Transport.Core.Packets
         private const int PollingRate = 1;
         private readonly SemaphoreSlim locker = new SemaphoreSlim(1, 1);
         private readonly byte[] headerBuffer = new byte[headerSize];
-
         private const int headerSize = DefaultPacket.DefaultHeaderSize;
 
         public bool PendingPackets => backingStream.DataAvailable;
@@ -79,6 +78,7 @@ namespace NetInterop.Transport.Core.Packets
         public void WritePacket(IPacket packet)
         {
             packet.CompileHeader();
+
             backingStream.Write(packet.GetData());
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="data"></param>
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, byte[] data)
         {
             fixed (byte* array = &buffer, other = data)
@@ -31,6 +33,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static byte[] ToArray(this ref byte buffer, int length)
         {
             byte[] result = new byte[length];
@@ -50,35 +53,42 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             return result;
         }
 
+        [DebuggerHidden]
         public static sbyte ToSByte(this ref byte buffer)
         {
             return (sbyte)buffer;
         }
 
+        [DebuggerHidden]
         public static byte ToByte(this ref byte buffer)
         {
             return buffer;
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, sbyte value)
         {
             buffer = (byte)value;
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, byte value)
         {
             buffer = value;
         }
 
+        [DebuggerHidden]
         public static bool ToBool(this ref byte buffer)
         {
             return buffer == 0xFF;
         }
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, bool value)
         {
             buffer = value ? (byte)0xFF : (byte)0;
         }
 
+        [DebuggerHidden]
         public static short ToShort(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -89,6 +99,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, short value)
         {
             fixed (byte* array = &buffer)
@@ -105,6 +116,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static ushort ToUShort(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -115,6 +127,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, ushort value)
         {
             fixed (byte* array = &buffer)
@@ -131,6 +144,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static int ToInt(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -141,6 +155,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, int value)
         {
             fixed (byte* array = &buffer)
@@ -158,6 +173,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static uint ToUInt(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -168,6 +184,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, uint value)
         {
             fixed (byte* array = &buffer)
@@ -185,6 +202,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static long ToLong(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -195,6 +213,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, long value)
         {
             fixed (byte* array = &buffer)
@@ -212,6 +231,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static ulong ToULong(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -222,6 +242,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, ulong value)
         {
             fixed (byte* array = &buffer)
@@ -239,6 +260,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static float ToFloat(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -249,6 +271,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, float value)
         {
             fixed (byte* array = &buffer)
@@ -266,6 +289,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static double ToDouble(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -276,6 +300,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, double value)
         {
             fixed (byte* array = &buffer)
@@ -293,6 +318,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static DateTime ToDateTime(this ref byte buffer)
         {
             long bits = buffer.ToLong();
@@ -300,6 +326,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             return DateTime.FromBinary(bits);
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, DateTime value)
         {
             long bits = value.ToBinary();
@@ -307,6 +334,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             buffer.Write(bits);
         }
 
+        [DebuggerHidden]
         public static decimal ToDecimal(this ref byte buffer)
         {
             fixed (byte* ptr = &buffer)
@@ -317,6 +345,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, decimal value)
         {
             fixed (byte* array = &buffer)
@@ -334,6 +363,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static string ToString(this ref byte buffer, int length, Encoding encoding = default)
         {
             encoding = encoding ?? Encoding.UTF8;
@@ -350,6 +380,7 @@ namespace NetInterop.Transport.Core.Packets.Extensions
             }
         }
 
+        [DebuggerHidden]
         public static void Write(this ref byte buffer, string value, Encoding encoding = default)
         {
             encoding = encoding ?? Encoding.UTF8;

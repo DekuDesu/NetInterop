@@ -17,7 +17,7 @@ namespace NetInterop
             this.data = data;
         }
 
-        public int EstimatePacketSize() => (sizeof(byte) * 2) + (data?.EstimatePacketSize() ?? 0);
+        public int EstimatePacketSize() => sizeof(byte) + (data?.EstimatePacketSize() ?? 0);
 
         public void Serialize(IPacket packetBuilder)
         {
