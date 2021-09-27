@@ -12,7 +12,9 @@ namespace NetInterop.Transport.Core.Packets
         private readonly IStream<byte> backingStream;
         private const int PollingRate = 1;
         private readonly SemaphoreSlim locker = new SemaphoreSlim(1, 1);
-        private readonly byte[] headerBuffer = new byte[DefaultPacket.DefaultHeaderSize];
+        private readonly byte[] headerBuffer = new byte[headerSize];
+
+        private const int headerSize = DefaultPacket.DefaultHeaderSize;
 
         public bool PendingPackets => backingStream.DataAvailable;
 
@@ -35,7 +37,7 @@ namespace NetInterop.Transport.Core.Packets
                 if (backingStream.DataAvailable)
                 {
                     // read the header, it contains the type of packet and the size of the packet
-                    backingStream.Read(headerBuffer, 0, 4);
+                    backingStream.Read(headerBuffer, 0, headerSize);
 
                     ref byte headerPtr = ref headerBuffer[0];
 

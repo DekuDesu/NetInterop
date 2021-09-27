@@ -9,7 +9,7 @@ namespace NetInterop.Attributes
     /// <summary>
     /// This is a more compact version of [Guid("000-...")], use this if you do not have many types to register < 100
     /// </summary
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Assembly | AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Assembly | AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Interface)]
     public class InteropIdAttribute : Attribute
     {
         /// <summary>

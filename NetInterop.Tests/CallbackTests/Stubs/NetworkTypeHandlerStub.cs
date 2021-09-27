@@ -84,6 +84,16 @@ namespace NetInterop.Tests.CallbackTests.Stubs
             return new NetPtr<T>(explicitId, 0);
         }
 
+        public INetPtr<T> RegisterType<T>(IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        {
+            throw new NotImplementedException();
+        }
+
         public bool TryGetAmbiguousSerializableType(INetPtr id, out ISerializableNetworkType serializableNetworkType)
         {
             serializableNetworkType = network;

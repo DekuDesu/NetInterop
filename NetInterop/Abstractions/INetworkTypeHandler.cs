@@ -28,6 +28,8 @@ namespace NetInterop
         INetPtr<T> RegisterType<T>(Func<T> instantiator);
         INetPtr<T> RegisterType<T>(Action<T> disposer);
         INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer);
+        INetPtr<T> RegisterType<T>(IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
+        INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
         INetPtr<T> RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
         INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer);
         INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator);

@@ -49,6 +49,8 @@ namespace NetInterop
         public INetPtr<T> RegisterType<T>(Func<T> instantiator) => RegisterType<T>(0, instantiator, null, null, null);
         public INetPtr<T> RegisterType<T>(Action<T> disposer) => RegisterType<T>(0, null, disposer, null, null);
         public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer) => RegisterType(0, instantiator, disposer, null, null);
+        public INetPtr<T> RegisterType<T>(IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType(0, null, null, serializer, deserializer);
+        public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType<T>(0, instantiator, disposer, serializer, deserializer);
         public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer) => RegisterType<T>(explicitId, instantiator, disposer, null, null);
         public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator) => RegisterType<T>(explicitId, instantiator, null, null, null);
         public INetPtr<T> RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType<T>(explicitId, null, null, serializer, deserializer);
@@ -93,12 +95,21 @@ namespace NetInterop
                 // a type must have a GUID or InteropId to be registered
                 InteropIdAttribute interopId = type.GetCustomAttribute<InteropIdAttribute>();
 
-                explicitId = interopId?.Id ?? 0;
-
-                if (explicitId == 0)
+                if (interopId is null)
                 {
                     throw new InvalidOperationException($"Attempted to register {type.FullName} as a network type but the class does not implement {nameof(InteropIdAttribute)}. If this is not possible use {nameof(RegisterType)} with an {nameof(explicitId)} parameter to explicitly define it.");
                 }
+
+                explicitId = interopId.Id;
+            }
+
+            if (explicitId == 0)
+            {
+                throw new InvalidOperationException($"Attempted to register {type.FullName} as a network type with either an explicit id, or {nameof(InteropIdAttribute)} with the id of 0x0000, this is not allowed. Id must be between 0x0001 and 0xFFFE.");
+            }
+            if (explicitId == 0xFFFF && type.IsAssignableFrom(typeof(INetPtr)) is false)
+            {
+                throw new InvalidOperationException($"Attempted to register {type.FullName} as a network type with either an explicit id, or {nameof(InteropIdAttribute)} with the id of 0xFFFF, this is not allowed as 0xFFFF is reserved for {nameof(NetInterop)} runtime logic. Id must be between 0x0001 and 0xFFFE.");
             }
 
             return explicitId;

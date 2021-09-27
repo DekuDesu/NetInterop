@@ -168,7 +168,7 @@ namespace NetInterop.Transport.Core.Packets
         {
             ref byte ptr = ref buffer[0];
 
-            ptr.Write(ActualSize);
+            ptr.Write((ushort)ActualSize);
         }
 
         [DebuggerHidden]
