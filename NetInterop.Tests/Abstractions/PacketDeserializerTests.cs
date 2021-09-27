@@ -17,7 +17,7 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket packet = Packet.Create(4);
 
             value.Serialize(packet);
 
@@ -29,7 +29,7 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket packet = Packet.Create(4);
 
             packet.AppendInt(12);
 
@@ -41,7 +41,7 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket packet = Packet.Create(4);
 
             value.Serialize(packet);
 
@@ -54,7 +54,7 @@ namespace RemoteInvokeTests.Abstractions
         {
             MyClass value = new() { Value = 12 };
 
-            IPacket<TestPacketTypes> packet = Packet.Create(TestPacketTypes.Pass);
+            IPacket packet = Packet.Create(0);
 
             value.Serialize(packet);
 

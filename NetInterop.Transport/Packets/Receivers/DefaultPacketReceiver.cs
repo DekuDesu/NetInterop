@@ -1,5 +1,5 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
-using NetInterop.Transport.Core.Abstractions.Server;
+using NetInterop.Transport.Core.Abstractions.Connections;
 using NetInterop.Transport.Core.Packets;
 using System;
 using System.Collections.Generic;

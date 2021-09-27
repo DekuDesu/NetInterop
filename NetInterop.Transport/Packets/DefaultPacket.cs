@@ -5,14 +5,9 @@ using System.Diagnostics;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacket<TContext> : IPacket<TContext> where TContext : Enum
+    public class DefaultPacket : IPacket
     {
         private byte[] buffer;
-
-        /// <summary>
-        /// The type of packet this represents, this is enum whos value must be between 0 and 255(byte)
-        /// </summary>
-        public TContext PacketType { get; set; }
 
         /// <summary>
         /// The size of the span, does not indicate end of data within the span, use <see cref="EndOffset"/> for the location of the end of data
@@ -52,13 +47,12 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         public int HeaderSize { get; set; }
 
-        public const int DefaultHeaderSize = sizeof(uint);
+        public const int DefaultHeaderSize = sizeof(ushort);
 
         private const int MaxPacketSize = DefaultHeaderSize + ushort.MaxValue;
 
-        public DefaultPacket(TContext packetType, byte[] data, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(byte[] data, int headerSize = DefaultHeaderSize)
         {
-            PacketType = packetType;
             buffer = new byte[data.Length + headerSize];
             data.CopyTo(buffer, headerSize);
             EndOffset = buffer.Length;
@@ -66,9 +60,8 @@ namespace NetInterop.Transport.Core.Packets
             HeaderSize = headerSize;
         }
 
-        public DefaultPacket(TContext packetType, int estimatedLength, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(int estimatedLength, int headerSize = DefaultHeaderSize)
         {
-            PacketType = packetType;
             HeaderSize = headerSize;
             buffer = new byte[estimatedLength + headerSize];
             EndOffset = 0;
@@ -164,19 +157,20 @@ namespace NetInterop.Transport.Core.Packets
         }
 
         [DebuggerHidden]
-        public ref byte GetHeader()
+        public ref byte GetHeaderPointer()
         {
             return ref buffer[0];
         }
 
 
         [DebuggerHidden]
-        public void SetHeader(byte[] header)
+        public void CompileHeader()
         {
             ref byte ptr = ref buffer[0];
 
-            ptr.Write(header);
+            ptr.Write(ActualSize);
         }
+
         [DebuggerHidden]
         public byte[] GetData() => buffer;
     }

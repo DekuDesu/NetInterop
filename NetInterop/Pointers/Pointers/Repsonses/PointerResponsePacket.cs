@@ -6,7 +6,7 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class PointerResponsePacket<TPacket> : IPacketSerializable<TPacket> where TPacket : Enum, IConvertible
+    public class PointerResponsePacket : IPacketSerializable
     {
         private readonly bool goodResponse;
         private readonly IPacketSerializable data;
@@ -16,8 +16,6 @@ namespace NetInterop
             this.goodResponse = goodResponse;
             this.data = data;
         }
-
-        public TPacket PacketType { get; }
 
         public int EstimatePacketSize() => (sizeof(byte) * 2) + (data?.EstimatePacketSize() ?? 0);
 

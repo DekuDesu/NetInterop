@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NetInterop.Transport.Core.Abstractions.Server
+namespace NetInterop.Transport.Core.Abstractions.Connections
 {
     public interface IClientDispatcher<TClient>
     {

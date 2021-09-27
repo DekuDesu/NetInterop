@@ -6,9 +6,9 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class PointerOperationPacket<TPacket> : IPacketSerializable<TPacket> where TPacket : Enum, IConvertible
+    public class PointerOperationPacket : IPacketSerializable
     {
-        private readonly IPacketSerializable<TPacket> wrappedPacket;
+        private readonly IPacketSerializable wrappedPacket;
         private readonly PointerOperations operation;
 
         /// <summary>
@@ -16,13 +16,11 @@ namespace NetInterop
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="wrappedPacket"></param>
-        public PointerOperationPacket(PointerOperations operation, IPacketSerializable<TPacket> wrappedPacket)
+        public PointerOperationPacket(PointerOperations operation, IPacketSerializable wrappedPacket)
         {
             this.wrappedPacket = wrappedPacket;
             this.operation = operation;
         }
-
-        public TPacket PacketType => wrappedPacket.PacketType;
 
         public int EstimatePacketSize() => sizeof(byte) + wrappedPacket.EstimatePacketSize();
 

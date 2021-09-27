@@ -5,28 +5,28 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class DefaultPointerResponseSender<TPacket> : IPointerResponseSender where TPacket : Enum, IConvertible
+    public class DefaultPointerResponseSender : IPointerResponseSender
     {
-        private readonly IPacketSender<TPacket> sender;
+        private readonly IPacketSender sender;
 
-        public DefaultPointerResponseSender(IPacketSender<TPacket> sender)
+        public DefaultPointerResponseSender(IPacketSender sender)
         {
             this.sender = sender;
         }
 
         public void SendBadResponse(ushort callbackId)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.OperationResult, new PointerResponsePacket<TPacket>(false, new CallbackResponsePacket(callbackId))));
+            sender.Send(new PointerOperationPacket(PointerOperations.OperationResult, new PointerResponsePacket(false, new CallbackResponsePacket(callbackId))));
         }
 
         public void SendGoodResponse(ushort callbackId)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.OperationResult, new PointerResponsePacket<TPacket>(true, new CallbackResponsePacket(callbackId))));
+            sender.Send(new PointerOperationPacket(PointerOperations.OperationResult, new PointerResponsePacket(true, new CallbackResponsePacket(callbackId))));
         }
 
         public void SendResponse(ushort callbackId, bool goodResponse, IPacketSerializable packetBuilder)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.OperationResult, new PointerResponsePacket<TPacket>(goodResponse, new CallbackResponsePacket(callbackId, packetBuilder))));
+            sender.Send(new PointerOperationPacket(PointerOperations.OperationResult, new PointerResponsePacket(goodResponse, new CallbackResponsePacket(callbackId, packetBuilder))));
         }
     }
 }

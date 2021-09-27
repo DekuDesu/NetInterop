@@ -29,15 +29,15 @@ namespace NetInterop.Tests.CallbackTests
 
             INetworkTypeHandler typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
 
-            IPacketSender<TypeCode> sender = new PacketSenderStub<TypeCode>();
+            IPacketSender sender = new PacketSenderStub();
 
-            IPointerResponseSender pointerSender = new ResponseSenderStub<TypeCode>(sender);
+            IPointerResponseSender pointerSender = new ResponseSenderStub(sender);
 
             IPacketHandler<PointerOperations> allocOperation = new AllocPointerHandler(typeHandler, pointerProvider, pointerSender);
             IPacketHandler<PointerOperations> setOperation = new SetPointerHandler(typeHandler, pointerProvider, pointerSender);
             IPacketHandler<PointerOperations> getOperation = new GetPointerHandler(typeHandler, pointerProvider, pointerSender);
 
-            IPacketHandler operationHandler = new PointerPacketDispatchHandler<TypeCode>(allocOperation);
+            IPacketHandler operationHandler = new PointerPacketDispatchHandler(allocOperation);
 
             IDelegateHandler<bool, IPacket> delegateHandler = new DefaultPacketDelegateHandler();
 
@@ -49,23 +49,23 @@ namespace NetInterop.Tests.CallbackTests
             IPacketSerializable pointer = pointerProvider.Create(1, 0);
 
             // wrap the pointer with a callback id
-            IPacketSerializable<TypeCode> callback = new CallbackPacket<TypeCode>((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, delegateHandler);
+            IPacketSerializable callback = new CallbackPacket((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, delegateHandler);
 
             // wrap the callback with a operation code so it can be sorted to the correct handler by the serrver
-            IPacketSerializable<TypeCode> pointerOperation = new PointerOperationPacket<TypeCode>(PointerOperations.Alloc, callback);
+            IPacketSerializable pointerOperation = new PointerOperationPacket(PointerOperations.Alloc, callback);
 
             // send the packet to the server
             sender.Send(pointerOperation);
 
             // this is the packet as decoded by the server
-            IPacket sent = ((PacketSenderStub<TypeCode>)sender).Sent.Dequeue();
+            IPacket sent = ((PacketSenderStub)sender).Sent.Dequeue();
 
             // sort the packet into the correct handler
             // this should route to Alloc handler and should alloc a new int ptr
             // it should then respond with a ptr back
             operationHandler.Handle(sent);
 
-            IPacket responsePacket = ((PacketSenderStub<TypeCode>)sender).Sent.Dequeue();
+            IPacket responsePacket = ((PacketSenderStub)sender).Sent.Dequeue();
 
             Assert.NotNull(responsePacket);
 
@@ -84,7 +84,7 @@ namespace NetInterop.Tests.CallbackTests
         [Fact]
         public void Test_Set()
         {
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
             // create some spots to put our actual results to compare
             bool ranCallback = false;
@@ -94,10 +94,10 @@ namespace NetInterop.Tests.CallbackTests
             IPacketSerializable pointer = test.PointerProvider.Create(1, 0);
 
             // wrap the pointer with a callback id
-            IPacketSerializable<TypeCode> callback = new CallbackPacket<TypeCode>((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
+            IPacketSerializable callback = new CallbackPacket((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
 
             // wrap the callback with a operation code so it can be sorted to the correct handler by the serrver
-            IPacketSerializable<TypeCode> pointerOperation = new PointerOperationPacket<TypeCode>(PointerOperations.Alloc, callback);
+            IPacketSerializable pointerOperation = new PointerOperationPacket(PointerOperations.Alloc, callback);
 
             // send the packet to the server
             test.Sender.Send(pointerOperation);
@@ -131,10 +131,10 @@ namespace NetInterop.Tests.CallbackTests
             // now we have alloced the value attempt to set it's value
             pointer = new SetPointerPacket<int>(ptr, 44, test.SerializableNetworkType);
 
-            callback = new CallbackPacket<TypeCode>((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
+            callback = new CallbackPacket((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
 
             // wrap the callback with a operation code so it can be sorted to the correct handler by the serrver
-            pointerOperation = new PointerOperationPacket<TypeCode>(PointerOperations.Set, callback);
+            pointerOperation = new PointerOperationPacket(PointerOperations.Set, callback);
 
             // send the packet to the server
             test.Send(pointerOperation);
@@ -166,7 +166,7 @@ namespace NetInterop.Tests.CallbackTests
         [Fact]
         public void Test_Get()
         {
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
 
@@ -179,10 +179,10 @@ namespace NetInterop.Tests.CallbackTests
             // now we have alloced the value attempt to set it's value
             IPacketSerializable pointer = ptr;
 
-            IPacketSerializable<TypeCode> callback = new CallbackPacket<TypeCode>((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
+            IPacketSerializable callback = new CallbackPacket((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
 
             // wrap the callback with a operation code so it can be sorted to the correct handler by the serrver
-            IPacketSerializable<TypeCode> pointerOperation = new PointerOperationPacket<TypeCode>(PointerOperations.Get, callback);
+            IPacketSerializable pointerOperation = new PointerOperationPacket(PointerOperations.Get, callback);
 
             // send the packet to the server
             test.Send(pointerOperation);
@@ -214,7 +214,7 @@ namespace NetInterop.Tests.CallbackTests
         [Fact]
         public void Test_Free()
         {
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
 
@@ -227,10 +227,10 @@ namespace NetInterop.Tests.CallbackTests
             // now we have alloced the value attempt to set it's value
             IPacketSerializable pointer = ptr;
 
-            IPacketSerializable<TypeCode> callback = new CallbackPacket<TypeCode>((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
+            IPacketSerializable callback = new CallbackPacket((x, y) => { ranCallback = x; callbackPacket = y; }, pointer, test.DelegateHandler);
 
             // wrap the callback with a operation code so it can be sorted to the correct handler by the serrver
-            IPacketSerializable<TypeCode> pointerOperation = new PointerOperationPacket<TypeCode>(PointerOperations.Free, callback);
+            IPacketSerializable pointerOperation = new PointerOperationPacket(PointerOperations.Free, callback);
 
             // send the packet to the server
             test.Send(pointerOperation);
@@ -271,9 +271,9 @@ namespace NetInterop.Tests.CallbackTests
         public void Test_GetNetworkHeap()
         {
 
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
+            INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
 
@@ -306,9 +306,9 @@ namespace NetInterop.Tests.CallbackTests
         [Fact]
         public void Test_SetNetworkHeap()
         {
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
+            INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             // get a ptr to set the value of
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
@@ -337,9 +337,9 @@ namespace NetInterop.Tests.CallbackTests
         [Fact]
         public void Test_FreeNetworkHeap()
         {
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
+            INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
 
@@ -375,9 +375,9 @@ namespace NetInterop.Tests.CallbackTests
         [Fact]
         public void Test_AllocNetworkHeap()
         {
-            TestObjects<TypeCode> test = new();
+            TestObjects test = new();
 
-            INetworkHeap heap = new NetworkHeap<TypeCode>(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
+            INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             INetPtr<int> ptr = default;
 
@@ -405,13 +405,13 @@ namespace NetInterop.Tests.CallbackTests
         public void Test_VerifySetup()
         {
             // we should make sure our test method itself is not flawed
-            IPacketSender<TypeCode> sender = new PacketSenderStub<TypeCode>();
+            IPacketSender sender = new PacketSenderStub();
 
-            IPacketSerializable<TypeCode> packet = new TestPacket() { Value = 12 };
+            IPacketSerializable packet = new TestPacket() { Value = 12 };
 
             sender.Send(packet);
 
-            IPacket sent = ((PacketSenderStub<TypeCode>)sender).Sent.Dequeue();
+            IPacket sent = ((PacketSenderStub)sender).Sent.Dequeue();
 
             Assert.Equal(12, sent.GetInt());
 
@@ -434,7 +434,7 @@ namespace NetInterop.Tests.CallbackTests
 
             Assert.Equal(1, delegateHandler.Count);
 
-            IPacket arg = Packet.Create(TypeCode.Boolean);
+            IPacket arg = Packet.Create(0);
 
             arg.AppendInt(44);
 
@@ -451,22 +451,22 @@ namespace NetInterop.Tests.CallbackTests
         {
             IDelegateHandler<bool, IPacket> delegateHandler = new DefaultPacketDelegateHandler();
             // we should make sure our test method itself is not flawed
-            IPacketSender<TypeCode> sender = new PacketSenderStub<TypeCode>();
+            IPacketSender sender = new PacketSenderStub();
 
-            IPointerResponseSender responseSender = new DefaultPointerResponseSender<TypeCode>(sender);
+            IPointerResponseSender responseSender = new DefaultPointerResponseSender(sender);
 
-            IPacketSerializable<TypeCode> packet = new TestPacket() { Value = 12 };
+            IPacketSerializable packet = new TestPacket() { Value = 12 };
 
             bool invokedCallback = false;
             IPacket receivedPacket = default;
 
             // perform data appending
-            IPacketSerializable<TypeCode> callbackWrappedPacket = new CallbackPacket<TypeCode>((goodResponse, packet) => { invokedCallback = true; receivedPacket = packet; }, packet, delegateHandler);
+            IPacketSerializable callbackWrappedPacket = new CallbackPacket((goodResponse, packet) => { invokedCallback = true; receivedPacket = packet; }, packet, delegateHandler);
 
             // check results
             sender.Send(callbackWrappedPacket);
 
-            IPacket sent = ((PacketSenderStub<TypeCode>)sender).Sent.Dequeue();
+            IPacket sent = ((PacketSenderStub)sender).Sent.Dequeue();
 
             ushort id = sent.GetUShort();
 
@@ -481,10 +481,9 @@ namespace NetInterop.Tests.CallbackTests
             Assert.Equal(12, receivedPacket.GetInt());
         }
 
-        public class TestPacket : IPacketSerializable<TypeCode>
+        public class TestPacket : IPacketSerializable
         {
             public int Value { get; set; }
-            public TypeCode PacketType { get; } = TypeCode.Byte;
 
             public int EstimatePacketSize() => sizeof(int);
 
@@ -494,7 +493,7 @@ namespace NetInterop.Tests.CallbackTests
             }
         }
 
-        private class TestObjects<TPacket> where TPacket : Enum, IConvertible
+        private class TestObjects
         {
             public IPacketSerializer<int> IntSerializer { get; set; }
             public IPacketDeserializer<int> IntDeserializer { get; set; }
@@ -502,7 +501,7 @@ namespace NetInterop.Tests.CallbackTests
             public INetworkType<int> NetworkType { get; set; }
             public ISerializableNetworkType<int> SerializableNetworkType { get; set; }
             public INetworkTypeHandler TypeHandler { get; set; }
-            public IPacketSender<TPacket> Sender { get; set; }
+            public IPacketSender Sender { get; set; }
             public IPointerResponseSender PointerSender { get; set; }
             public IPacketHandler<PointerOperations> AllocOperation { get; set; }
             public IPacketHandler<PointerOperations> SetOperation { get; set; }
@@ -527,11 +526,11 @@ namespace NetInterop.Tests.CallbackTests
 
                 TypeHandler = new NetworkTypeHandlerStub() { network = SerializableNetworkType, networkType = NetworkType };
 
-                Sender = new PacketSenderStub<TPacket>();
+                Sender = new PacketSenderStub();
 
                 MethodHandler = new DefaultMethodHandler(PointerProvider, TypeHandler);
 
-                PointerSender = new ResponseSenderStub<TPacket>(Sender);
+                PointerSender = new ResponseSenderStub(Sender);
 
                 AllocOperation = new AllocPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 SetOperation = new SetPointerHandler(TypeHandler, PointerProvider, PointerSender);
@@ -539,7 +538,7 @@ namespace NetInterop.Tests.CallbackTests
                 FreeOperation = new FreePointerHandler(TypeHandler, PointerProvider, PointerSender);
                 InvokeOperation = new InvokePointerHandler(TypeHandler, PointerProvider, PointerSender, MethodHandler);
 
-                OperationHandler = new PointerPacketDispatchHandler<TPacket>(AllocOperation, SetOperation, GetOperation, FreeOperation);
+                OperationHandler = new PointerPacketDispatchHandler(AllocOperation, SetOperation, GetOperation, FreeOperation);
 
                 DelegateHandler = new DefaultPacketDelegateHandler();
 
@@ -550,9 +549,9 @@ namespace NetInterop.Tests.CallbackTests
 
             public IPacket Receive()
             {
-                return ((PacketSenderStub<TPacket>)Sender).Sent.Dequeue();
+                return ((PacketSenderStub)Sender).Sent.Dequeue();
             }
-            public void Send(IPacketSerializable<TPacket> packet)
+            public void Send(IPacketSerializable packet)
             {
                 Sender.Send(packet);
             }

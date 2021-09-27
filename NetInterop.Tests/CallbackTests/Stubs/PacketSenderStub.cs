@@ -9,28 +9,21 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Tests.CallbackTests.Stubs
 {
-    class PacketSenderStub<TPacket> : IPacketSender<TPacket> where TPacket : Enum, IConvertible
+    class PacketSenderStub : IPacketSender
     {
-        public Queue<IPacket<TPacket>> Sent = new();
+        public Queue<IPacket> Sent = new();
 
-        public void Send(IPacketSerializable<TPacket> value)
+        public void Send(IPacketSerializable value)
         {
-            var packet = Packet.Create((TPacket)(object)0);
+            var packet = Packet.Create(value.EstimatePacketSize());
 
             value.Serialize(packet);
 
             Sent.Enqueue(packet);
         }
 
-        public void Send(IPacket<TPacket> packet)
+        public void Send(IPacket packet)
         {
-            Sent.Enqueue(packet);
-        }
-
-        public void Send(TPacket packetType, byte[] data)
-        {
-            var packet = Packet.Create(packetType, data);
-
             Sent.Enqueue(packet);
         }
     }

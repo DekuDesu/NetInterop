@@ -4,33 +4,26 @@ using NetInterop.Transport.Core.Factories;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacketSender<TPacket> : IPacketSender<TPacket> where TPacket : Enum, IConvertible
+    public class DefaultPacketSender : IPacketSender
     {
-        private readonly IPacketController<TPacket> controller;
+        private readonly IPacketController controller;
 
-        public DefaultPacketSender(IPacketController<TPacket> controller)
+        public DefaultPacketSender(IPacketController controller)
         {
             this.controller = controller;
         }
 
-        public void Send(IPacketSerializable<TPacket> value)
+        public void Send(IPacketSerializable value)
         {
             int size = value.EstimatePacketSize();
 
-            var packet = Packet.Create(value.PacketType, size);
+            var packet = Packet.Create(size);
 
             value.Serialize(packet);
 
-            controller.WriteBlindPacket(packet);
+            controller.WritePacket(packet);
         }
 
-        public void Send(IPacket<TPacket> packet) => controller.WriteBlindPacket(packet);
-
-        public void Send(TPacket packetType, byte[] data)
-        {
-            var packet = Packet.Create(packetType, data);
-
-            controller.WriteBlindPacket(packet);
-        }
+        public void Send(IPacket packet) => controller.WritePacket(packet);
     }
 }

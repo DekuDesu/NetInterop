@@ -11,7 +11,7 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// Defines an object implements functionality to serialize itself into <typeparamref name="TResult"/>
     /// </summary>
     /// <typeparam name="TResult"></typeparam>
-    public interface IPacketSerializable<TPacket> : IPacketSerializable where TPacket : Enum, IConvertible
+    public interface IPacketSerializable<TPacket> : IPacketSerializable
     {
         /// <summary>
         /// The type or context of this object that should be appended to the header of the packet

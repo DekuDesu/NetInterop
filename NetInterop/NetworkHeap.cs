@@ -5,13 +5,13 @@ using System.Text;
 
 namespace NetInterop
 {
-    public class NetworkHeap<TPacket> : INetworkHeap where TPacket : Enum, IConvertible
+    public class NetworkHeap : INetworkHeap
     {
         private readonly INetworkMethodHandler methodHandler;
         private readonly INetworkTypeHandler typeHandler;
-        private readonly IPacketSender<TPacket> sender;
+        private readonly IPacketSender sender;
         private readonly IDelegateHandler<bool, IPacket> callbackDelegateHandler;
-        public NetworkHeap(INetworkTypeHandler typeHandler, IPacketSender<TPacket> sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, INetworkMethodHandler methodHandler)
+        public NetworkHeap(INetworkTypeHandler typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, INetworkMethodHandler methodHandler)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
@@ -25,7 +25,7 @@ namespace NetInterop
         {
             if (typeHandler.TryGetTypePtr<T>(out INetPtr<T> ptr))
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Alloc, new CallbackPacket<TPacket>(
+                sender.Send(new PointerOperationPacket(PointerOperations.Alloc, new CallbackPacket(
                     (goodResponse, packet) =>
                     {
                         if (goodResponse)
@@ -40,7 +40,7 @@ namespace NetInterop
 
         public void Create(INetPtr typePtr, Action<INetPtr> callback)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Alloc, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Alloc, new CallbackPacket(
                     (goodResponse, packet) =>
                     {
                         if (goodResponse)
@@ -54,19 +54,19 @@ namespace NetInterop
 
         public void Destroy<T>(INetPtr<T> ptr)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Free, new CallbackPacket<TPacket>(null, ptr, callbackDelegateHandler)));
+            sender.Send(new PointerOperationPacket(PointerOperations.Free, new CallbackPacket(null, ptr, callbackDelegateHandler)));
         }
 
         public void Destroy(INetPtr ptr)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Free, new CallbackPacket<TPacket>(null, ptr, callbackDelegateHandler)));
+            sender.Send(new PointerOperationPacket(PointerOperations.Free, new CallbackPacket(null, ptr, callbackDelegateHandler)));
         }
 
         public void Get<T>(INetPtr<T> ptr, Action<T> callback)
         {
             if (typeHandler.TryGetSerializableType<T>(ptr, out var serializer))
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Get, new CallbackPacket<TPacket>(
+                sender.Send(new PointerOperationPacket(PointerOperations.Get, new CallbackPacket(
                     (goodResponse, packet) =>
                     {
                         if (goodResponse)
@@ -89,7 +89,7 @@ namespace NetInterop
         {
             if (typeHandler.TryGetAmbiguousSerializableType(ptr, out var serializer))
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Get, new CallbackPacket<TPacket>(
+                sender.Send(new PointerOperationPacket(PointerOperations.Get, new CallbackPacket(
                     (goodResponse, packet) =>
                     {
                         if (goodResponse)
@@ -112,7 +112,7 @@ namespace NetInterop
         {
             if (typeHandler.TryGetSerializableType<T>(ptr, out var serializer))
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Set, new CallbackPacket<TPacket>(
+                sender.Send(new PointerOperationPacket(PointerOperations.Set, new CallbackPacket(
                     null,
                     new SetPointerPacket<T>(ptr, value, serializer),
                     callbackDelegateHandler
@@ -126,7 +126,7 @@ namespace NetInterop
         {
             if (typeHandler.TryGetAmbiguousSerializableType(ptr, out var serializer))
             {
-                sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Set, new CallbackPacket<TPacket>(
+                sender.Send(new PointerOperationPacket(PointerOperations.Set, new CallbackPacket(
                     null,
                     new SetAmbiguousPointerPacket(ptr, value, serializer),
                     callbackDelegateHandler
@@ -138,7 +138,7 @@ namespace NetInterop
 
         public void InvokeStatic(INetPtr methodPtr)
         {
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(null, methodPtr, callbackDelegateHandler)));
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(null, methodPtr, callbackDelegateHandler)));
         }
 
         public void InvokeStatic<T>(INetPtr methodPtr, Action<T> callback)
@@ -148,7 +148,7 @@ namespace NetInterop
                 throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 (goodResponse, packet) =>
                 {
                     if (goodResponse)
@@ -171,7 +171,7 @@ namespace NetInterop
                 throw GenerateMissingMethodSerializerException(methodPtr.ToString());
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 null,
                 new InvokePointerWithParametersPacket(methodPtr, parameterSerializer, parameters),
                 callbackDelegateHandler
@@ -191,7 +191,7 @@ namespace NetInterop
                 throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 (goodResponse, packet) =>
                 {
                     if (goodResponse)
@@ -219,7 +219,7 @@ namespace NetInterop
                 throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                     (goodResponse, packet) =>
                     {
                         if (goodResponse)
@@ -245,7 +245,7 @@ namespace NetInterop
                 throw new InvalidCastException($"Can't invoke method {methodPtr} on instance {instancePtr} since the instance type is not the declaring type that defines the method. If the method is static use InvokeStatic(methodPtr) instead.");
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 null,
                 new InvokePointerWithInstance(methodPtr, instancePtr),
                 callbackDelegateHandler
@@ -264,7 +264,7 @@ namespace NetInterop
                 throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 (goodResponse, packet) =>
                 {
                     if (goodResponse)
@@ -292,7 +292,7 @@ namespace NetInterop
                 throw GenerateMissingMethodSerializerException(methodPtr.ToString());
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 null,
                 new InvokePointerWithInstanceAndParametersPacket(methodPtr, instancePtr, serializer, parameters),
                 callbackDelegateHandler
@@ -316,7 +316,7 @@ namespace NetInterop
                 throw GenerateMissingReturnTypeSerializerException(typeof(T).FullName);
             }
 
-            sender.Send(new PointerOperationPacket<TPacket>(PointerOperations.Invoke, new CallbackPacket<TPacket>(
+            sender.Send(new PointerOperationPacket(PointerOperations.Invoke, new CallbackPacket(
                 (goodResponse, packet) =>
                 {
                     if (goodResponse)

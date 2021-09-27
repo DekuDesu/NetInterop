@@ -93,7 +93,7 @@ namespace NetInterop.Tests
 
             Assert.True(typeHandler.TryGetAmbiguousSerializableType(pointerProvider.Create(0x01, 0), out var netType));
 
-            IPacket packet = Packet.Create(TypeCode.Boolean);
+            IPacket packet = Packet.Create(0);
 
             packet.AppendInt(32);
 
@@ -101,7 +101,7 @@ namespace NetInterop.Tests
 
             Assert.Equal(32, ((TestSerializableClass)result).Value);
 
-            packet = Packet.Create(TypeCode.Boolean);
+            packet = Packet.Create(0);
 
             TestSerializableClass newClass = new() { Value = 43 };
 

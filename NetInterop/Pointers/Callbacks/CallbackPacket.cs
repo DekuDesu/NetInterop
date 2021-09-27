@@ -10,7 +10,7 @@ namespace NetInterop
     /// Registers the given callback with the delegate handler and obtains and appends the callback id to the front of the packet
     /// </summary>
     /// <typeparam name="TPacket"></typeparam>
-    public class CallbackPacket<TPacket> : IPacketSerializable<TPacket> where TPacket : Enum, IConvertible
+    public class CallbackPacket : IPacketSerializable
     {
         private readonly Action<bool, IPacket> callback;
         private readonly IDelegateHandler<bool, IPacket> packetCallbackHandler;
@@ -26,8 +26,6 @@ namespace NetInterop
             this.packetCallbackHandler = packetCallbackHandler ?? throw new ArgumentNullException(nameof(packetCallbackHandler));
             this.callback = callback;
         }
-
-        public TPacket PacketType { get; }
 
         public int EstimatePacketSize() => sizeof(ushort) + packet.EstimatePacketSize();
 

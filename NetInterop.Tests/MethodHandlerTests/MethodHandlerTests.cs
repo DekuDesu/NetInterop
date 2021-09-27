@@ -65,12 +65,12 @@ namespace NetInterop.Tests.MethodHandlerTests
             // create an instance to call the method on
             INetPtr<TestClass> instancePtr = networkType.AllocPtr().As<TestClass>();
 
-            IPacket inputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket inputPacket = Packet.Create(instancePtr.EstimatePacketSize());
 
             // append the instance ptr to the packet so we know which instance to invoke the method on
             inputPacket.AppendSerializable(instancePtr);
 
-            IPacket outputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket outputPacket = Packet.Create(0);
 
             methodHandler.Invoke(methodPtr, inputPacket, outputPacket);
 
@@ -99,9 +99,9 @@ namespace NetInterop.Tests.MethodHandlerTests
             Assert.Equal(1, methodPtr.PtrAddress);
 
             // blank packet, no instance ptr
-            IPacket inputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket inputPacket = Packet.Create(0);
 
-            IPacket outputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket outputPacket = Packet.Create(0);
 
             methodHandler.Invoke(methodPtr, inputPacket, outputPacket);
 
@@ -129,7 +129,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             // create an instance to call the method on
             INetPtr<TestClass> instancePtr = networkType.AllocPtr().As<TestClass>();
 
-            IPacket inputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket inputPacket = Packet.Create(0);
 
             // append the instance ptr to the packet so we know which instance to invoke the method on
             inputPacket.AppendSerializable(instancePtr);
@@ -138,7 +138,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             inputPacket.AppendInt(12);
 
-            IPacket outputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket outputPacket = Packet.Create(0);
 
             methodHandler.Invoke(methodPtr, inputPacket);
 
@@ -169,7 +169,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             // create an instance to call the method on
             INetPtr<TestClass> instancePtr = networkType.AllocPtr().As<TestClass>();
 
-            IPacket inputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket inputPacket = Packet.Create(0);
 
             // append the instance ptr to the packet so we know which instance to invoke the method on
             inputPacket.AppendSerializable(instancePtr);
@@ -178,7 +178,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             inputPacket.AppendInt(12);
 
-            IPacket outputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket outputPacket = Packet.Create(0);
 
             methodHandler.Invoke(methodPtr, inputPacket, outputPacket);
 
@@ -208,14 +208,14 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             Assert.Equal(1, methodPtr.PtrAddress);
 
-            IPacket inputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket inputPacket = Packet.Create(0);
 
             // dont append an instance ptr, only append the parameters
             inputPacket.AppendInt(12);
 
             inputPacket.AppendInt(12);
 
-            IPacket outputPacket = Packet.Create(TypeCode.Boolean);
+            IPacket outputPacket = Packet.Create(0);
 
             methodHandler.Invoke(methodPtr, inputPacket, outputPacket);
 

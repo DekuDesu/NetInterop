@@ -11,7 +11,7 @@ namespace NetInterop
     /// Dispatches pointer operations packets to individual handlers, pointer packets are wrapped with PointerOperationPackets
     /// </summary>
     /// <typeparam name="TPacket"></typeparam>
-    public class PointerPacketDispatchHandler<TPacket> : IPacketHandler<TPacket> where TPacket : Enum, IConvertible
+    public class PointerPacketDispatchHandler : IPacketHandler
     {
         private readonly IDictionary<PointerOperations, IPacketHandler<PointerOperations>> handlers;
 
@@ -19,9 +19,6 @@ namespace NetInterop
         {
             this.handlers = handlers.ToDictionary(x => x.PacketType);
         }
-
-        // the 0th value in any user-defned packet type should be reserved for net interop pointer operations
-        public TPacket PacketType { get; } = default;
 
         public void Handle(IPacket packet)
         {
