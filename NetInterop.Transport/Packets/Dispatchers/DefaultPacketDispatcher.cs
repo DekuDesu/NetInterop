@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacketDispatcher<TPacketType> : IPacketDispatcher
+    public class DefaultPacketDispatcher<TPacketType> : IPacketHandler
     {
         private readonly IDictionary<TPacketType, IPacketHandler<TPacketType>> handlers;
         private readonly Func<byte, TPacketType> keyConverter;
@@ -19,7 +19,7 @@ namespace NetInterop.Transport.Core.Packets
             this.keyConverter = keyConverter ?? throw new ArgumentNullException(nameof(keyConverter));
         }
 
-        public void Dispatch(IPacket packet)
+        public void Handle(IPacket packet)
         {
             TPacketType type = keyConverter(packet.GetByte());
             handlers[type].Handle(packet);

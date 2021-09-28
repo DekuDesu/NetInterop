@@ -15,17 +15,17 @@ namespace NetInterop.Transport.Core.Packets
     {
         private readonly IPacketController controller;
         private readonly IConnection connection;
-        private readonly IPacketDispatcher dispatcher;
+        private readonly IPacketHandler handler;
         private System.Timers.Timer packetAvailableTimer;
         private readonly double timerInterval = 1000 / 60;
-        public DefaultPacketReceiver(IPacketDispatcher dispatcher, IPacketController controller, IConnection connection)
+        public DefaultPacketReceiver(IPacketHandler handler, IPacketController controller, IConnection connection)
         {
             if (connection is null)
             {
                 throw new ArgumentNullException(nameof(connection));
             }
 
-            this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
             this.controller = controller ?? throw new ArgumentNullException(nameof(controller));
             this.connection = connection;
         }
@@ -49,7 +49,7 @@ namespace NetInterop.Transport.Core.Packets
             {
                 if (controller.TryReadPacket(out IPacket packet))
                 {
-                    dispatcher.Dispatch(packet);
+                    handler.Handle(packet);
                     return true;
                 }
             }
