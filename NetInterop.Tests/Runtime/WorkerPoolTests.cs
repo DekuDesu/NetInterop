@@ -17,7 +17,7 @@ namespace NetInterop.Tests.Runtime
         {
             IWorkerPool pool = new DefaultWorkPool();
 
-            Assert.Equal(Environment.ProcessorCount,pool.WorkerLimit);
+            Assert.Equal(Environment.ProcessorCount, pool.WorkerLimit);
         }
 
         [Fact]
@@ -27,9 +27,9 @@ namespace NetInterop.Tests.Runtime
 
             pool.ShrinkPool(1);
 
-            Assert.Equal(Environment.ProcessorCount-1,pool.WorkerLimit);
+            Assert.Equal(Environment.ProcessorCount - 1, pool.WorkerLimit);
 
-            Assert.Throws<ArgumentOutOfRangeException>(()=>pool.ShrinkPool(-1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => pool.ShrinkPool(-1));
 
             int previous = pool.WorkerLimit;
 
@@ -41,7 +41,8 @@ namespace NetInterop.Tests.Runtime
         [Fact]
         public void Test_ExpandPool_Limit()
         {
-            IWorkerPool pool = new DefaultWorkPool() { 
+            IWorkerPool pool = new DefaultWorkPool()
+            {
                 WorkerLimit = Environment.ProcessorCount - 1
             };
 
@@ -71,7 +72,7 @@ namespace NetInterop.Tests.Runtime
 
             pool.StartPool();
 
-            Assert.Equal(count,pool.WorkerCount);
+            Assert.Equal(count, pool.WorkerCount);
 
             pool.StopPool();
 
@@ -90,7 +91,8 @@ namespace NetInterop.Tests.Runtime
 
             Barrier barrier = new(2);
 
-            IWork work = new TestWork(()=> {
+            IWork work = new TestWork(() =>
+            {
                 barrier.SignalAndWait();
                 count++;
             });
@@ -103,20 +105,118 @@ namespace NetInterop.Tests.Runtime
 
             Assert.Equal(1, pool.WaitingWork);
 
-            Assert.Equal(0,count);
+            Assert.Equal(0, count);
 
             barrier.SignalAndWait();
 
-            Assert.Equal(0,pool.WaitingWork);
+            Assert.Equal(0, pool.WaitingWork);
 
-            Assert.Equal(1,count);
+            Assert.Equal(1, count);
 
             pool.StopPool();
 
-            Assert.Equal(0,pool.WorkerCount);
+            Assert.Equal(0, pool.WorkerCount);
 
             Assert.False(pool.PoolStarted);
         }
+
+        [Fact]
+        public void Test_Race_Start()
+        {
+            int count = Environment.ProcessorCount;
+            // when we start the pool we should never exceed WorkerLimit even if we call start multiple times
+            IWorkerPool pool = new DefaultWorkPool()
+            {
+                WorkerLimit = Environment.ProcessorCount
+            };
+
+            Assert.Equal(count, pool.WorkerLimit);
+            Assert.Equal(0, pool.WorkerCount);
+
+            pool.StartPool();
+
+            Assert.Equal(count, pool.WorkerCount);
+
+            pool.StopPool();
+
+            Assert.Equal(0, pool.WorkerCount);
+
+            // begin race condition testing
+            int taskCount = 4;
+
+            Barrier barrier = new(taskCount);
+
+            void Worker()
+            {
+                barrier.SignalAndWait();
+                pool.StartPool();
+            }
+
+
+            List<Task> tasks = new List<Task>();
+
+            for (int i = 0; i < taskCount; i++)
+            {
+                tasks.Add(Task.Run(Worker));
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
+            Assert.Equal(count, pool.WorkerCount);
+        }
+
+        [Fact]
+        public void Test_Expand()
+        {
+            // when we start the pool we should never exceed WorkerLimit even if we call start multiple times
+            IWorkerPool pool = new DefaultWorkPool()
+            {
+                WorkerLimit = 2
+            };
+
+            Assert.Equal(2, pool.WorkerLimit);
+            Assert.Equal(0, pool.WorkerCount);
+
+            pool.StartPool();
+
+            Assert.Equal(2, pool.WorkerCount);
+
+            pool.ExpandPool(1);
+            Assert.Equal(3, pool.WorkerLimit);
+            Assert.Equal(3, pool.WorkerCount);
+
+            pool.StopPool();
+
+            Assert.Equal(3, pool.WorkerLimit);
+            Assert.Equal(0, pool.WorkerCount);
+        }
+
+        [Fact]
+        public void Test_Shrink()
+        {
+            // when we start the pool we should never exceed WorkerLimit even if we call start multiple times
+            IWorkerPool pool = new DefaultWorkPool()
+            {
+                WorkerLimit = 3
+            };
+
+            Assert.Equal(3, pool.WorkerLimit);
+            Assert.Equal(0, pool.WorkerCount);
+
+            pool.StartPool();
+
+            Assert.Equal(3, pool.WorkerCount);
+
+            pool.ShrinkPool(1);
+            Assert.Equal(2, pool.WorkerLimit);
+            Assert.Equal(2, pool.WorkerCount);
+
+            pool.StopPool();
+
+            Assert.Equal(2, pool.WorkerLimit);
+            Assert.Equal(0, pool.WorkerCount);
+        }
+
         private class TestWork : IWork
         {
             private readonly Action work;

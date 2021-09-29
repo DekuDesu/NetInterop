@@ -12,6 +12,7 @@ namespace NetInterop.Transport.Core.Runtime
     {
         private readonly IProducerConsumerCollection<IWork> waitingWork = new ConcurrentBag<IWork>();
         private readonly IProducerConsumerCollection<IWorker> workers = new ConcurrentBag<IWorker>();
+        private readonly SemaphoreSlim synchronizationLock = new SemaphoreSlim(1, 1);
 
         public int WaitingWork => waitingWork.Count;
 
@@ -37,7 +38,7 @@ namespace NetInterop.Transport.Core.Runtime
 
             while (PoolStarted && WorkerCount < WorkerLimit)
             {
-                AddWorkerToPool();
+                InvokeSynchronized(AddWorkerToPoolUnsafe);
             }
         }
 
@@ -47,11 +48,11 @@ namespace NetInterop.Transport.Core.Runtime
             {
                 throw new ArgumentOutOfRangeException($"Name: {nameof(count)}, expected positive iteger, got negative. Did you mean to call {nameof(ExpandPool)} instead?");
             }
-            WorkerLimit = Math.Max(WorkerLimit - count,0);
+            WorkerLimit = Math.Max(WorkerLimit - count, 0);
 
             while (PoolStarted && WorkerCount > WorkerLimit)
             {
-                RemoveWorkerFromPool();
+                InvokeSynchronized(RemoveWorkerFromPoolUnsafe);
             }
         }
 
@@ -59,8 +60,10 @@ namespace NetInterop.Transport.Core.Runtime
         {
             while (WorkerCount < WorkerLimit)
             {
-                AddWorkerToPool();
+                InvokeSynchronized(AddWorkerToPoolUnsafe);
             }
+
+            // bools are atomic
             PoolStarted = true;
         }
 
@@ -68,20 +71,22 @@ namespace NetInterop.Transport.Core.Runtime
         {
             while (WorkerCount > 0)
             {
-                RemoveWorkerFromPool();
+                InvokeSynchronized(RemoveWorkerFromPoolUnsafe);
             }
+
+            // bools are atomic
             PoolStarted = false;
         }
 
-        private void AddWorkerToPool()
+        private void AddWorkerToPoolUnsafe()
         {
             if (workers.Count < WorkerLimit)
             {
-                while (workers.TryAdd(CreateWorker()) is false){ }
+                while (workers.TryAdd(CreateWorker()) is false) { }
             }
         }
 
-        private void RemoveWorkerFromPool()
+        private void RemoveWorkerFromPoolUnsafe()
         {
             if (workers.Count > 0)
             {
@@ -123,6 +128,23 @@ namespace NetInterop.Transport.Core.Runtime
 
                 // wait 1/60th of a second
                 Thread.Sleep(1000 / 60);
+            }
+        }
+
+        /// <summary>
+        /// Invokes the provided action using this objects syncrhonization object to perform atomic state-changing operations on this object
+        /// </summary>
+        /// <param name="expression"></param>
+        private void InvokeSynchronized(Action expression)
+        {
+            synchronizationLock.Wait();
+            try
+            {
+                expression?.Invoke();
+            }
+            finally
+            {
+                synchronizationLock.Release();
             }
         }
     }
