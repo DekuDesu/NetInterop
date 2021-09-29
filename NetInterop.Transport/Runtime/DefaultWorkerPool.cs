@@ -14,6 +14,11 @@ namespace NetInterop.Transport.Core.Runtime
         private readonly IProducerConsumerCollection<IWorker> workers = new ConcurrentBag<IWorker>();
         private readonly SemaphoreSlim synchronizationLock = new SemaphoreSlim(1, 1);
 
+        public DefaultWorkPool(int workerLimit = -1)
+        {
+            WorkerLimit = workerLimit == -1 ? Environment.ProcessorCount : workerLimit;
+        }
+
         public int WaitingWork => waitingWork.Count;
 
         public bool PoolStarted { get; private set; }

@@ -10,7 +10,5 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     public interface IPacketSender
     {
         void Send(IPacketSerializable value);
-
-        void Send(IPacket packet);
     }
 }
