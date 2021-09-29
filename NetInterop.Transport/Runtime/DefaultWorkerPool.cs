@@ -8,15 +8,17 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Transport.Core.Runtime
 {
-    public class DefaultWorkPool : IWorkerPool
+    public class DefaultWorkPool : IWorkPool
     {
+        private readonly IWorkExceptionHandler exceptionHandler;
         private readonly IProducerConsumerCollection<IWork> waitingWork = new ConcurrentBag<IWork>();
         private readonly IProducerConsumerCollection<IWorker> workers = new ConcurrentBag<IWorker>();
         private readonly SemaphoreSlim synchronizationLock = new SemaphoreSlim(1, 1);
 
-        public DefaultWorkPool(int workerLimit = -1)
+        public DefaultWorkPool(int workerLimit = -1, IWorkExceptionHandler exceptionHandler = null)
         {
             WorkerLimit = workerLimit == -1 ? Environment.ProcessorCount : workerLimit;
+            this.exceptionHandler = exceptionHandler;
         }
 
         public int WaitingWork => waitingWork.Count;
@@ -116,7 +118,14 @@ namespace NetInterop.Transport.Core.Runtime
                 {
                     if (waitingWork.TryTake(out IWork work))
                     {
-                        work.PerformWork();
+                        try
+                        {
+                            work.PerformWork();
+                        }
+                        catch (Exception e)
+                        {
+                            exceptionHandler?.Handle(work, e);
+                        }
                     }
 
                     if (token.IsCancellationRequested)

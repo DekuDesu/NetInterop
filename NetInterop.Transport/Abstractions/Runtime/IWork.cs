@@ -1,7 +1,7 @@
 ﻿namespace NetInterop.Transport.Core.Abstractions.Runtime
 {
     /// <summary>
-    /// Represents some arbitrary work that needs to be completed by a <see cref="IWorkerPool"/>
+    /// Represents some arbitrary work that needs to be completed by a <see cref="IWorkPool"/>
     /// </summary>
     public interface IWork
     {

@@ -15,7 +15,7 @@ namespace NetInterop.Tests.Runtime
         [Fact]
         public void Test_DefaultWorkerLimit()
         {
-            IWorkerPool pool = new DefaultWorkPool();
+            IWorkPool pool = new DefaultWorkPool();
 
             Assert.Equal(Environment.ProcessorCount, pool.WorkerLimit);
         }
@@ -23,7 +23,7 @@ namespace NetInterop.Tests.Runtime
         [Fact]
         public void Test_ShrinkPool_Limit()
         {
-            IWorkerPool pool = new DefaultWorkPool();
+            IWorkPool pool = new DefaultWorkPool();
 
             pool.ShrinkPool(1);
 
@@ -41,7 +41,7 @@ namespace NetInterop.Tests.Runtime
         [Fact]
         public void Test_ExpandPool_Limit()
         {
-            IWorkerPool pool = new DefaultWorkPool()
+            IWorkPool pool = new DefaultWorkPool()
             {
                 WorkerLimit = Environment.ProcessorCount - 1
             };
@@ -62,7 +62,7 @@ namespace NetInterop.Tests.Runtime
         public void Test_StartWorkers()
         {
             int count = 2;
-            IWorkerPool pool = new DefaultWorkPool()
+            IWorkPool pool = new DefaultWorkPool()
             {
                 WorkerLimit = count
             };
@@ -82,7 +82,7 @@ namespace NetInterop.Tests.Runtime
         [Fact]
         public void Test_PerformsWork()
         {
-            IWorkerPool pool = new DefaultWorkPool()
+            IWorkPool pool = new DefaultWorkPool()
             {
                 WorkerLimit = 1
             };
@@ -125,7 +125,7 @@ namespace NetInterop.Tests.Runtime
         {
             int count = Environment.ProcessorCount;
             // when we start the pool we should never exceed WorkerLimit even if we call start multiple times
-            IWorkerPool pool = new DefaultWorkPool()
+            IWorkPool pool = new DefaultWorkPool()
             {
                 WorkerLimit = Environment.ProcessorCount
             };
@@ -169,7 +169,7 @@ namespace NetInterop.Tests.Runtime
         public void Test_Expand()
         {
             // when we start the pool we should never exceed WorkerLimit even if we call start multiple times
-            IWorkerPool pool = new DefaultWorkPool()
+            IWorkPool pool = new DefaultWorkPool()
             {
                 WorkerLimit = 2
             };
@@ -195,7 +195,7 @@ namespace NetInterop.Tests.Runtime
         public void Test_Shrink()
         {
             // when we start the pool we should never exceed WorkerLimit even if we call start multiple times
-            IWorkerPool pool = new DefaultWorkPool()
+            IWorkPool pool = new DefaultWorkPool()
             {
                 WorkerLimit = 3
             };

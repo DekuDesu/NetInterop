@@ -8,10 +8,10 @@ namespace NetInterop.Transport.Core.Packets.Handlers
 {
     public class PacketWorkPoolHandler : IPacketHandler
     {
-        private readonly IWorkerPool pool;
+        private readonly IWorkPool pool;
         private readonly IPacketHandler handler;
 
-        public PacketWorkPoolHandler(IWorkerPool pool, IPacketHandler handler)
+        public PacketWorkPoolHandler(IWorkPool pool, IPacketHandler handler)
         {
             this.pool = pool ?? throw new ArgumentNullException(nameof(pool));
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));

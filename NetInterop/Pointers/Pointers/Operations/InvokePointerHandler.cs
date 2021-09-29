@@ -36,14 +36,7 @@ namespace NetInterop
                 sender.SendBadResponse(callbackId);
             }
 
-            try
-            {
-                sender.SendResponse(callbackId, true, new InvokeMethodPacketProxy(methodPtr, methodHandler, packet));
-            }
-            catch (Exception)
-            {
-                sender.SendBadResponse(callbackId);
-            }
+            sender.SendResponse(callbackId, true, new InvokeMethodPacketProxy(methodPtr, methodHandler, packet));
         }
     }
 

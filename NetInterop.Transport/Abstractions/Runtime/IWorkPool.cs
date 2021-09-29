@@ -8,7 +8,7 @@ namespace NetInterop.Transport.Core.Abstractions.Runtime
     /// Represents a group of threads, tasks responsible for consuming <see cref="IWork"/> from the pool, processing it,
     /// and waiting on standby.
     /// </summary>
-    public interface IWorkerPool
+    public interface IWorkPool
     {
         /// <summary>
         /// The amount of work that is waiting to be performed.

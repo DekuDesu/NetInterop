@@ -43,13 +43,9 @@ namespace NetInterop.Runtime.MethodHandling
             {
                 instance = GetDeclaringInstance(packet);
             }
-            catch (NullReferenceException)
-            {
-                throw new NullReferenceException($"Failed to get an instance of an object to invoke {method.Name} on the remote client. Missing or malformed Net Interop Pointer at the start of the packet.");
-            }
             catch (IndexOutOfRangeException)
             {
-                throw new NullReferenceException($"Failed to get an instance of an object to invoke {method.Name} on the remote client. Missing or malformed Net Interop Pointer at the start of the packet.");
+                throw new IndexOutOfRangeException($"Failed to get an instance of an object to invoke {method.Name} on the remote client. Missing or malformed Net Interop Pointer at the start of the packet.");
             }
 
             object[] methodParams = Deserialize(packet);
@@ -71,7 +67,14 @@ namespace NetInterop.Runtime.MethodHandling
 
             INetPtr instancePtr = pointerProvider.Deserialize(packet);
 
-            return declaringNetworkType.GetPtr(instancePtr);
+            object instance = declaringNetworkType.GetPtr(instancePtr);
+
+            if (instance is null)
+            {
+                throw new NullReferenceException($"Failed to get an instance of an object for pointer {instancePtr}, a reference to instance of {method.DeclaringType.FullName} is required to invoke {method.Name}");
+            }
+
+            return instance;
         }
 
         private Exception GenerateDetailedParameterException(int parameterIndex)
