@@ -6,25 +6,26 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections.Concurrent;
 using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Abstractions;
 
 namespace NetInterop
 {
     public class DefaultNetworkType<T> : INetworkType, INetworkType<T>
     {
         private readonly IPointerProvider pointerProvider;
-        private readonly Func<T> instantiator;
+        private readonly IActivator<T> activator;
         private readonly bool isDisposable;
         private ConcurrentBag<ushort> freedIds = new ConcurrentBag<ushort>();
-        private readonly Action<T> disposer;
+        private readonly IDeactivator<T> disposer;
         private ushort instanceIndex = 0;
         private T[] instances = new T[ushort.MaxValue];
         private readonly object locker = new object();
 
         public ushort Id { get; set; }
 
-        public DefaultNetworkType(ushort id, IPointerProvider pointerProvider, Func<T> instantiator = null, Action<T> disposer = null)
+        public DefaultNetworkType(ushort id, IPointerProvider pointerProvider, IActivator<T> activator, IDeactivator<T> disposer = null)
         {
-            this.instantiator = instantiator ?? DefaultInstantiator;
+            this.activator = activator ?? throw new NullReferenceException(nameof(activator)); ;
             this.Id = id;
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             isDisposable = typeof(T).GetInterface(nameof(IDisposable)) != null;
@@ -35,7 +36,7 @@ namespace NetInterop
         {
             ushort instance = GetNewAddress();
 
-            T newInstance = instantiator();
+            T newInstance = activator.CreateInstance();
 
             lock (locker)
             {
@@ -139,21 +140,7 @@ namespace NetInterop
 
         private void DisposeManagedT(T instance)
         {
-            if (isDisposable)
-            {
-                if (instance.Equals(default) is false)
-                {
-                    if (instance is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                }
-            }
-
-            if (instance != null)
-            {
-                disposer?.Invoke(instance);
-            }
+            disposer.DestroyInstance(instance);
         }
     }
 }

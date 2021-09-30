@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using NetInterop.Attributes;
 using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Abstractions;
 
 namespace NetInterop
 {
@@ -22,46 +23,14 @@ namespace NetInterop
         private readonly IDictionary<ushort, INetworkType> registeredTypes = new Dictionary<ushort, INetworkType>();
         private readonly IDictionary<Type, ushort> idRegistry = new Dictionary<Type, ushort>();
 
-        public ushort RegisterType(Type type, ushort explicitId, object instantiator)
-        {
-            explicitId = GetId(type, explicitId);
-
-            // create the network register type
-            var constructedGeneric = typeof(DefaultNetworkType<>).MakeGenericType(new Type[] { type });
-
-            Type instantiatorType = instantiator.GetType().GetGenericArguments().FirstOrDefault() ?? type;
-
-            if (instantiatorType != type)
-            {
-                throw new InvalidCastException($"Attempted to assign an instantiator for the type {type.FullName} that does not have the same type arguments as expected. Expected: {type.FullName} Actual: {instantiatorType.FullName}");
-            }
-
-            var newRegistration = (INetworkType)Activator.CreateInstance(constructedGeneric, new object[] { explicitId, instantiator });
-
-            registeredTypes.Add(explicitId, newRegistration);
-
-            return explicitId;
-        }
-        public ushort RegisterType(Type type) => RegisterType(type, 0, null);
-        public ushort RegisterType(Type type, ushort explicitId) => RegisterType(type, explicitId, null);
-
-        public INetPtr<T> RegisterType<T>(ushort explicitId) => RegisterType<T>(explicitId, null, null, null, null);
-        public INetPtr<T> RegisterType<T>(Func<T> instantiator) => RegisterType<T>(0, instantiator, null, null, null);
-        public INetPtr<T> RegisterType<T>(Action<T> disposer) => RegisterType<T>(0, null, disposer, null, null);
-        public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer) => RegisterType(0, instantiator, disposer, null, null);
-        public INetPtr<T> RegisterType<T>(IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType(0, null, null, serializer, deserializer);
-        public INetPtr<T> RegisterType<T>(Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType<T>(0, instantiator, disposer, serializer, deserializer);
-        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer) => RegisterType<T>(explicitId, instantiator, disposer, null, null);
-        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator) => RegisterType<T>(explicitId, instantiator, null, null, null);
-        public INetPtr<T> RegisterType<T>(ushort explicitId, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer) => RegisterType<T>(explicitId, null, null, serializer, deserializer);
-        public INetPtr<T> RegisterType<T>(ushort explicitId, Func<T> instantiator, Action<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public INetPtr<T> RegisterType<T>(ushort explicitId, IActivator<T> activator, IDeactivator<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             Type tType = typeof(T);
 
             explicitId = GetId(tType, explicitId);
 
 
-            INetworkType newRegistration = null;
+            INetworkType newRegistration;
 
             if (serializer != null && deserializer != null)
             {

@@ -9,6 +9,7 @@ using NetInterop.Attributes;
 using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Core.Factories;
+using NetInterop.Runtime.Extensions;
 
 namespace NetInterop.Tests
 {
