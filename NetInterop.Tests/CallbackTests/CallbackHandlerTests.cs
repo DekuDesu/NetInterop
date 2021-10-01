@@ -10,6 +10,7 @@ using NetInterop.Tests.CallbackTests.Stubs;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Core.Factories;
 using NetInterop.Runtime.MethodHandling;
+using NetInterop.Runtime.TypeHandling;
 
 namespace NetInterop.Tests.CallbackTests
 {
@@ -23,7 +24,7 @@ namespace NetInterop.Tests.CallbackTests
 
             IPointerProvider pointerProvider = new DefaultPointerProvider();
 
-            INetworkType<int> baseNetworkType = new DefaultNetworkType<int>(1, pointerProvider, () => 69);
+            INetworkType<int> baseNetworkType = new DefaultNetworkType<int>(1, pointerProvider, new FuncActivator<int>(() => 69));
 
             ISerializableNetworkType<int> networkType = new DefaultSerializableNetworkType<int>(baseNetworkType, intDeserializer, intSerializer);
 
@@ -520,7 +521,7 @@ namespace NetInterop.Tests.CallbackTests
 
                 PointerProvider = new DefaultPointerProvider();
 
-                NetworkType = new DefaultNetworkType<int>(1, PointerProvider, () => 0);
+                NetworkType = new DefaultNetworkType<int>(1, PointerProvider, new FuncActivator<int>(() => 69));
 
                 SerializableNetworkType = new DefaultSerializableNetworkType<int>(NetworkType, IntDeserializer, IntSerializer);
 
