@@ -226,7 +226,7 @@ namespace NetInterop.Tests.Runtime
                 this.work = work;
             }
 
-            public void PerformWork()
+            public void PerformWork(CancellationToken token)
             {
                 work?.Invoke();
             }

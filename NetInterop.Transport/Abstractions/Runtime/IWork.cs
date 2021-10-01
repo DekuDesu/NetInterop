@@ -1,4 +1,6 @@
-﻿namespace NetInterop.Transport.Core.Abstractions.Runtime
+﻿using System.Threading;
+
+namespace NetInterop.Transport.Core.Abstractions.Runtime
 {
     /// <summary>
     /// Represents some arbitrary work that needs to be completed by a <see cref="IWorkPool"/>
@@ -8,6 +10,6 @@
         /// <summary>
         /// Performs the work in the context any random thread or task
         /// </summary>
-        void PerformWork();
+        void PerformWork(CancellationToken token);
     }
 }

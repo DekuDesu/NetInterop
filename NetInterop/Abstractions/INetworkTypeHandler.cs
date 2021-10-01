@@ -16,6 +16,7 @@ namespace NetInterop
         /// <param name="type"></param>
         /// <returns></returns>
         bool TryGetAmbiguousType(INetPtr typePtr, out INetworkType type);
+
         /// <summary>
         /// Attempts to get find a registerded <see cref="INetworkType"/> using the type or instance pointer provided.
         /// </summary>
@@ -23,6 +24,7 @@ namespace NetInterop
         /// <param name="type"></param>
         /// <returns></returns>
         bool TryGetType<T>(INetPtr<T> typePtr, out INetworkType<T> type);
+
         /// <summary>
         /// Attempts to get find a registerded <see cref="INetworkType"/> using the generic type provided
         /// </summary>

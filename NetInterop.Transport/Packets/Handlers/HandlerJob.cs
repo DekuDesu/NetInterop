@@ -3,6 +3,7 @@ using NetInterop.Transport.Core.Abstractions.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace NetInterop.Transport.Core.Packets.Handlers
 {
@@ -17,7 +18,7 @@ namespace NetInterop.Transport.Core.Packets.Handlers
             this.packet = packet ?? throw new ArgumentNullException(nameof(packet));
         }
 
-        public void PerformWork()
+        public void PerformWork(CancellationToken token)
         {
             handler.Handle(packet);
         }

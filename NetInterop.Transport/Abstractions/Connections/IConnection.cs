@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace NetInterop.Transport.Core.Abstractions.Connections
 {
     /// <summary>
-    /// Defines an object that controlls a connection to a resource
+    /// Defines an object that controls a connection to a resource
     /// </summary>
     public interface IConnection
     {

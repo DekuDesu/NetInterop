@@ -120,5 +120,10 @@ namespace NetInterop.Runtime.MethodHandling
 
             throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(INetworkMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetworkTypeHandler)}. Use {nameof(INetworkTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
         }
+
+        public void Clear()
+        {
+            registeredMethods.Clear();
+        }
     }
 }

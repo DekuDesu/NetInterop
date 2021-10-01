@@ -3,6 +3,7 @@ using NetInterop.Transport.Core.Abstractions.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace NetInterop.Transport.Core.Packets.Senders
 {
@@ -17,7 +18,7 @@ namespace NetInterop.Transport.Core.Packets.Senders
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
         }
 
-        public void PerformWork()
+        public void PerformWork(CancellationToken token)
         {
             sender.Send(packet);
         }

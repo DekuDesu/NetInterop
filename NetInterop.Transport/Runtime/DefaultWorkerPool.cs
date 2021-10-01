@@ -120,7 +120,7 @@ namespace NetInterop.Transport.Core.Runtime
                     {
                         try
                         {
-                            work.PerformWork();
+                            work.PerformWork(token);
                         }
                         catch (Exception e)
                         {
