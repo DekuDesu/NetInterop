@@ -1,17 +1,13 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
+using System.Diagnostics;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacket<TContext> : IPacket<TContext> where TContext : Enum
+    public class DefaultPacket : IPacket
     {
         private byte[] buffer;
-
-        /// <summary>
-        /// The type of packet this represents, this is enum whos value must be between 0 and 255(byte)
-        /// </summary>
-        public TContext PacketType { get; set; }
 
         /// <summary>
         /// The size of the span, does not indicate end of data within the span, use <see cref="EndOffset"/> for the location of the end of data
@@ -51,13 +47,12 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         public int HeaderSize { get; set; }
 
-        public const int DefaultHeaderSize = sizeof(uint);
+        public const int DefaultHeaderSize = sizeof(ushort);
 
         private const int MaxPacketSize = DefaultHeaderSize + ushort.MaxValue;
 
-        public DefaultPacket(TContext packetType, byte[] data, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(byte[] data, int headerSize = DefaultHeaderSize)
         {
-            PacketType = packetType;
             buffer = new byte[data.Length + headerSize];
             data.CopyTo(buffer, headerSize);
             EndOffset = buffer.Length;
@@ -65,9 +60,8 @@ namespace NetInterop.Transport.Core.Packets
             HeaderSize = headerSize;
         }
 
-        public DefaultPacket(TContext packetType, int estimatedLength, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(int estimatedLength, int headerSize = DefaultHeaderSize)
         {
-            PacketType = packetType;
             HeaderSize = headerSize;
             buffer = new byte[estimatedLength + headerSize];
             EndOffset = 0;
@@ -79,6 +73,7 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
+        [DebuggerHidden]
         public ref byte GetBuffer(int length)
         {
             // make sure we have adequet space
@@ -90,7 +85,7 @@ namespace NetInterop.Transport.Core.Packets
 
             return ref buffer[HeaderSize + offset];
         }
-
+        [DebuggerHidden]
         private ref byte GetPointer(int index)
         {
             return ref buffer[index];
@@ -101,6 +96,7 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="count"></param>
         /// <returns>The index of the last element within the span, this can be used to immediately insert data to the end within re-finding the end of the span</returns>
+        [DebuggerHidden]
         private void Extend(int count)
         {
             int desiredLength = EndOffset + HeaderSize + count;
@@ -127,6 +123,7 @@ namespace NetInterop.Transport.Core.Packets
         /// Appends the given data to the end of the packet, increments the position of the end of the packets data
         /// </summary>
         /// <param name="newData"></param>
+        [DebuggerHidden]
         public void Append(byte[] newData)
         {
             int length = newData.Length;
@@ -147,6 +144,7 @@ namespace NetInterop.Transport.Core.Packets
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
+        [DebuggerHidden]
         public ref byte Remove(int length)
         {
             length = Math.Min(Length, Math.Max(length, 0));
@@ -158,18 +156,22 @@ namespace NetInterop.Transport.Core.Packets
             return ref GetPointer(index);
         }
 
-        public ref byte GetHeader()
+        [DebuggerHidden]
+        public ref byte GetHeaderPointer()
         {
             return ref buffer[0];
         }
 
-        public void SetHeader(byte[] header)
+
+        [DebuggerHidden]
+        public void CompileHeader()
         {
             ref byte ptr = ref buffer[0];
 
-            ptr.Write(header);
+            ptr.Write((ushort)Length);
         }
 
+        [DebuggerHidden]
         public byte[] GetData() => buffer;
     }
 }

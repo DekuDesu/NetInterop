@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetInterop.Transport.Core",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetInterop.Transport.Sockets", "NetInterop.Transport.Sockets\NetInterop.Transport.Sockets.csproj", "{8FECD81C-1AF9-46FA-B50E-6258786D487C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetInterop", "NetInterop\NetInterop.csproj", "{10A07C12-BBDD-4DF6-A912-F9EF9EF065E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FECD81C-1AF9-46FA-B50E-6258786D487C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10A07C12-BBDD-4DF6-A912-F9EF9EF065E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10A07C12-BBDD-4DF6-A912-F9EF9EF065E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10A07C12-BBDD-4DF6-A912-F9EF9EF065E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10A07C12-BBDD-4DF6-A912-F9EF9EF065E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,12 +7,8 @@ using NetInterop.Transport.Core.Packets;
 
 namespace NetInterop.Transport.Core.Abstractions.Packets
 {
-    public interface IPacketSender<TPacket> where TPacket : Enum, IConvertible
+    public interface IPacketSender
     {
-        void Send(IPacketSerializable<TPacket> value);
-
-        void Send(IPacket<TPacket> packet);
-
-        void Send(TPacket packetType, byte[] data);
+        void Send(IPacketSerializable value);
     }
 }

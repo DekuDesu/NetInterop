@@ -3,24 +3,25 @@ using System.Threading;
 using NetInterop.Transport.Core.Abstractions;
 using NetInterop.Transport.Core.Factories;
 using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Transport.Core.Packets.Extensions;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacketController<T> : IPacketController<T> where T : Enum, IConvertible
+    public class DefaultPacketController : IPacketController
     {
         private readonly IStream<byte> backingStream;
-        private readonly IPacketHeader<T> headerParser;
-        private const int PollingRate = 1;
         private readonly SemaphoreSlim locker = new SemaphoreSlim(1, 1);
+        private readonly byte[] headerBuffer = new byte[headerSize];
+        private const int headerSize = DefaultPacket.DefaultHeaderSize;
+
         public bool PendingPackets => backingStream.DataAvailable;
 
-        public DefaultPacketController(IStream<byte> backingStream, IPacketHeader<T> headerParser)
+        public DefaultPacketController(IStream<byte> backingStream)
         {
             this.backingStream = backingStream ?? throw new ArgumentNullException(nameof(backingStream));
-            this.headerParser = headerParser ?? throw new ArgumentNullException(nameof(headerParser));
         }
 
-        public bool TryReadPacket(out IPacket<T> packet)
+        public bool TryReadPacket(out IPacket packet)
         {
             packet = default;
             if (backingStream.DataAvailable is false)
@@ -33,24 +34,18 @@ namespace NetInterop.Transport.Core.Packets
             {
                 if (backingStream.DataAvailable)
                 {
-                    byte[] header = new byte[4];
-
                     // read the header, it contains the type of packet and the size of the packet
-                    backingStream.Read(header, 0, 4);
+                    backingStream.Read(headerBuffer, 0, headerSize);
 
-                    ref byte headerPtr = ref header[0];
+                    ref byte headerPtr = ref headerBuffer[0];
 
-                    // convert the int type to the actual packet type for compile type type safety and convenience
-                    T packetType = headerParser.GetHeaderType(ref headerPtr);
-
-                    // get the message size in bytes
-                    int messageSize = headerParser.GetPacketSize(ref headerPtr);
+                    ushort messageSize = headerPtr.ToUShort();
 
                     // this is for packets that hold no data and merely represent messages
                     // such as things like "response good" or "ping"
                     if (messageSize == 0)
                     {
-                        packet = Packet.Empty(packetType);
+                        packet = Packet.Empty;
 
                         return true;
                     }
@@ -64,10 +59,7 @@ namespace NetInterop.Transport.Core.Packets
                     if (validPacket)
                     {
                         // no sense creating a new object if we got weird data
-                        packet = Packet.Create(packetType, packetData);
-
-                        // this is purely for consistency and debugging, header bytes aren't used for reading gener
-                        packet.SetHeader(header);
+                        packet = Packet.Create(packetData);
                     }
 
                     return validPacket;
@@ -82,9 +74,9 @@ namespace NetInterop.Transport.Core.Packets
             return false;
         }
 
-        public void WriteBlindPacket(IPacket<T> packet)
+        public void WritePacket(IPacket packet)
         {
-            headerParser.CreateHeader(packet);
+            packet.CompileHeader();
 
             backingStream.Write(packet.GetData());
         }

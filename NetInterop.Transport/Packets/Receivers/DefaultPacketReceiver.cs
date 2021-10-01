@@ -1,5 +1,5 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
-using NetInterop.Transport.Core.Abstractions.Server;
+using NetInterop.Transport.Core.Abstractions.Connections;
 using NetInterop.Transport.Core.Packets;
 using System;
 using System.Collections.Generic;
@@ -11,21 +11,21 @@ using System.Timers;
 
 namespace NetInterop.Transport.Core.Packets
 {
-    public class DefaultPacketReceiver<TPacketType> : IPacketReceiver<TPacketType> where TPacketType : Enum, IConvertible
+    public class DefaultPacketReceiver : IPacketReceiver
     {
-        private readonly IPacketController<TPacketType> controller;
+        private readonly IPacketController controller;
         private readonly IConnection connection;
-        private readonly IPacketDispatcher<TPacketType> dispatcher;
+        private readonly IPacketHandler handler;
         private System.Timers.Timer packetAvailableTimer;
         private readonly double timerInterval = 1000 / 60;
-        public DefaultPacketReceiver(IPacketDispatcher<TPacketType> dispatcher, IPacketController<TPacketType> controller, IConnection connection)
+        public DefaultPacketReceiver(IPacketHandler handler, IPacketController controller, IConnection connection)
         {
             if (connection is null)
             {
                 throw new ArgumentNullException(nameof(connection));
             }
 
-            this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
             this.controller = controller ?? throw new ArgumentNullException(nameof(controller));
             this.connection = connection;
         }
@@ -47,9 +47,9 @@ namespace NetInterop.Transport.Core.Packets
         {
             if (controller.PendingPackets)
             {
-                if (controller.TryReadPacket(out IPacket<TPacketType> packet))
+                if (controller.TryReadPacket(out IPacket packet))
                 {
-                    dispatcher.Dispatch(packet);
+                    handler.Handle(packet);
                     return true;
                 }
             }

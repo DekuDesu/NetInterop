@@ -16,6 +16,6 @@ namespace NetInterop.Transport.Sockets.Packets
     {
         public DefaultPacketTypes PacketType { get; } = DefaultPacketTypes.ping;
 
-        public void Handle(IPacket<DefaultPacketTypes> packet) { }
+        public void Handle(IPacket packet) { }
     }
 }
