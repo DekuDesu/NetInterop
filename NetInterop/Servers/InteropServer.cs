@@ -36,11 +36,11 @@ namespace NetInterop.Servers
 
         public void Stop()
         {
-            Manager.StopConnecting();
+            Manager?.StopConnecting();
 
-            listener.Stop();
+            listener?.Stop();
 
-            Manager.DisconnectAll();
+            Manager?.DisconnectAll();
 
             Manager = null;
 
@@ -48,7 +48,7 @@ namespace NetInterop.Servers
 
             Dispatcher = null;
 
-            Connection.Disconnect();
+            Connection?.Disconnect();
 
             Connection = null;
 

@@ -16,12 +16,9 @@ namespace NetInterop.Servers
 
         public void Handle(TcpClient client, IConnection connection)
         {
-            var newClient = new InteropClient()
-            {
-                BackingClient = client
-            };
+            var newClient = Interop.CreateClient(client, connection);
 
-            newClient.Connect(connection);
+            newClient.Start();
 
             Clients.Add(newClient);
 

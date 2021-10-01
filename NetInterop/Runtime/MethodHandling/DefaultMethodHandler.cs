@@ -1,5 +1,6 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,6 +13,7 @@ namespace NetInterop.Runtime.MethodHandling
         private readonly IPointerProvider pointerProvider;
         private readonly INetworkTypeHandler typeHandler;
         private readonly IDictionary<INetPtr, RegisteredMethod> registeredMethods = new Dictionary<INetPtr, RegisteredMethod>();
+        private readonly IDictionary<MethodInfo, INetPtr> methodPtrs = new ConcurrentDictionary<MethodInfo, INetPtr>();
         private ushort nextId = 1;
 
         public DefaultMethodHandler(IPointerProvider pointerProvider, INetworkTypeHandler typeHandler)
@@ -34,6 +36,23 @@ namespace NetInterop.Runtime.MethodHandling
 
         public INetPtr Register(MethodInfo method)
         {
+            if (methodPtrs.ContainsKey(method))
+            {
+                return methodPtrs[method];
+            }
+
+            INetworkType declaringNetwork = null;
+
+            // get the network type for the declaring type for the method
+            if (method.IsStatic is false)
+            {
+                if (typeHandler.TryGetTypePtr(method.DeclaringType, out INetPtr declaringPtr) is false
+                    || typeHandler.TryGetAmbiguousType(declaringPtr, out declaringNetwork) is false)
+                {
+                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(INetworkTypeHandler)}.");
+                }
+            }
+
             // iterate and generate parameters for the method
             // making sure that every type the method accepts as a parameter is registerd with the type handler
             ParameterInfo[] parameterInfos = method.GetParameters();
@@ -49,21 +68,11 @@ namespace NetInterop.Runtime.MethodHandling
             // get the return type and ensure that is as well is registered
             MethodParameter returnParam = EnsureRegistered(method.ReturnParameter, method);
 
-            INetworkType declaringNetwork = null;
-
-            // get the network type for the declaring type for the method
-            if (method.IsStatic is false)
-            {
-                if (typeHandler.TryGetTypePtr(method.DeclaringType, out INetPtr declaringPtr) is false
-                    || typeHandler.TryGetAmbiguousType(declaringPtr, out declaringNetwork) is false)
-                {
-                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(INetworkTypeHandler)}.");
-                }
-            }
-
             RegisteredMethod registration = new RegisteredMethod(method, returnParam, parameters.ToArray(), pointerProvider, declaringNetwork);
 
             INetPtr ptr = pointerProvider.Create(declaringNetwork?.Id ?? 0, nextId++);
+
+            methodPtrs.Add(method, ptr);
 
             registeredMethods.Add(ptr, registration);
 

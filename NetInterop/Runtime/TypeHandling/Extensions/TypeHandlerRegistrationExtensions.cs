@@ -13,22 +13,22 @@ namespace NetInterop.Runtime.Extensions
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler)
             => RegisterType<T>(handler, GetInteropAttributeId<T>());
 
-        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler, 
+        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             ushort interopId)
-            => handler.RegisterType<T>(interopId, 
-                new DefaultActivator<T>(), 
-                new DefaultDeactivator<T>(), 
-                null, 
+            => handler.RegisterType<T>(interopId,
+                new DefaultActivator<T>(),
+                new DefaultDeactivator<T>(),
+                null,
                 null);
 
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             Func<T> activator)
-            => RegisterType<T>(handler, GetInteropAttributeId<T>(),activator);
+            => RegisterType<T>(handler, GetInteropAttributeId<T>(), activator);
 
-        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler, 
+        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             ushort interopId,
             Func<T> activator)
-            => handler.RegisterType<T>(interopId, 
+            => handler.RegisterType<T>(interopId,
                 new FuncActivator<T>(activator),
                 new DefaultDeactivator<T>(),
                 null,
@@ -37,10 +37,10 @@ namespace NetInterop.Runtime.Extensions
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             Func<T> activator,
             Action<T> disposer)
-            => RegisterType<T>(handler,GetInteropAttributeId<T>(),activator,disposer);
+            => RegisterType<T>(handler, GetInteropAttributeId<T>(), activator, disposer);
 
-        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler, 
-            ushort interopId, 
+        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
+            ushort interopId,
             Func<T> activator,
             Action<T> disposer)
             => handler.RegisterType<T>(interopId,
@@ -53,7 +53,7 @@ namespace NetInterop.Runtime.Extensions
             Func<T> activator,
             Action<T> disposer,
             IPacketSerializer<T> serializer)
-            => RegisterType<T>(handler, GetInteropAttributeId<T>(),activator,disposer,serializer);
+            => RegisterType<T>(handler, GetInteropAttributeId<T>(), activator, disposer, serializer);
 
 
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
@@ -69,10 +69,33 @@ namespace NetInterop.Runtime.Extensions
 
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             Func<T> activator,
+            IPacketSerializer<T> serializer,
+            IPacketDeserializer<T> deserializer)
+            => handler.RegisterType<T>(
+                GetInteropAttributeId<T>(),
+                new FuncActivator<T>(activator),
+                new DefaultDeactivator<T>(),
+                serializer,
+                deserializer);
+
+        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
+            ushort interopId,
+            Func<T> activator,
+            IPacketSerializer<T> serializer,
+            IPacketDeserializer<T> deserializer)
+            => handler.RegisterType<T>(
+                interopId,
+                new FuncActivator<T>(activator),
+                new DefaultDeactivator<T>(),
+                serializer,
+                deserializer);
+
+        public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
+            Func<T> activator,
             Action<T> disposer,
             IPacketSerializer<T> serializer,
             IPacketDeserializer<T> deserializer)
-            => RegisterType<T>(handler, GetInteropAttributeId<T>(),activator,disposer,serializer,deserializer);
+            => RegisterType<T>(handler, GetInteropAttributeId<T>(), activator, disposer, serializer, deserializer);
 
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             ushort interopId,
@@ -89,7 +112,7 @@ namespace NetInterop.Runtime.Extensions
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             IPacketSerializer<T> serializer,
             IPacketDeserializer<T> deserializer)
-            => RegisterType<T>(handler, GetInteropAttributeId<T>(),serializer,deserializer);
+            => RegisterType<T>(handler, GetInteropAttributeId<T>(), serializer, deserializer);
 
         public static INetPtr<T> RegisterType<T>(this INetworkTypeHandler handler,
             ushort interopId,

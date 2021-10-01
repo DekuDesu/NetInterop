@@ -15,7 +15,7 @@ namespace NetInterop.Runtime.TypeHandling
         /// <param name="expression"></param>
         public ActionDeactivator(Action<T> expression)
         {
-            this.expression = expression;
+            this.expression = expression ?? throw new ArgumentNullException(nameof(expression));
         }
 
         public void DestroyInstance(T instance) => expression(instance);

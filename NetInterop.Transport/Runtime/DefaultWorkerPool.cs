@@ -10,7 +10,7 @@ namespace NetInterop.Transport.Core.Runtime
 {
     public class DefaultWorkPool : IWorkPool
     {
-        private readonly IWorkExceptionHandler exceptionHandler;
+        public IWorkExceptionHandler ExceptionHandler { get; set; }
         private readonly IProducerConsumerCollection<IWork> waitingWork = new ConcurrentBag<IWork>();
         private readonly IProducerConsumerCollection<IWorker> workers = new ConcurrentBag<IWorker>();
         private readonly SemaphoreSlim synchronizationLock = new SemaphoreSlim(1, 1);
@@ -18,7 +18,7 @@ namespace NetInterop.Transport.Core.Runtime
         public DefaultWorkPool(int workerLimit = -1, IWorkExceptionHandler exceptionHandler = null)
         {
             WorkerLimit = workerLimit == -1 ? Environment.ProcessorCount : workerLimit;
-            this.exceptionHandler = exceptionHandler;
+            this.ExceptionHandler = exceptionHandler;
         }
 
         public int WaitingWork => waitingWork.Count;
@@ -124,7 +124,7 @@ namespace NetInterop.Transport.Core.Runtime
                         }
                         catch (Exception e)
                         {
-                            exceptionHandler?.Handle(work, e);
+                            ExceptionHandler?.Handle(work, e);
                         }
                     }
 

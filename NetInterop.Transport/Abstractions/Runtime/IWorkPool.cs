@@ -11,6 +11,10 @@ namespace NetInterop.Transport.Core.Abstractions.Runtime
     public interface IWorkPool
     {
         /// <summary>
+        /// The handler that should consume any exceptions encountered in work
+        /// </summary>
+        IWorkExceptionHandler ExceptionHandler { get; set; }
+        /// <summary>
         /// The amount of work that is waiting to be performed.
         /// </summary>
         int WaitingWork { get; }

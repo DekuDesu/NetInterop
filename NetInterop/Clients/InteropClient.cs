@@ -35,59 +35,19 @@ namespace NetInterop.Clients
 
         public IWorkPool WorkPool { get; set; }
 
-        public IPointerProvider PointerProvider { get; set; } = new DefaultPointerProvider();
+        public IPointerProvider PointerProvider { get; set; }
         public IPointerResponseSender PointerResponseSender { get; set; }
         public IDelegateHandler<bool, IPacket> PacketCallbackHandler { get; set; }
 
 
-        public void Connect(string hostname, int port) => Connect(new DefaultTcpConnection(BackingClient, IPAddress.Parse(hostname), port));
-
-        public void Connect(IConnection connection)
+        public void Start()
         {
-            Connection = connection;
-
-            Stream = new DefaultTcpStream(BackingClient, Connection);
-
-            PacketController = new DefaultPacketController(Stream);
-
-            WorkPool = new DefaultWorkPool();
-
-            PacketSender = new PacketWorkPoolSender(new DefaultPacketSender(PacketController), WorkPool);
-
-            Types = new DefaultNetworkTypeHandler(PointerProvider);
-
-            Methods = new DefaultMethodHandler(PointerProvider, Types);
-
-            PointerResponseSender = new DefaultPointerResponseSender(PacketSender);
-
-            PacketCallbackHandler = new DefaultPacketDelegateHandler();
-
-            RemoteHeap = new NetworkHeap(Types, PacketSender, PacketCallbackHandler, Methods);
-
-            PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
-                new IPacketHandler<PointerOperations>[]
-                {
-                    // pointer operations
-                    new AllocPointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new FreePointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new SetPointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new GetPointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new InvokePointerHandler(PointerProvider,PointerResponseSender, Methods),
-                    // in charge of handling the results of the above operations
-                    new DefaultPointerReponseHandler(new CallbackPacketHandler(PacketCallbackHandler))
-                }
-            ));
-
-            PacketReceiver = new DefaultPacketReceiver(PacketHandler, PacketController, Connection);
-
-            WorkPool.AddWork(new PacketReceiverJob(PacketReceiver, PacketController));
-
             WorkPool.StartPool();
         }
 
         public void Disconnect()
         {
-            WorkPool.StopPool();
+            WorkPool?.StopPool();
 
             PacketReceiver = null;
 
@@ -99,29 +59,29 @@ namespace NetInterop.Clients
 
             PointerResponseSender = null;
 
-            Methods.Clear();
+            Methods?.Clear();
 
             Methods = null;
 
-            Types.Clear();
+            Types?.Clear();
 
             Types = null;
 
             PacketSender = null;
 
-            WorkPool = new DefaultWorkPool();
+            WorkPool = null;
 
             PacketController = null;
 
             Stream = null;
 
-            Connection.Disconnect();
+            Connection?.Disconnect();
 
             Connection = null;
 
-            BackingClient.Dispose();
+            BackingClient?.Dispose();
 
-            BackingClient = new TcpClient();
+            BackingClient = null;
         }
     }
 }

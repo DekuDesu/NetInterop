@@ -57,9 +57,11 @@ namespace NetInterop.Abstractions
         /// Controls the threads assigned to this client for serialization, deserialization, and runtime tasks
         /// </summary>
         IWorkPool WorkPool { get; set; }
+        IPointerProvider PointerProvider { get; set; }
+        IPointerResponseSender PointerResponseSender { get; set; }
+        IDelegateHandler<bool, IPacket> PacketCallbackHandler { get; set; }
 
-        void Connect(string hostname, int port);
-        void Connect(IConnection connection);
+        void Start();
         void Disconnect();
     }
 }

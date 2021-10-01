@@ -98,7 +98,7 @@ namespace NetInterop
 
         public void FreeAll()
         {
-            T[] safeCopy = Array.Empty<T>();
+            T[] safeCopy = new T[instances.Length];
 
             lock (locker)
             {
@@ -133,14 +133,9 @@ namespace NetInterop
             return instanceIndex++;
         }
 
-        private T DefaultInstantiator()
-        {
-            return Activator.CreateInstance<T>();
-        }
-
         private void DisposeManagedT(T instance)
         {
-            disposer.DestroyInstance(instance);
+            disposer?.DestroyInstance(instance);
         }
     }
 }
