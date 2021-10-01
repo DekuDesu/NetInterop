@@ -9,14 +9,12 @@ namespace NetInterop
     public class InvokePointerHandler : IPacketHandler<PointerOperations>
     {
         private readonly INetworkMethodHandler methodHandler;
-        private readonly INetworkTypeHandler typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public InvokePointerHandler(INetworkTypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender, INetworkMethodHandler methodHandler)
+        public InvokePointerHandler(IPointerProvider pointerProvider, IPointerResponseSender sender, INetworkMethodHandler methodHandler)
         {
             this.methodHandler = methodHandler ?? throw new ArgumentNullException(nameof(methodHandler));
-            this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
         }

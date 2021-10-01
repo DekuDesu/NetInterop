@@ -21,7 +21,7 @@ namespace NetInterop.Clients
 {
     public class InteropClient : IClient
     {
-        private TcpClient client;
+        public TcpClient BackingClient { get; set; }
 
         public IConnection Connection { get; set; }
         public IStream<byte> Stream { get; set; }
@@ -40,11 +40,13 @@ namespace NetInterop.Clients
         public IDelegateHandler<bool, IPacket> PacketCallbackHandler { get; set; }
 
 
-        public void Connect(string hostname, int port)
-        {
-            Connection = new DefaultTcpConnection(client, IPAddress.Parse(hostname), port);
+        public void Connect(string hostname, int port) => Connect(new DefaultTcpConnection(BackingClient, IPAddress.Parse(hostname), port));
 
-            Stream = new DefaultTcpStream(client, Connection);
+        public void Connect(IConnection connection)
+        {
+            Connection = connection;
+
+            Stream = new DefaultTcpStream(BackingClient, Connection);
 
             PacketController = new DefaultPacketController(Stream);
 
@@ -70,7 +72,7 @@ namespace NetInterop.Clients
                     new FreePointerHandler(Types,PointerProvider,PointerResponseSender),
                     new SetPointerHandler(Types,PointerProvider,PointerResponseSender),
                     new GetPointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new InvokePointerHandler(Types,PointerProvider,PointerResponseSender, Methods),
+                    new InvokePointerHandler(PointerProvider,PointerResponseSender, Methods),
                     // in charge of handling the results of the above operations
                     new DefaultPointerReponseHandler(new CallbackPacketHandler(PacketCallbackHandler))
                 }
@@ -117,9 +119,9 @@ namespace NetInterop.Clients
 
             Connection = null;
 
-            client.Dispose();
+            BackingClient.Dispose();
 
-            client = new TcpClient();
+            BackingClient = new TcpClient();
         }
     }
 }

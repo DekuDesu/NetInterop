@@ -537,7 +537,7 @@ namespace NetInterop.Tests.CallbackTests
                 SetOperation = new SetPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 GetOperation = new GetPointerHandler(TypeHandler, PointerProvider, PointerSender);
                 FreeOperation = new FreePointerHandler(TypeHandler, PointerProvider, PointerSender);
-                InvokeOperation = new InvokePointerHandler(TypeHandler, PointerProvider, PointerSender, MethodHandler);
+                InvokeOperation = new InvokePointerHandler(PointerProvider, PointerSender, MethodHandler);
 
                 OperationHandler = new PointerPacketDispatchHandler(AllocOperation, SetOperation, GetOperation, FreeOperation);
 
