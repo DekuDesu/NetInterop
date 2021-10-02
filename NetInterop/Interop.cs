@@ -27,6 +27,8 @@ namespace NetInterop
 
         public static event Action<IWorkPool> GlobalWorkPoolStartup;
 
+        public static event Action<IClient> OnNewClientConnected;
+
         public static IClient CreateClient(string hostname, int port)
         {
             var client = new TcpClient();
@@ -108,7 +110,13 @@ namespace NetInterop
 
         public static IServer CreateServer()
         {
-            return new InteropServer();
+            var clientHandler = new InteropClientHandler();
+
+            InteropServer result = new InteropServer() { Handler = clientHandler };
+
+            clientHandler.OnHandle += OnNewClientConnected;
+
+            return result;
         }
     }
 }

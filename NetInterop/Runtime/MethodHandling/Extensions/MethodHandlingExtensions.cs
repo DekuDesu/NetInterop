@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace NetInterop.Extensions
+namespace NetInterop.Runtime.Extensions
 {
     public static class MethodHandlingExtensions
     {
