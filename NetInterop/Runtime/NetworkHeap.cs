@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Packets;
+﻿using NetInterop.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,10 +9,10 @@ namespace NetInterop
     public class NetworkHeap : INetworkHeap
     {
         private readonly INetworkMethodHandler methodHandler;
-        private readonly INetworkTypeHandler typeHandler;
+        private readonly INetTypeHandler typeHandler;
         private readonly IPacketSender sender;
         private readonly IDelegateHandler<bool, IPacket> callbackDelegateHandler;
-        public NetworkHeap(INetworkTypeHandler typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, INetworkMethodHandler methodHandler)
+        public NetworkHeap(INetTypeHandler typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, INetworkMethodHandler methodHandler)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
@@ -23,7 +24,7 @@ namespace NetInterop
 
         public void Create<T>(Action<INetPtr<T>> callback)
         {
-            if (typeHandler.TryGetTypePtr<T>(out INetPtr<T> ptr))
+            if (typeHandler.TryGetType<T>(out INetType<T> type))
             {
                 sender.Send(new PointerOperationPacket(PointerOperations.Alloc, new CallbackPacket(
                     (goodResponse, packet) =>
@@ -33,7 +34,7 @@ namespace NetInterop
                             callback(PointerProvider.Deserialize(packet).As<T>());
                         }
                     },
-                    ptr, callbackDelegateHandler)));
+                    type.TypePointer, callbackDelegateHandler)));
                 return;
             }
         }
@@ -87,7 +88,7 @@ namespace NetInterop
 
         public void Get(INetPtr ptr, Action<object> callback)
         {
-            if (typeHandler.TryGetAmbiguousSerializableType(ptr, out var serializer))
+            if (typeHandler.TryGetSerializableType(ptr, out var serializer))
             {
                 sender.Send(new PointerOperationPacket(PointerOperations.Get, new CallbackPacket(
                     (goodResponse, packet) =>
@@ -110,7 +111,7 @@ namespace NetInterop
 
         public void Set<T>(INetPtr<T> ptr, T value)
         {
-            if (typeHandler.TryGetSerializableType<T>(ptr, out var serializer))
+            if (typeHandler.TryGetSerializableType<T>(ptr, out ISerializableNetType<T> serializer))
             {
                 sender.Send(new PointerOperationPacket(PointerOperations.Set, new CallbackPacket(
                     null,
@@ -124,7 +125,7 @@ namespace NetInterop
 
         public void Set(INetPtr ptr, object value)
         {
-            if (typeHandler.TryGetAmbiguousSerializableType(ptr, out var serializer))
+            if (typeHandler.TryGetSerializableType(ptr, out var serializer))
             {
                 sender.Send(new PointerOperationPacket(PointerOperations.Set, new CallbackPacket(
                     null,

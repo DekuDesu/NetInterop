@@ -21,12 +21,12 @@ namespace NetInterop
         private T[] instances = new T[ushort.MaxValue];
         private readonly object locker = new object();
 
-        public ushort Id { get; set; }
+        public ushort InteropId { get; set; }
 
         public DefaultNetworkType(ushort id, IPointerProvider pointerProvider, IActivator<T> activator, IDeactivator<T> disposer = null)
         {
             this.activator = activator ?? throw new NullReferenceException(nameof(activator)); ;
-            this.Id = id;
+            this.InteropId = id;
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             isDisposable = typeof(T).GetInterface(nameof(IDisposable)) != null;
             this.disposer = disposer;
@@ -43,7 +43,7 @@ namespace NetInterop
                 instances[instance] = newInstance;
             }
 
-            return pointerProvider.Create<T>(Id, instance);
+            return pointerProvider.Create<T>(InteropId, instance);
         }
 
         public T GetPtr(INetPtr<T> ptr)
@@ -69,7 +69,7 @@ namespace NetInterop
             }
             else
             {
-                throw new InvalidCastException($"Failed to cast pointer {ptr} to {typeof(T).FullName}, expected type {this.Id} got {ptr.PtrType} ({value})");
+                throw new InvalidCastException($"Failed to cast pointer {ptr} to {typeof(T).FullName}, expected type {this.InteropId} got {ptr.PtrType} ({value})");
             }
         }
 
@@ -135,7 +135,7 @@ namespace NetInterop
 
         private void DisposeManagedT(T instance)
         {
-            disposer?.DestroyInstance(instance);
+            disposer?.DestroyInstance(ref instance);
         }
     }
 }

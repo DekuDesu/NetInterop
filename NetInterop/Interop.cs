@@ -16,16 +16,22 @@ using NetInterop.Transport.Core.Packets.Handlers;
 using NetInterop.Runtime.Jobs;
 using System.Net;
 using NetInterop.Transport.Core.Abstractions.Connections;
+using NetInterop.Runtime;
+using NetInterop.Runtime.TypeHandling;
 
 namespace NetInterop
 {
     public static class Interop
     {
+        public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
+
+        public static INetworkMethodHandler Methods { get; set; } = new DefaultMethodHandler(null, null);
+
+        public static INetTypeHandler Types { get; set; }
+
         public static event Action<INetworkTypeHandler> GlobalTypesStartup;
 
         public static event Action<INetworkMethodHandler> GlobalMethodsStartup;
-
-        public static event Action<IWorkPool> GlobalWorkPoolStartup;
 
         public static event Action<IClient> OnNewClientConnected;
 
@@ -39,17 +45,11 @@ namespace NetInterop
 
         public static IClient CreateClient(TcpClient client, IConnection connection)
         {
-            var WorkPool = new DefaultWorkPool();
-
-            GlobalWorkPoolStartup?.Invoke(WorkPool);
-
             var BackingClient = client;
 
             var PointerProvider = new DefaultPointerProvider();
 
-            var Types = new DefaultNetworkTypeHandler(PointerProvider);
-
-            GlobalTypesStartup?.Invoke(Types);
+            var Types = new NetTypeHandler(PointerProvider);
 
             var Methods = new DefaultMethodHandler(PointerProvider, Types);
 
@@ -71,14 +71,16 @@ namespace NetInterop
 
             var RemoteHeap = new NetworkHeap(Types, PacketSender, PacketCallbackHandler, Methods);
 
+            IObjectHeap runtimeHeap = new RuntimeHeap();
+
             var PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
                 new IPacketHandler<PointerOperations>[]
                 {
                     // pointer operations
-                    new AllocPointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new FreePointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new SetPointerHandler(Types,PointerProvider,PointerResponseSender),
-                    new GetPointerHandler(Types,PointerProvider,PointerResponseSender),
+                    new AllocPointerHandler(runtimeHeap,PointerProvider,PointerResponseSender),
+                    new FreePointerHandler(runtimeHeap,PointerProvider,PointerResponseSender),
+                    new SetPointerHandler(runtimeHeap,Types,PointerProvider,PointerResponseSender),
+                    new GetPointerHandler(runtimeHeap,Types,PointerProvider,PointerResponseSender),
                     new InvokePointerHandler(PointerProvider,PointerResponseSender, Methods),
                     // in charge of handling the results of the above operations
                     new DefaultPointerReponseHandler(new CallbackPacketHandler(PacketCallbackHandler))

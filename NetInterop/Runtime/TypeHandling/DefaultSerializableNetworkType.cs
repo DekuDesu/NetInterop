@@ -18,7 +18,7 @@ namespace NetInterop
             this.serializer = serializer;
         }
 
-        public ushort Id => networkType.Id;
+        public ushort InteropId => networkType.InteropId;
 
         public INetPtr AllocPtr() => networkType.AllocPtr();
 

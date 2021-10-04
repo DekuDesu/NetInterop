@@ -7,7 +7,16 @@ namespace NetInterop.Runtime.TypeHandling
 {
     public class DefaultDeactivator<T> : IDeactivator<T>
     {
-        public void DestroyInstance(T instance)
+        public void DestroyInstance(ref T instance)
+        {
+            if (instance is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+
+
+        public void DestroyInstance(ref object instance)
         {
             if (instance is IDisposable disposable)
             {

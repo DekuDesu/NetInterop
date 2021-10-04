@@ -10,6 +10,8 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Core.Factories;
 using NetInterop.Runtime.Extensions;
+using NetInterop.Abstractions;
+using NetInterop.Runtime;
 
 namespace NetInterop.Tests
 {
@@ -19,7 +21,7 @@ namespace NetInterop.Tests
         public void Test_BasicRegister()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetworkTypeHandler typeHandler = new DefaultNetworkTypeHandler(pointerProvider);
+            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
 
             typeHandler.RegisterType<int>(1);
 
@@ -27,14 +29,14 @@ namespace NetInterop.Tests
 
             Assert.NotNull(netType);
 
-            Assert.Equal(1, netType.Id);
+            Assert.Equal(1, netType.TypePointer.PtrType);
         }
 
         [Fact]
         public void Test_GetTypePtr()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetworkTypeHandler typeHandler = new DefaultNetworkTypeHandler(pointerProvider);
+            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
 
             typeHandler.RegisterType<int>(1);
 
@@ -42,18 +44,14 @@ namespace NetInterop.Tests
 
             Assert.NotNull(netType);
 
-            Assert.Equal(1, netType.Id);
-
-            Assert.True(typeHandler.TryGetTypePtr<int>(out INetPtr<int> ptr));
-
-            Assert.Equal(1, ptr.PtrType);
+            Assert.Equal(1, netType.TypePointer.PtrType);
         }
 
         [Fact]
         public void Test_InstantiatorAndDisposerRegister()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetworkTypeHandler typeHandler = new DefaultNetworkTypeHandler(pointerProvider);
+            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
 
             bool instantiated = false; ;
             bool disposed = false;
@@ -73,11 +71,13 @@ namespace NetInterop.Tests
 
             Assert.True(typeHandler.TryGetType<int>(out var netType));
 
-            INetPtr<int> ptr = netType.AllocPtr().As<int>();
+            IObjectHeap<int> heap = new ObjectHeap<int>(netType, pointerProvider);
+
+            INetPtr<int> ptr = heap.Alloc(null).As<int>();
 
             Assert.True(instantiated);
 
-            netType.Free(ptr);
+            heap.Free(ptr);
 
             Assert.True(disposed);
         }
@@ -86,13 +86,13 @@ namespace NetInterop.Tests
         public void Test_Serialization()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetworkTypeHandler typeHandler = new DefaultNetworkTypeHandler(pointerProvider);
+            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
 
             var serializer = new TestSerializer();
 
             typeHandler.RegisterType<TestSerializableClass>(0x01, serializer, serializer);
 
-            Assert.True(typeHandler.TryGetAmbiguousSerializableType(pointerProvider.Create(0x01, 0), out var netType));
+            Assert.True(typeHandler.TryGetSerializableType(pointerProvider.Create(0x01, 0), out var netType));
 
             IPacket packet = Packet.Create(0);
 
