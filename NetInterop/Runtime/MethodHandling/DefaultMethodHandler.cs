@@ -51,7 +51,7 @@ namespace NetInterop.Runtime.MethodHandling
             {
                 if (typeHandler.TryGetType(method.DeclaringType, out _) is false)
                 {
-                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(INetworkTypeHandler)}.");
+                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(INetTypeHandler)}.");
                 }
             }
 
@@ -126,7 +126,7 @@ namespace NetInterop.Runtime.MethodHandling
                 return new MethodParameter(info, null, null);
             }
 
-            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(INetworkMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetworkTypeHandler)}. Use {nameof(INetworkTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
+            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(INetworkMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetTypeHandler)}. Use {nameof(INetTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
         }
 
         public void Clear()

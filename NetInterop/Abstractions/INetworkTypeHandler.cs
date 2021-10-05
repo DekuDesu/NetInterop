@@ -7,6 +7,7 @@ namespace NetInterop
     /// <summary>
     /// Handles runtime instantiation, destruction and management of network types during runtime
     /// </summary>
+    [System.Obsolete("Migrate to INetTypeHandler instead")]
     public interface INetworkTypeHandler
     {
         /// <summary>
