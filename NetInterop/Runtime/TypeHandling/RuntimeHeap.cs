@@ -39,6 +39,8 @@ namespace NetInterop.Runtime.TypeHandling
             return Alloc(ptr);
         }
 
+        public INetPtr<T> Alloc<T>(INetPtr<T> ptr) => Alloc((INetPtr)ptr).As<T>();
+
         public void Clear()
         {
             foreach (var item in heaps)
@@ -52,8 +54,12 @@ namespace NetInterop.Runtime.TypeHandling
 
         public object Get(INetPtr instancePtr) => heaps[instancePtr.PtrType].Get(instancePtr);
 
+        public T Get<T>(INetPtr<T> instancePtr) => (T)(Get((INetPtr)instancePtr) ?? default(T));
+
         public void Set(INetPtr instancePtr, object value) => heaps[instancePtr.PtrType].Set(instancePtr, value);
-        
+
+        public void Set<T>(INetPtr<T> instancePtr, T value) => Set((INetPtr) instancePtr, value);
+
         private IObjectHeap Create(INetType type)
         {
             return (IObjectHeap)Activator.CreateInstance(typeof(ObjectHeap<>).MakeGenericType(type.BackingType),type,pointerProvider);

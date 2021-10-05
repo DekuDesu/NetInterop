@@ -81,7 +81,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             methodHandler.Invoke(methodPtr, inputPacket, outputPacket);
 
             // get the instance value and make sure RanTest is tru
-            TestClass instance = (TestClass)heap.Get(instancePtr);
+            TestClass instance = heap.Get(instancePtr);
 
             Assert.True(instance.RanTest);
         }
