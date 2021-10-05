@@ -32,7 +32,7 @@ namespace NetInterop.Clients
         public IPacketReceiver PacketReceiver { get; set; }
         public IPacketSender PacketSender { get; set; }
         public IPacketHandler PacketHandler { get; set; }
-
+        public IObjectHeap Heap { get; set; }
         public IWorkPool WorkPool { get; set; }
 
         public IPointerProvider PointerProvider { get; set; }
@@ -58,12 +58,6 @@ namespace NetInterop.Clients
             PacketCallbackHandler = null;
 
             PointerResponseSender = null;
-
-            Methods?.Clear();
-
-            Methods = null;
-
-            Types = null;
 
             PacketSender = null;
 

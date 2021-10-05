@@ -26,12 +26,19 @@ namespace NetInterop
         public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
 
         public static INetTypeHandler Types { get; set; }
-
-        public static event Action<INetworkTypeHandler> GlobalTypesStartup;
-
-        public static event Action<INetworkMethodHandler> GlobalMethodsStartup;
+        public static INetworkMethodHandler Methods { get; set; }
+        public static IPointerProvider PointerProvider { get; set; }
+        public static IObjectHeap LocalHeap { get; set; }
 
         public static event Action<IClient> OnNewClientConnected;
+
+        static Interop()
+        {
+            PointerProvider = new DefaultPointerProvider();
+            Types = new NetTypeHandler(PointerProvider);
+            LocalHeap = new RuntimeHeap(Types,PointerProvider);
+            Methods = new DefaultMethodHandler(PointerProvider,Types,LocalHeap);
+        }
 
         public static IClient CreateClient(string hostname, int port)
         {
@@ -44,16 +51,6 @@ namespace NetInterop
         public static IClient CreateClient(TcpClient client, IConnection connection)
         {
             var BackingClient = client;
-
-            var PointerProvider = new DefaultPointerProvider();
-
-            var Types = new NetTypeHandler(PointerProvider);
-
-            IObjectHeap runtimeHeap = new RuntimeHeap(Types, PointerProvider);
-
-            var Methods = new DefaultMethodHandler(PointerProvider, Types, runtimeHeap);
-
-            GlobalMethodsStartup?.Invoke(Methods);
 
             var PacketCallbackHandler = new DefaultPacketDelegateHandler();
 
@@ -71,16 +68,14 @@ namespace NetInterop
 
             var RemoteHeap = new NetworkHeap(Types, PacketSender, PacketCallbackHandler, Methods);
 
-            
-
             var PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
                 new IPacketHandler<PointerOperations>[]
                 {
                     // pointer operations
-                    new AllocPointerHandler(runtimeHeap,PointerProvider,PointerResponseSender),
-                    new FreePointerHandler(runtimeHeap,PointerProvider,PointerResponseSender),
-                    new SetPointerHandler(runtimeHeap,Types,PointerProvider,PointerResponseSender),
-                    new GetPointerHandler(runtimeHeap,Types,PointerProvider,PointerResponseSender),
+                    new AllocPointerHandler(LocalHeap,PointerProvider,PointerResponseSender),
+                    new FreePointerHandler(LocalHeap,PointerProvider,PointerResponseSender),
+                    new SetPointerHandler(LocalHeap,Types,PointerProvider,PointerResponseSender),
+                    new GetPointerHandler(LocalHeap,Types,PointerProvider,PointerResponseSender),
                     new InvokePointerHandler(PointerProvider,PointerResponseSender, Methods),
                     // in charge of handling the results of the above operations
                     new DefaultPointerReponseHandler(new CallbackPacketHandler(PacketCallbackHandler))
@@ -95,6 +90,7 @@ namespace NetInterop
             {
                 BackingClient = BackingClient,
                 WorkPool = WorkPool,
+                Heap = LocalHeap,
                 Stream = Stream,
                 Methods = Methods,
                 Types = Types,
