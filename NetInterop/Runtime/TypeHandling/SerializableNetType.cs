@@ -12,6 +12,8 @@ namespace NetInterop.Runtime
         private readonly IPacketSerializer<T> serializer;
         private readonly IPacketDeserializer<T> deserializer;
 
+        public Type BackingType => type.BackingType;
+
         public SerializableNetType(INetType<T> type, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             this.type = type;

@@ -25,8 +25,6 @@ namespace NetInterop
     {
         public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
 
-        public static INetworkMethodHandler Methods { get; set; } = new DefaultMethodHandler(null, null);
-
         public static INetTypeHandler Types { get; set; }
 
         public static event Action<INetworkTypeHandler> GlobalTypesStartup;
@@ -51,7 +49,9 @@ namespace NetInterop
 
             var Types = new NetTypeHandler(PointerProvider);
 
-            var Methods = new DefaultMethodHandler(PointerProvider, Types);
+            IObjectHeap runtimeHeap = new RuntimeHeap(Types, PointerProvider);
+
+            var Methods = new DefaultMethodHandler(PointerProvider, Types, runtimeHeap);
 
             GlobalMethodsStartup?.Invoke(Methods);
 
@@ -71,7 +71,7 @@ namespace NetInterop
 
             var RemoteHeap = new NetworkHeap(Types, PacketSender, PacketCallbackHandler, Methods);
 
-            IObjectHeap runtimeHeap = new RuntimeHeap();
+            
 
             var PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
                 new IPacketHandler<PointerOperations>[]

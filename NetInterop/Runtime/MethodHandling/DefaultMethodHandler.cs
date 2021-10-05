@@ -13,14 +13,16 @@ namespace NetInterop.Runtime.MethodHandling
     {
         private readonly IPointerProvider pointerProvider;
         private readonly INetTypeHandler typeHandler;
+        private readonly IObjectHeap heap;
         private readonly IDictionary<INetPtr, RegisteredMethod> registeredMethods = new Dictionary<INetPtr, RegisteredMethod>();
         private readonly IDictionary<MethodInfo, INetPtr> methodPtrs = new ConcurrentDictionary<MethodInfo, INetPtr>();
         private ushort nextId = 1;
 
-        public DefaultMethodHandler(IPointerProvider pointerProvider, INetTypeHandler typeHandler)
+        public DefaultMethodHandler(IPointerProvider pointerProvider, INetTypeHandler typeHandler, IObjectHeap heap)
         {
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
+            this.heap = heap ?? throw new ArgumentNullException(nameof(heap));
         }
 
         public void Invoke(INetPtr methodPtr, IPacket packet) => Invoke(methodPtr, packet, null);
@@ -68,7 +70,7 @@ namespace NetInterop.Runtime.MethodHandling
             // get the return type and ensure that is as well is registered
             MethodParameter returnParam = EnsureRegistered(method.ReturnParameter, method);
 
-            RegisteredMethod registration = new RegisteredMethod(method, returnParam, parameters.ToArray(), pointerProvider, declaringNetwork);
+            RegisteredMethod registration = new RegisteredMethod(method, returnParam, parameters.ToArray(), pointerProvider, heap);
 
             INetPtr ptr = pointerProvider.Create(declaringNetwork?.InteropId ?? 0, nextId++);
 

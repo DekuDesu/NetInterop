@@ -8,17 +8,36 @@ namespace NetInterop.Runtime.TypeHandling
 {
     public class RuntimeHeap : IObjectHeap
     {
+        private readonly INetTypeHandler typeHandler;
+        private readonly IPointerProvider pointerProvider;
         private readonly IDictionary<ushort, IObjectHeap> heaps = new ConcurrentDictionary<ushort, IObjectHeap>();
 
-        public RuntimeHeap(IEnumerable<KeyValuePair<INetPtr, IObjectHeap>> heaps)
+        public RuntimeHeap(INetTypeHandler typeHandler, IPointerProvider pointerProvider)
         {
-            foreach (var item in heaps)
-            {
-                this.heaps.Add(item.Key.PtrType, item.Value);
-            }
+            this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
+            this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
         }
 
-        public INetPtr Alloc(INetPtr ptr) => heaps[ptr.PtrType].Alloc(ptr);
+        public INetPtr Alloc(INetPtr ptr)
+        {
+            // check to see if the type already has a heap
+            if (heaps.ContainsKey(ptr.PtrType))
+            { 
+                return heaps[ptr.PtrType].Alloc(ptr);
+            }
+
+            // since it doesnt have a heap attempt to create one if we have enough information
+            if (typeHandler.TryGetType(ptr, out INetType type) is false)
+            {
+                throw new ArgumentException($"Failed to activate a new instance of {ptr} becuase no IObjectHEap with that type is already registered and the type was not found within the type handler. Use ITypeHandler.Register<T> to register the type before attempting to create a new instance of it.");
+            }
+
+            // create a new heap
+            heaps.Add(ptr.PtrType,Create(type));
+
+            // recurse to return the new value
+            return Alloc(ptr);
+        }
 
         public void Clear()
         {
@@ -34,5 +53,10 @@ namespace NetInterop.Runtime.TypeHandling
         public object Get(INetPtr instancePtr) => heaps[instancePtr.PtrType].Get(instancePtr);
 
         public void Set(INetPtr instancePtr, object value) => heaps[instancePtr.PtrType].Set(instancePtr, value);
+        
+        private IObjectHeap Create(INetType type)
+        {
+            return (IObjectHeap)Activator.CreateInstance(typeof(ObjectHeap<>).MakeGenericType(type.BackingType),type,pointerProvider);
+        }
     }
 }

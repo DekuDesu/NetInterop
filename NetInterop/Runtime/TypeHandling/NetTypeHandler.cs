@@ -31,6 +31,8 @@ namespace NetInterop.Runtime
                 types.Add(interopId, new NetType<T>(ptr, activator, deactivator));
             }
 
+            typeMap.Add(typeof(T),interopId);
+
             return ptr;
         }
 

@@ -25,7 +25,7 @@ namespace NetInterop.Clients
 
         public IConnection Connection { get; set; }
         public IStream<byte> Stream { get; set; }
-        public INetworkTypeHandler Types { get; set; }
+        public INetTypeHandler Types { get; set; }
         public INetworkMethodHandler Methods { get; set; }
         public INetworkHeap RemoteHeap { get; set; }
         public IPacketController PacketController { get; set; }
@@ -62,8 +62,6 @@ namespace NetInterop.Clients
             Methods?.Clear();
 
             Methods = null;
-
-            Types?.Clear();
 
             Types = null;
 

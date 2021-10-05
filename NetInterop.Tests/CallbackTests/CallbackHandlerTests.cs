@@ -36,7 +36,7 @@ namespace NetInterop.Tests.CallbackTests
 
             IPointerResponseSender pointerSender = new ResponseSenderStub(sender);
 
-            IObjectHeap heap = new RuntimeHeap();
+            IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
 
             IPacketHandler<PointerOperations> allocOperation = new AllocPointerHandler(heap, pointerProvider, pointerSender);
             IPacketHandler<PointerOperations> setOperation = new SetPointerHandler(heap, typeHandler, pointerProvider, pointerSender);
@@ -165,7 +165,7 @@ namespace NetInterop.Tests.CallbackTests
             Assert.True(ranCallback);
             Assert.NotNull(callbackPacket);
 
-            Assert.Equal(44, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(44, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -175,7 +175,7 @@ namespace NetInterop.Tests.CallbackTests
 
             INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             // create some spots to put our actual results to compare
             bool ranCallback = false;
@@ -221,9 +221,9 @@ namespace NetInterop.Tests.CallbackTests
         {
             TestObjects test = new();
 
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             // create some spots to put our actual results to compare
             bool ranCallback = false;
@@ -262,14 +262,14 @@ namespace NetInterop.Tests.CallbackTests
             Assert.NotNull(callbackPacket);
 
             // becuase int is a value type "freeing" it is just forgeting it's there, write over the value and check to see if the value was freed
-            var newPtr = test.NetworkType.AllocPtr().As<int>();
+            var newPtr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
             Assert.Equal(newPtr, ptr);
 
             // set the value of the new ptr and then check the old pointer and verify that we wrote over the value at the address of the old pointer
-            test.NetworkType.SetPtr(newPtr, 0);
+            test.RuntimeHeap.Set(newPtr, 0);
 
-            Assert.Equal(0, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(0, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -280,9 +280,9 @@ namespace NetInterop.Tests.CallbackTests
 
             INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
-            INetPtr<int> ptr = test.RuntimeHeap.Alloc();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             // now we have alloced the value attempt to set it's value
             IPacketSerializable pointer = ptr;
@@ -316,7 +316,7 @@ namespace NetInterop.Tests.CallbackTests
             INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             // get a ptr to set the value of
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
             heap.Set<int>(ptr, 22);
 
@@ -336,7 +336,7 @@ namespace NetInterop.Tests.CallbackTests
 
             Assert.NotNull(responsePacket);
 
-            Assert.Equal(22, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(22, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -346,9 +346,9 @@ namespace NetInterop.Tests.CallbackTests
 
             INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             heap.Destroy(ptr);
 
@@ -367,14 +367,14 @@ namespace NetInterop.Tests.CallbackTests
             test.RepsonseHandler.Handle(responsePacket);
 
             // becuase int is a value type "freeing" it is just forgeting it's there, write over the value and check to see if the value was freed
-            var newPtr = test.NetworkType.AllocPtr().As<int>();
+            var newPtr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
             Assert.Equal(newPtr, ptr);
 
             // set the value of the new ptr and then check the old pointer and verify that we wrote over the value at the address of the old pointer
-            test.NetworkType.SetPtr(newPtr, 0);
+            test.RuntimeHeap.Set(newPtr, 0);
 
-            Assert.Equal(0, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(0, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -534,14 +534,15 @@ namespace NetInterop.Tests.CallbackTests
                 SerializableNetworkType = new SerializableNetType<int>(NetworkType, IntSerializer, IntDeserializer);
 
                 TypeHandler = new NetworkTypeHandlerStub() { network = SerializableNetworkType, networkType = NetworkType };
+                
+                RuntimeHeap = new RuntimeHeap(TypeHandler,PointerProvider);
 
                 Sender = new PacketSenderStub();
 
-                MethodHandler = new DefaultMethodHandler(PointerProvider, TypeHandler);
+                MethodHandler = new DefaultMethodHandler(PointerProvider, TypeHandler, RuntimeHeap);
 
                 PointerSender = new ResponseSenderStub(Sender);
 
-                RuntimeHeap = new RuntimeHeap();
 
                 AllocOperation = new AllocPointerHandler(RuntimeHeap, PointerProvider, PointerSender);
                 SetOperation = new SetPointerHandler(RuntimeHeap, TypeHandler, PointerProvider, PointerSender);

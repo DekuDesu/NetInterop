@@ -10,6 +10,7 @@ namespace NetInterop.Abstractions
     /// </summary>
     public interface INetType
     {
+        Type BackingType { get; }
         /// <summary>
         /// The unique identifier that was either explicitly provided when registered, or automatically retrieved from an <see cref="InteropIdAttribute"/>
         /// </summary>

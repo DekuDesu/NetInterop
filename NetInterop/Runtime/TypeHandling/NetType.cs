@@ -11,6 +11,8 @@ namespace NetInterop.Runtime
         private readonly IActivator<T> activator;
         private readonly IDeactivator<T> deactivator;
 
+        public Type BackingType { get; } = typeof(T);
+
         public NetType(INetPtr typePointer, IActivator<T> activator, IDeactivator<T> deactivator)
         {
             TypePointer = typePointer ?? throw new ArgumentNullException(nameof(typePointer));
