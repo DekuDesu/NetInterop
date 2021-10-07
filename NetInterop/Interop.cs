@@ -36,8 +36,8 @@ namespace NetInterop
         {
             PointerProvider = new DefaultPointerProvider();
             Types = new NetTypeHandler(PointerProvider);
-            LocalHeap = new RuntimeHeap(Types,PointerProvider);
-            Methods = new DefaultMethodHandler(PointerProvider,Types,LocalHeap);
+            LocalHeap = new RuntimeHeap(Types, PointerProvider);
+            Methods = new DefaultMethodHandler(PointerProvider, Types, LocalHeap);
         }
 
         public static IClient CreateClient(string hostname, int port)

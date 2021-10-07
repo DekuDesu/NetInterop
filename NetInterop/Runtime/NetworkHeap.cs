@@ -24,7 +24,7 @@ namespace NetInterop
 
         public void Create<T>(Action<INetPtr<T>> callback)
         {
-            if (typeHandler.TryGetType<T>(out INetType<T> type))
+            if (typeHandler.TryGetType<T>(out IType<T> type))
             {
                 sender.Send(new PointerOperationPacket(PointerOperations.Alloc, new CallbackPacket(
                     (goodResponse, packet) =>
@@ -111,7 +111,7 @@ namespace NetInterop
 
         public void Set<T>(INetPtr<T> ptr, T value)
         {
-            if (typeHandler.TryGetSerializableType<T>(ptr, out ISerializableNetType<T> serializer))
+            if (typeHandler.TryGetSerializableType<T>(ptr, out ISerializableType<T> serializer))
             {
                 sender.Send(new PointerOperationPacket(PointerOperations.Set, new CallbackPacket(
                     null,

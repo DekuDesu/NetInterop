@@ -97,7 +97,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
 
             typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
 
@@ -128,7 +128,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
 
             typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
 
@@ -170,7 +170,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             var intSerializer = new IntSerializer();
             typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
             
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
             
             IObjectHeap<TestClass> heap = new ObjectHeap<TestClass>(networkType, pointerProvider);
             
@@ -216,7 +216,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
 
             typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
 
@@ -247,7 +247,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(test.Types.TryGetType<TestClass>(out IType<TestClass> networkType));
 
             INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
 
@@ -280,7 +280,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(test.Types.TryGetType<TestClass>(out IType<TestClass> networkType));
 
             INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
 
@@ -307,7 +307,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(test.Types.TryGetType<TestClass>(out IType<TestClass> networkType));
 
             INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
 

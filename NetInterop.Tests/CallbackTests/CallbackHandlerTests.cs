@@ -26,9 +26,9 @@ namespace NetInterop.Tests.CallbackTests
 
             IPointerProvider pointerProvider = new DefaultPointerProvider();
 
-            INetType<int> baseNetworkType = new NetType<int>(pointerProvider.Create(1, 0), new DefaultActivator<int>(), new DefaultDeactivator<int>());
+            IType<int> baseNetworkType = new NetType<int>(pointerProvider.Create(1, 0), new DefaultActivator<int>(), new DefaultDeactivator<int>());
 
-            ISerializableNetType<int> networkType = new SerializableNetType<int>(baseNetworkType, intSerializer, intDeserializer);
+            ISerializableType<int> networkType = new SerializableNetType<int>(baseNetworkType, intSerializer, intDeserializer);
 
             ITypeHandler typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
 
@@ -503,8 +503,8 @@ namespace NetInterop.Tests.CallbackTests
             public IPacketSerializer<int> IntSerializer { get; set; }
             public IPacketDeserializer<int> IntDeserializer { get; set; }
             public IPointerProvider PointerProvider { get; set; }
-            public INetType<int> NetworkType { get; set; }
-            public ISerializableNetType<int> SerializableNetworkType { get; set; }
+            public IType<int> NetworkType { get; set; }
+            public ISerializableType<int> SerializableNetworkType { get; set; }
             public ITypeHandler TypeHandler { get; set; }
             public IPacketSender Sender { get; set; }
             public IPointerResponseSender PointerSender { get; set; }

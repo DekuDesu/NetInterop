@@ -6,15 +6,15 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 
 namespace NetInterop.Runtime
 {
-    public class SerializableNetType<T> : ISerializableNetType<T>
+    public class SerializableNetType<T> : ISerializableType<T>
     {
-        private readonly INetType<T> type;
+        private readonly IType<T> type;
         private readonly IPacketSerializer<T> serializer;
         private readonly IPacketDeserializer<T> deserializer;
 
         public Type BackingType => type.BackingType;
 
-        public SerializableNetType(INetType<T> type, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public SerializableNetType(IType<T> type, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             this.type = type;
             this.serializer = serializer;
@@ -37,6 +37,6 @@ namespace NetInterop.Runtime
 
         public void Serialize(T value, IPacket packetBuilder) => serializer.Serialize(value, packetBuilder);
 
-        object INetType.Activate() => type.Activate();
+        object IType.Activate() => type.Activate();
     }
 }

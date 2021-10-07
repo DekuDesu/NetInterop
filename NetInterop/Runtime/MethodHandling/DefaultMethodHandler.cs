@@ -101,7 +101,7 @@ namespace NetInterop.Runtime.MethodHandling
 
         private RegisteredMethod CreateRegistration(MethodInfo method)
         {
-            INetType declaringNetwork = null;
+            IType declaringNetwork = null;
 
             // get the network type for the declaring type for the method
             if (method.IsStatic is false)
@@ -164,7 +164,7 @@ namespace NetInterop.Runtime.MethodHandling
             }
 
             // make sure the type is registered as serializable
-            if (typeHandler.TryGetSerializableType(paramType, out ISerializableNetType networkType))
+            if (typeHandler.TryGetSerializableType(paramType, out ISerializableType networkType))
             {
                 return new MethodParameter(info, networkType, networkType);
             }

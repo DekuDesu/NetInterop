@@ -1,11 +1,13 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
 using System;
+using System.Threading.Tasks;
 
 namespace NetInterop
 {
     /// <summary>
     /// Controls registered interop types on a remote client
     /// </summary>
+    [System.Obsolete("Migrate to IRemoteHeap instead")]
     public interface INetworkHeap
     {
         IPointerProvider PointerProvider { get; set; }
@@ -132,5 +134,32 @@ namespace NetInterop
         /// <param name="ptr"></param>
         /// <param name="value"></param>
         void Set(INetPtr ptr, object value);
+    }
+    public interface IRemoteHeap
+    {
+        Task<INetPtr<T>> Create<T>();
+        Task<INetPtr> Create(INetPtr typePointer);
+        Task<INetPtr<T>> Create<T>(INetPtr<T> typePointer);
+
+        Task<T> Get<T>(INetPtr<T> instancePointer);
+        Task<object> Get(INetPtr instancePointer);
+
+        Task Set<T>(INetPtr<T> instancePointer, T value);
+        Task Set(INetPtr instancePointer, object value);
+
+        Task Destroy<T>(INetPtr<T> instancePointer);
+        Task Destroy(INetPtr instancePointer);
+
+        Task InvokeStatic(INetPtr methodPointer);
+        Task InvokeStatic(INetPtr methodPointer, params object[] parameters);
+
+        Task<T> InvokeStatic<T>(INetPtr<T> methodPointer);
+        Task<T> InvokeStatic<T>(INetPtr<T> methodPointer, params object[] parameters);
+
+        Task Invoke(INetPtr methodPointer, INetPtr instancePointer);
+        Task<T> Invoke<T>(INetPtr<T> methodPointer, INetPtr instancePointer);
+
+        Task Invoke(INetPtr methodPointer, INetPtr instancePointer, params object[] parameters);
+        Task<T> Invoke<T>(INetPtr<T> methodPointer, INetPtr instancePointer, params object[] parameters);
     }
 }

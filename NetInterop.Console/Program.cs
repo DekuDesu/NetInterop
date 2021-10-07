@@ -26,7 +26,7 @@ namespace RemoteInvokeConsole
 
             try
             {
-                Test(server,client);
+                Test(server, client);
                 Console.ReadLine();
             }
             finally
@@ -38,10 +38,12 @@ namespace RemoteInvokeConsole
 
         private static void Test(IServer server, IClient client)
         {
+            _ = server;
 
             Barrier barrier = new Barrier(2);
             INetPtr<TestClass> ptr = default;
-            client.RemoteHeap.Create<TestClass>((p) => {
+            client.RemoteHeap.Create<TestClass>((p) =>
+            {
                 ptr = p;
 
                 Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId} waiting for main thread");
@@ -52,24 +54,23 @@ namespace RemoteInvokeConsole
             barrier.SignalAndWait();
 
             Console.WriteLine($"Created remote TestClass instance ptr: {ptr}");
-
         }
 
         private static void Startup(ITypeHandler handler)
         {
             var serializer = new TestClassSerializer();
             var intSer = new IntSerializer();
-            handler.RegisterType<int>((ushort)TypeCode.Int32,intSer,intSer);
-            handler.RegisterType<TestClass>(0x01,serializer,serializer,serializer,serializer);
+            handler.RegisterType<int>((ushort)TypeCode.Int32, intSer, intSer);
+            handler.RegisterType<TestClass>(0x01, serializer, serializer, serializer, serializer);
         }
         private static INetPtr SetValuePtr;
         private static INetPtr<int> GetValuePtr;
         public static void Startup(IMethodHandler handler)
         {
-            SetValuePtr = handler.Register<TestClass,int>((a)=> a.SetValue);
-            GetValuePtr = handler.Register<TestClass,int>((a) => a.GetValue);
+            SetValuePtr = handler.Register<TestClass, int>(a => a.SetValue);
+            GetValuePtr = handler.Register<TestClass, int>(a => a.GetValue);
         }
-        public class TestClass :IDisposable
+        public class TestClass : IDisposable
         {
             public int Value { get; set; }
             public void SetValue(int value)
@@ -113,7 +114,7 @@ namespace RemoteInvokeConsole
             {
                 if (instance is TestClass isTestClass)
                 {
-                    isTestClass?.Dispose();              
+                    isTestClass?.Dispose();
                 }
             }
 

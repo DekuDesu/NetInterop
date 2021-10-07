@@ -10,7 +10,7 @@ namespace NetInterop.Runtime
     public class NetTypeHandler : ITypeHandler
     {
         private readonly IPointerProvider pointerProvider;
-        private readonly IDictionary<ushort, INetType> types = new ConcurrentDictionary<ushort, INetType>();
+        private readonly IDictionary<ushort, IType> types = new ConcurrentDictionary<ushort, IType>();
         private readonly IDictionary<Type, ushort> typeMap = new ConcurrentDictionary<Type, ushort>();
 
         public NetTypeHandler(IPointerProvider pointerProvider)
@@ -36,11 +36,11 @@ namespace NetInterop.Runtime
             return ptr;
         }
 
-        public bool TryGetSerializableType(INetPtr typePtr, out ISerializableNetType netType)
+        public bool TryGetSerializableType(INetPtr typePtr, out ISerializableType netType)
         {
-            if (types.TryGetValue(typePtr.PtrType, out INetType possiblySerializable))
+            if (types.TryGetValue(typePtr.PtrType, out IType possiblySerializable))
             {
-                if (possiblySerializable is ISerializableNetType isSerializable)
+                if (possiblySerializable is ISerializableType isSerializable)
                 {
                     netType = isSerializable;
                     return true;
@@ -50,11 +50,11 @@ namespace NetInterop.Runtime
             return false;
         }
 
-        public bool TryGetSerializableType<T>(INetPtr typePtr, out ISerializableNetType<T> netType)
+        public bool TryGetSerializableType<T>(INetPtr typePtr, out ISerializableType<T> netType)
         {
-            if (types.TryGetValue(typePtr.PtrType, out INetType possiblySerializable))
+            if (types.TryGetValue(typePtr.PtrType, out IType possiblySerializable))
             {
-                if (possiblySerializable is ISerializableNetType<T> isSerializable)
+                if (possiblySerializable is ISerializableType<T> isSerializable)
                 {
                     netType = isSerializable;
                     return true;
@@ -64,13 +64,13 @@ namespace NetInterop.Runtime
             return false;
         }
 
-        public bool TryGetSerializableType(Type type, out ISerializableNetType netType)
+        public bool TryGetSerializableType(Type type, out ISerializableType netType)
         {
             if (typeMap.TryGetValue(type, out ushort id))
             {
-                if (types.TryGetValue(id, out INetType possiblySerializable))
+                if (types.TryGetValue(id, out IType possiblySerializable))
                 {
-                    if (possiblySerializable is ISerializableNetType isSerializable)
+                    if (possiblySerializable is ISerializableType isSerializable)
                     {
                         netType = isSerializable;
                         return true;
@@ -81,13 +81,13 @@ namespace NetInterop.Runtime
             return false;
         }
 
-        public bool TryGetSerializableType<T>(out ISerializableNetType<T> netType)
+        public bool TryGetSerializableType<T>(out ISerializableType<T> netType)
         {
             if (typeMap.TryGetValue(typeof(T), out ushort id))
             {
-                if (types.TryGetValue(id, out INetType possiblyTyped))
+                if (types.TryGetValue(id, out IType possiblyTyped))
                 {
-                    if (possiblyTyped is ISerializableNetType<T> isProperlyTyped)
+                    if (possiblyTyped is ISerializableType<T> isProperlyTyped)
                     {
                         netType = isProperlyTyped;
                         return true;
@@ -98,13 +98,13 @@ namespace NetInterop.Runtime
             return false;
         }
 
-        public bool TryGetType(INetPtr typePtr, out INetType netType) => types.TryGetValue(typePtr.PtrType, out netType);
+        public bool TryGetType(INetPtr typePtr, out IType netType) => types.TryGetValue(typePtr.PtrType, out netType);
 
-        public bool TryGetType<T>(INetPtr typePtr, out INetType<T> netType)
+        public bool TryGetType<T>(INetPtr typePtr, out IType<T> netType)
         {
-            if (types.TryGetValue(typePtr.PtrType, out INetType possiblyTyped))
+            if (types.TryGetValue(typePtr.PtrType, out IType possiblyTyped))
             {
-                if (possiblyTyped is INetType<T> isProperlyTyped)
+                if (possiblyTyped is IType<T> isProperlyTyped)
                 {
                     netType = isProperlyTyped;
                     return true;
@@ -114,7 +114,7 @@ namespace NetInterop.Runtime
             return false;
         }
 
-        public bool TryGetType(Type type, out INetType netType)
+        public bool TryGetType(Type type, out IType netType)
         {
             if (typeMap.TryGetValue(type, out ushort id))
             {
@@ -127,13 +127,13 @@ namespace NetInterop.Runtime
             return false;
         }
 
-        public bool TryGetType<T>(out INetType<T> netType)
+        public bool TryGetType<T>(out IType<T> netType)
         {
             if (typeMap.TryGetValue(typeof(T), out ushort id))
             {
-                if (types.TryGetValue(id, out INetType possiblyTyped))
+                if (types.TryGetValue(id, out IType possiblyTyped))
                 {
-                    if (possiblyTyped is INetType<T> isProperlyTyped)
+                    if (possiblyTyped is IType<T> isProperlyTyped)
                     {
                         netType = isProperlyTyped;
                         return true;
