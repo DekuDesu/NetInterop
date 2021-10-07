@@ -258,6 +258,70 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             Assert.Equal(typeof(NetPtr),ptr.GetType());
             Assert.NotEqual(typeof(NetPtr<>),ptr.GetType());
+
+            // should be of the same type as the return type of the provided istance method
+            INetPtr intPtr = test.Methods.Register<TestClass,int,int,int>(x=>x.Adder);
+
+            Assert.Equal(typeof(NetPtr<int>),intPtr.GetType());
+
+            // we should get a net ptr that has a generic type of the return type
+            // regarless of us specifying it as a generic param
+            INetPtr otherIntPtr = test.Methods.Register(typeof(MethodHandlerTests).GetMethod(nameof(StaticIntDelegate)));
+
+            Assert.Equal(typeof(NetPtr<int>),otherIntPtr.GetType());
+        }
+
+        [Fact]
+        public void Test_DuplicateRegistrations()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
+
+            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+
+            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+
+            // any duplicate registrations to the method handler should return the same ptr each time
+            void ShouldNotThrow()
+            {
+                INetPtr<int> ptr = test.Methods.Register<int>(typeof(MethodHandlerTests).GetMethod(nameof(StaticIntDelegate)));
+                throw new OperationCanceledException();
+            }
+            void ShouldThrow()
+            {
+                INetPtr<float> ptr = test.Methods.Register<float>(typeof(MethodHandlerTests).GetMethod(nameof(StaticIntDelegate)));
+            }
+            Assert.Throws<OperationCanceledException>(ShouldNotThrow);
+            Assert.Throws<InvalidCastException>(ShouldThrow);
+        }
+
+        [Fact]
+        public void Test_RegistrationThrowsWhenWrongGenericType()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
+
+            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+
+            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+
+            // any duplicate registrations to the method handler should return the same ptr each time
+            INetPtr<int> ptr = test.Methods.Register(StaticIntDelegate);
+
+            Assert.Equal(ptr, test.Methods.Register(StaticIntDelegate));
+            Assert.Equal(ptr, test.Methods.Register(StaticIntDelegate));
+            Assert.Equal(ptr, test.Methods.Register(StaticIntDelegate));
+        }
+
+        public static int StaticIntDelegate()
+        {
+            return default;
         }
 
         public class TestObjects
