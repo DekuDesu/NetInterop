@@ -8,11 +8,11 @@ namespace NetInterop
 {
     public class InvokePointerHandler : IPacketHandler<PointerOperations>
     {
-        private readonly INetworkMethodHandler methodHandler;
+        private readonly IMethodHandler methodHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public InvokePointerHandler(IPointerProvider pointerProvider, IPointerResponseSender sender, INetworkMethodHandler methodHandler)
+        public InvokePointerHandler(IPointerProvider pointerProvider, IPointerResponseSender sender, IMethodHandler methodHandler)
         {
             this.methodHandler = methodHandler ?? throw new ArgumentNullException(nameof(methodHandler));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
@@ -41,10 +41,10 @@ namespace NetInterop
     public class InvokeMethodPacketProxy : IPacketSerializable
     {
         private readonly INetPtr methodPtr;
-        private readonly INetworkMethodHandler methodHandler;
+        private readonly IMethodHandler methodHandler;
         private readonly IPacket packet;
 
-        public InvokeMethodPacketProxy(INetPtr methodPtr, INetworkMethodHandler methodHandler, IPacket packet)
+        public InvokeMethodPacketProxy(INetPtr methodPtr, IMethodHandler methodHandler, IPacket packet)
         {
             this.methodPtr = methodPtr;
             this.methodHandler = methodHandler;

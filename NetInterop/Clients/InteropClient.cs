@@ -25,14 +25,14 @@ namespace NetInterop.Clients
 
         public IConnection Connection { get; set; }
         public IStream<byte> Stream { get; set; }
-        public INetworkTypeHandler Types { get; set; }
-        public INetworkMethodHandler Methods { get; set; }
+        public ITypeHander Types { get; set; }
+        public IMethodHandler Methods { get; set; }
         public INetworkHeap RemoteHeap { get; set; }
         public IPacketController PacketController { get; set; }
         public IPacketReceiver PacketReceiver { get; set; }
         public IPacketSender PacketSender { get; set; }
         public IPacketHandler PacketHandler { get; set; }
-
+        public IObjectHeap Heap { get; set; }
         public IWorkPool WorkPool { get; set; }
 
         public IPointerProvider PointerProvider { get; set; }
@@ -58,14 +58,6 @@ namespace NetInterop.Clients
             PacketCallbackHandler = null;
 
             PointerResponseSender = null;
-
-            Methods?.Clear();
-
-            Methods = null;
-
-            Types?.Clear();
-
-            Types = null;
 
             PacketSender = null;
 

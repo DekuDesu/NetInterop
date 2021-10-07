@@ -10,9 +10,9 @@ namespace NetInterop
     {
         private readonly INetPtr<T> ptr;
         private readonly T value;
-        private readonly ISerializableNetworkType<T> serializableNetworkType;
+        private readonly IPacketSerializer<T> serializableNetworkType;
 
-        public SetPointerPacket(INetPtr<T> ptr, T value, ISerializableNetworkType<T> serializableNetworkType)
+        public SetPointerPacket(INetPtr<T> ptr, T value, IPacketSerializer<T> serializableNetworkType)
         {
             this.ptr = ptr;
             this.value = value;
@@ -31,9 +31,9 @@ namespace NetInterop
     {
         private readonly INetPtr ptr;
         private readonly object value;
-        private readonly ISerializableNetworkType serializableNetworkType;
+        private readonly IPacketSerializer serializableNetworkType;
 
-        public SetAmbiguousPointerPacket(INetPtr ptr, object value, ISerializableNetworkType serializableNetworkType)
+        public SetAmbiguousPointerPacket(INetPtr ptr, object value, IPacketSerializer serializableNetworkType)
         {
             this.ptr = ptr;
             this.value = value;

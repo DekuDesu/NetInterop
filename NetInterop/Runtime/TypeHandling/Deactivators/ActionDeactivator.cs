@@ -18,6 +18,8 @@ namespace NetInterop.Runtime.TypeHandling
             this.expression = expression ?? throw new ArgumentNullException(nameof(expression));
         }
 
-        public void DestroyInstance(T instance) => expression(instance);
+        public void DestroyInstance(ref T instance) => expression(instance);
+
+        public void DestroyInstance(ref object instance) => expression((T)instance);
     }
 }

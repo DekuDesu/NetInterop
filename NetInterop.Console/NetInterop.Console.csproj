@@ -6,8 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetInterop.Transport.Sockets\NetInterop.Transport.Sockets.csproj" />
-    <ProjectReference Include="..\NetInterop.Transport\NetInterop.Transport.Core.csproj" />
+    <ProjectReference Include="..\NetInterop\NetInterop.csproj" />
   </ItemGroup>
 
 </Project>

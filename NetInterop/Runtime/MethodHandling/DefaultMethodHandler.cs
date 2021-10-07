@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Packets;
+﻿using NetInterop.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,18 +9,20 @@ using System.Text;
 
 namespace NetInterop.Runtime.MethodHandling
 {
-    public class DefaultMethodHandler : INetworkMethodHandler
+    public class DefaultMethodHandler : IMethodHandler
     {
         private readonly IPointerProvider pointerProvider;
-        private readonly INetworkTypeHandler typeHandler;
+        private readonly ITypeHander typeHandler;
+        private readonly IObjectHeap heap;
         private readonly IDictionary<INetPtr, RegisteredMethod> registeredMethods = new Dictionary<INetPtr, RegisteredMethod>();
         private readonly IDictionary<MethodInfo, INetPtr> methodPtrs = new ConcurrentDictionary<MethodInfo, INetPtr>();
         private ushort nextId = 1;
 
-        public DefaultMethodHandler(IPointerProvider pointerProvider, INetworkTypeHandler typeHandler)
+        public DefaultMethodHandler(IPointerProvider pointerProvider, ITypeHander typeHandler, IObjectHeap heap)
         {
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
+            this.heap = heap ?? throw new ArgumentNullException(nameof(heap));
         }
 
         public void Invoke(INetPtr methodPtr, IPacket packet) => Invoke(methodPtr, packet, null);
@@ -32,24 +35,80 @@ namespace NetInterop.Runtime.MethodHandling
             }
         }
 
+        public INetPtr<TResult> Register<TResult>(Delegate method) => Register<TResult>(method.Method);
+
         public INetPtr Register(Delegate method) => Register(method.Method);
 
         public INetPtr Register(MethodInfo method)
         {
+            RegisteredMethod registration = CreateRegistration(method);
+
+            INetPtr ptr = default;
+
+            if (method.ReturnType != typeof(void))
+            {
+                var genericCreateMethod = typeof(IPointerProvider)
+                    .GetMethods()
+                    .Where(m => m.Name == nameof(IPointerProvider.Create) && m.IsGenericMethod)
+                    .FirstOrDefault();
+
+                var contructedGeneric = genericCreateMethod.MakeGenericMethod(method.ReturnType);
+
+                ptr = (INetPtr)contructedGeneric.Invoke(pointerProvider, 
+                    parameters: new object[] {
+                        registration?.DeclaringType?.TypePointer?.PtrType ?? 0, 
+                        nextId++ 
+                    });
+            }
+            else {
+                ptr = pointerProvider.Create(registration?.DeclaringType?.TypePointer?.PtrType ?? 0, nextId++);
+            } 
+
+            AddRegistration(method, registration, ptr);
+
+            return ptr;
+        }
+
+        public INetPtr<TResult> Register<TResult>(MethodInfo method)
+        {
             if (methodPtrs.ContainsKey(method))
             {
-                return methodPtrs[method];
+                if (methodPtrs[method] is INetPtr<TResult> isDestinationType)
+                {
+                    return isDestinationType;
+                }
+                else
+                {
+                    throw new InvalidCastException($"Attempted to cast a method who's return type is {method.ReturnType.Name} to {typeof(TResult).Name}");
+                }
             }
 
-            INetworkType declaringNetwork = null;
+            RegisteredMethod registration = CreateRegistration(method);
+
+            INetPtr<TResult> ptr = pointerProvider.Create<TResult>(registration?.DeclaringType?.TypePointer?.PtrType ?? 0, nextId++);
+
+            AddRegistration(method, registration, ptr);
+
+            return ptr;
+        }
+
+        private void AddRegistration(MethodInfo method, RegisteredMethod registration, INetPtr ptr)
+        {
+            methodPtrs.Add(method, ptr);
+
+            registeredMethods.Add(ptr, registration);
+        }
+
+        private RegisteredMethod CreateRegistration(MethodInfo method)
+        {
+            INetType declaringNetwork = null;
 
             // get the network type for the declaring type for the method
             if (method.IsStatic is false)
             {
-                if (typeHandler.TryGetTypePtr(method.DeclaringType, out INetPtr declaringPtr) is false
-                    || typeHandler.TryGetAmbiguousType(declaringPtr, out declaringNetwork) is false)
+                if (typeHandler.TryGetType(method.DeclaringType, out declaringNetwork) is false)
                 {
-                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(INetworkTypeHandler)}.");
+                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(ITypeHander)}.");
                 }
             }
 
@@ -68,34 +127,26 @@ namespace NetInterop.Runtime.MethodHandling
             // get the return type and ensure that is as well is registered
             MethodParameter returnParam = EnsureRegistered(method.ReturnParameter, method);
 
-            RegisteredMethod registration = new RegisteredMethod(method, returnParam, parameters.ToArray(), pointerProvider, declaringNetwork);
-
-            INetPtr ptr = pointerProvider.Create(declaringNetwork?.Id ?? 0, nextId++);
-
-            methodPtrs.Add(method, ptr);
-
-            registeredMethods.Add(ptr, registration);
-
-            return ptr;
+            return new RegisteredMethod(method, returnParam, parameters.ToArray(), pointerProvider, heap, declaringNetwork);
         }
 
-        public bool TryGetSerializer(INetPtr ptr, out IPacketSerializer<object[]> serializer)
+        public bool TryGetSerializer(INetPtr methodPtr, out IPacketSerializer<object[]> serializer)
         {
             serializer = default;
-            if (registeredMethods.ContainsKey(ptr))
+            if (registeredMethods.ContainsKey(methodPtr))
             {
-                serializer = registeredMethods[ptr];
+                serializer = registeredMethods[methodPtr];
                 return true;
             }
             return false;
         }
 
-        public bool TryGetDeserializer(INetPtr ptr, out IPacketDeserializer<object[]> deserializer)
+        public bool TryGetDeserializer(INetPtr methodPtr, out IPacketDeserializer<object[]> deserializer)
         {
             deserializer = default;
-            if (registeredMethods.ContainsKey(ptr))
+            if (registeredMethods.ContainsKey(methodPtr))
             {
-                deserializer = registeredMethods[ptr];
+                deserializer = registeredMethods[methodPtr];
                 return true;
             }
             return false;
@@ -113,12 +164,9 @@ namespace NetInterop.Runtime.MethodHandling
             }
 
             // make sure the type is registered as serializable
-            if (typeHandler.TryGetTypePtr(paramType, out INetPtr typePtr))
+            if (typeHandler.TryGetSerializableType(paramType, out ISerializableNetType networkType))
             {
-                if (typeHandler.TryGetAmbiguousSerializableType(typePtr, out var networkType))
-                {
-                    return new MethodParameter(info, networkType, networkType);
-                }
+                return new MethodParameter(info, networkType, networkType);
             }
 
             // if it's System.Void, then it's a return parameter and is an allowable edge case
@@ -127,12 +175,13 @@ namespace NetInterop.Runtime.MethodHandling
                 return new MethodParameter(info, null, null);
             }
 
-            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(INetworkMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetworkTypeHandler)}. Use {nameof(INetworkTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
+            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(IMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(ITypeHander)}. Use {nameof(ITypeHander)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
         }
 
         public void Clear()
         {
             registeredMethods.Clear();
         }
+
     }
 }

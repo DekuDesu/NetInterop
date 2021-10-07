@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Packets;
+﻿using NetInterop.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Collections.Generic;
@@ -8,13 +9,13 @@ namespace NetInterop
 {
     public class FreePointerHandler : IPacketHandler<PointerOperations>
     {
-        private readonly INetworkTypeHandler typeHandler;
+        private readonly IObjectHeap heap;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public FreePointerHandler(INetworkTypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
+        public FreePointerHandler(IObjectHeap heap, IPointerProvider pointerProvider, IPointerResponseSender sender)
         {
-            this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
+            this.heap = heap ?? throw new ArgumentNullException(nameof(heap));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
         }
@@ -30,16 +31,17 @@ namespace NetInterop
 
             if (ptr != null)
             {
-                // try to get the type and alloc a new object
-                if (typeHandler.TryGetAmbiguousType(ptr, out var type))
+                try
                 {
-                    type.Free(ptr);
-
+                    heap.Free(ptr);
                     sender.SendGoodResponse(callbackId);
-                    return;
+                }
+                catch (Exception)
+                {
+                    sender.SendBadResponse(callbackId);
+                    throw;
                 }
             }
-            sender.SendBadResponse(callbackId);
         }
     }
 }

@@ -26,12 +26,12 @@ namespace NetInterop.Abstractions
         /// <summary>
         /// The registered network types that can be sent between this client and the remote client
         /// </summary>
-        INetworkTypeHandler Types { get; set; }
+        ITypeHander Types { get; set; }
 
         /// <summary>
         /// The registred methods that can be invoked on this client of the remote client
         /// </summary>
-        INetworkMethodHandler Methods { get; set; }
+        IMethodHandler Methods { get; set; }
 
         /// <summary>
         /// The object heap that controls creating, destroying, and managing network types on the remote client

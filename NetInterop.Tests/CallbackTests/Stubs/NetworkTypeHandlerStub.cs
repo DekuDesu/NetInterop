@@ -8,87 +8,63 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Tests.CallbackTests.Stubs
 {
-    public class NetworkTypeHandlerStub : INetworkTypeHandler
+    public class NetworkTypeHandlerStub : ITypeHander
     {
         public List<Type> registeredTypes = new List<Type>();
         public bool cleared = false;
-        public ISerializableNetworkType network = null;
-        public INetworkType networkType = null;
-        public void Clear()
-        {
-            cleared = true;
-        }
+        public ISerializableNetType network = null;
+        public INetType networkType = null;
 
-        public INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> disposer, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> deactivator, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             throw new NotImplementedException();
         }
 
-        public bool TryGetAmbiguousSerializableType(INetPtr id, out ISerializableNetworkType serializableNetworkType)
+        public bool TryGetSerializableType<T>(out ISerializableNetType<T> netType)
         {
-            serializableNetworkType = network;
+            netType = (ISerializableNetType<T>)network;
             return true;
         }
 
-        public bool TryGetAmbiguousType(INetPtr ptr, out INetworkType type)
+        public bool TryGetSerializableType(Type type, out ISerializableNetType netType)
         {
-            type = network;
+            netType = network;
             return true;
         }
 
-        public bool TryGetSerializableType<T>(out ISerializableNetworkType<T> serializableNetworkType)
+        public bool TryGetSerializableType(INetPtr typePtr, out ISerializableNetType netType)
         {
-            if (network is ISerializableNetworkType<T> sType)
-            {
-                serializableNetworkType = sType;
-                return true;
-            }
-            serializableNetworkType = default;
-            return false;
-        }
-
-        public bool TryGetSerializableType<T>(INetPtr<T> id, out ISerializableNetworkType<T> serializableNetworkType)
-        {
-            if (network is ISerializableNetworkType<T> sType)
-            {
-                serializableNetworkType = sType;
-                return true;
-            }
-            serializableNetworkType = default;
-            return false;
-        }
-
-        public bool TryGetType<T>(INetPtr<T> ptr, out INetworkType<T> type)
-        {
-            if (networkType is INetworkType<T> t)
-            {
-                type = t;
-                return true;
-            }
-            type = default;
+            netType = network;
             return true;
         }
 
-        public bool TryGetType<T>(out INetworkType<T> type)
+        public bool TryGetSerializableType<T>(INetPtr typePtr, out ISerializableNetType<T> netType)
         {
-            if (networkType is INetworkType<T> t)
-            {
-                type = t;
-                return true;
-            }
-            type = default;
+            netType = (ISerializableNetType<T>)network;
             return true;
         }
 
-        public bool TryGetTypePtr<T>(out INetPtr<T> ptr)
+        public bool TryGetType<T>(out INetType<T> netType)
         {
-            ptr = new NetPtr<T>(1, 0); ;
+            netType = (INetType<T>)networkType;
             return true;
         }
 
-        public bool TryGetTypePtr(Type type, out INetPtr ptr)
+        public bool TryGetType(Type type, out INetType netType)
         {
-            ptr = new NetPtr(1, 0); ;
+            netType = networkType;
+            return true;
+        }
+
+        public bool TryGetType(INetPtr typePtr, out INetType netType)
+        {
+            netType = networkType;
+            return true;
+        }
+
+        public bool TryGetType<T>(INetPtr typePtr, out INetType<T> netType)
+        {
+            netType = (INetType<T>)networkType;
             return true;
         }
     }

@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Packets;
+﻿using NetInterop.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Collections.Generic;
@@ -8,12 +9,14 @@ namespace NetInterop
 {
     public class GetPointerHandler : IPacketHandler<PointerOperations>
     {
-        private readonly INetworkTypeHandler typeHandler;
+        private readonly IObjectHeap heap;
+        private readonly ITypeHander typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public GetPointerHandler(INetworkTypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
+        public GetPointerHandler(IObjectHeap heap, ITypeHander typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
         {
+            this.heap = heap ?? throw new ArgumentNullException(nameof(heap));
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
@@ -33,9 +36,9 @@ namespace NetInterop
             }
 
             // try to get the type and alloc a new object
-            if (typeHandler.TryGetAmbiguousSerializableType(ptr, out var type))
+            if (typeHandler.TryGetSerializableType(ptr, out var type))
             {
-                object value = type.GetPtr(ptr);
+                object value = heap.Get(ptr);
 
                 if (value != null)
                 {
@@ -43,6 +46,7 @@ namespace NetInterop
                     return;
                 }
             }
+
             sender.SendBadResponse(callbackId);
         }
     }

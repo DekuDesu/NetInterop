@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Packets;
+﻿using NetInterop.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Collections.Generic;
@@ -8,15 +9,17 @@ namespace NetInterop
 {
     public class SetPointerHandler : IPacketHandler<PointerOperations>
     {
-        private readonly INetworkTypeHandler typeHandler;
+        private readonly IObjectHeap heap;
+        private readonly ITypeHander typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public SetPointerHandler(INetworkTypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
+        public SetPointerHandler(IObjectHeap heap, ITypeHander typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
         {
-            this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
+            this.heap = heap ?? throw new ArgumentNullException(nameof(heap));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
+            this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
         }
 
         public PointerOperations PacketType { get; } = PointerOperations.Set;
@@ -33,21 +36,30 @@ namespace NetInterop
                 sender.SendBadResponse(callbackId);
             }
 
-            // try to get the type and alloc a new object
-            if (typeHandler.TryGetAmbiguousSerializableType(ptr, out var type))
+            try
             {
-                object value = type.AmbiguousDeserialize(packet);
-
-                if (value != null)
+                // try to get the type and alloc a new object
+                if (typeHandler.TryGetSerializableType(ptr, out var type))
                 {
-                    type.SetPtr(ptr, value);
+                    object value = type.AmbiguousDeserialize(packet);
 
-                    sender.SendGoodResponse(callbackId);
-                    return;
+                    if (value != null)
+                    {
+                        heap.Set(ptr, value);
+
+                        sender.SendGoodResponse(callbackId);
+
+                        return;
+                    }
                 }
+                sender.SendBadResponse(callbackId);
             }
+            catch (Exception)
+            {
+                sender.SendBadResponse(callbackId);
 
-            sender.SendBadResponse(callbackId);
+                throw;
+            }
         }
     }
 }

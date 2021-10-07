@@ -11,6 +11,8 @@ using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Transport.Core.Factories;
 using NetInterop.Runtime.MethodHandling;
 using NetInterop.Runtime.TypeHandling;
+using NetInterop.Abstractions;
+using NetInterop.Runtime;
 
 namespace NetInterop.Tests.CallbackTests
 {
@@ -24,19 +26,21 @@ namespace NetInterop.Tests.CallbackTests
 
             IPointerProvider pointerProvider = new DefaultPointerProvider();
 
-            INetworkType<int> baseNetworkType = new DefaultNetworkType<int>(1, pointerProvider, new FuncActivator<int>(() => 69));
+            INetType<int> baseNetworkType = new NetType<int>(pointerProvider.Create(1, 0), new DefaultActivator<int>(), new DefaultDeactivator<int>());
 
-            ISerializableNetworkType<int> networkType = new DefaultSerializableNetworkType<int>(baseNetworkType, intDeserializer, intSerializer);
+            ISerializableNetType<int> networkType = new SerializableNetType<int>(baseNetworkType, intSerializer, intDeserializer);
 
-            INetworkTypeHandler typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
+            ITypeHander typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
 
             IPacketSender sender = new PacketSenderStub();
 
             IPointerResponseSender pointerSender = new ResponseSenderStub(sender);
 
-            IPacketHandler<PointerOperations> allocOperation = new AllocPointerHandler(typeHandler, pointerProvider, pointerSender);
-            IPacketHandler<PointerOperations> setOperation = new SetPointerHandler(typeHandler, pointerProvider, pointerSender);
-            IPacketHandler<PointerOperations> getOperation = new GetPointerHandler(typeHandler, pointerProvider, pointerSender);
+            IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
+
+            IPacketHandler<PointerOperations> allocOperation = new AllocPointerHandler(heap, pointerProvider, pointerSender);
+            IPacketHandler<PointerOperations> setOperation = new SetPointerHandler(heap, typeHandler, pointerProvider, pointerSender);
+            IPacketHandler<PointerOperations> getOperation = new GetPointerHandler(heap, typeHandler, pointerProvider, pointerSender);
 
             IPacketHandler operationHandler = new PointerPacketDispatchHandler(allocOperation);
 
@@ -161,7 +165,7 @@ namespace NetInterop.Tests.CallbackTests
             Assert.True(ranCallback);
             Assert.NotNull(callbackPacket);
 
-            Assert.Equal(44, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(44, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -169,9 +173,9 @@ namespace NetInterop.Tests.CallbackTests
         {
             TestObjects test = new();
 
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             // create some spots to put our actual results to compare
             bool ranCallback = false;
@@ -217,9 +221,9 @@ namespace NetInterop.Tests.CallbackTests
         {
             TestObjects test = new();
 
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             // create some spots to put our actual results to compare
             bool ranCallback = false;
@@ -258,14 +262,14 @@ namespace NetInterop.Tests.CallbackTests
             Assert.NotNull(callbackPacket);
 
             // becuase int is a value type "freeing" it is just forgeting it's there, write over the value and check to see if the value was freed
-            var newPtr = test.NetworkType.AllocPtr().As<int>();
+            var newPtr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
             Assert.Equal(newPtr, ptr);
 
             // set the value of the new ptr and then check the old pointer and verify that we wrote over the value at the address of the old pointer
-            test.NetworkType.SetPtr(newPtr, 0);
+            test.RuntimeHeap.Set(newPtr, 0);
 
-            Assert.Equal(0, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(0, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -276,9 +280,9 @@ namespace NetInterop.Tests.CallbackTests
 
             INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             // now we have alloced the value attempt to set it's value
             IPacketSerializable pointer = ptr;
@@ -312,7 +316,7 @@ namespace NetInterop.Tests.CallbackTests
             INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
             // get a ptr to set the value of
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
             heap.Set<int>(ptr, 22);
 
@@ -332,7 +336,7 @@ namespace NetInterop.Tests.CallbackTests
 
             Assert.NotNull(responsePacket);
 
-            Assert.Equal(22, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(22, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -342,9 +346,9 @@ namespace NetInterop.Tests.CallbackTests
 
             INetworkHeap heap = new NetworkHeap(test.TypeHandler, test.Sender, test.DelegateHandler, test.MethodHandler);
 
-            INetPtr<int> ptr = test.NetworkType.AllocPtr().As<int>();
+            INetPtr<int> ptr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
-            test.NetworkType.SetPtr(ptr, 32);
+            test.RuntimeHeap.Set(ptr, 32);
 
             heap.Destroy(ptr);
 
@@ -363,14 +367,14 @@ namespace NetInterop.Tests.CallbackTests
             test.RepsonseHandler.Handle(responsePacket);
 
             // becuase int is a value type "freeing" it is just forgeting it's there, write over the value and check to see if the value was freed
-            var newPtr = test.NetworkType.AllocPtr().As<int>();
+            var newPtr = test.RuntimeHeap.Alloc(test.IntTypePointer).As<int>();
 
             Assert.Equal(newPtr, ptr);
 
             // set the value of the new ptr and then check the old pointer and verify that we wrote over the value at the address of the old pointer
-            test.NetworkType.SetPtr(newPtr, 0);
+            test.RuntimeHeap.Set(newPtr, 0);
 
-            Assert.Equal(0, test.NetworkType.GetPtr(ptr));
+            Assert.Equal(0, test.RuntimeHeap.Get(ptr));
         }
 
         [Fact]
@@ -499,9 +503,9 @@ namespace NetInterop.Tests.CallbackTests
             public IPacketSerializer<int> IntSerializer { get; set; }
             public IPacketDeserializer<int> IntDeserializer { get; set; }
             public IPointerProvider PointerProvider { get; set; }
-            public INetworkType<int> NetworkType { get; set; }
-            public ISerializableNetworkType<int> SerializableNetworkType { get; set; }
-            public INetworkTypeHandler TypeHandler { get; set; }
+            public INetType<int> NetworkType { get; set; }
+            public ISerializableNetType<int> SerializableNetworkType { get; set; }
+            public ITypeHander TypeHandler { get; set; }
             public IPacketSender Sender { get; set; }
             public IPointerResponseSender PointerSender { get; set; }
             public IPacketHandler<PointerOperations> AllocOperation { get; set; }
@@ -513,7 +517,9 @@ namespace NetInterop.Tests.CallbackTests
             public IDelegateHandler<bool, IPacket> DelegateHandler { get; set; }
             public IPointerResponseHandler PointerCallbackHandler { get; set; }
             public IPacketHandler<PointerOperations> RepsonseHandler { get; set; }
-            public INetworkMethodHandler MethodHandler { get; set; }
+            public IMethodHandler MethodHandler { get; set; }
+            public IObjectHeap RuntimeHeap { get; set; }
+            public INetPtr<int> IntTypePointer { get; set; }
             public TestObjects()
             {
                 IntSerializer = new DefaultSerializer<int>((num, packet) => packet.AppendInt(num));
@@ -521,22 +527,27 @@ namespace NetInterop.Tests.CallbackTests
 
                 PointerProvider = new DefaultPointerProvider();
 
-                NetworkType = new DefaultNetworkType<int>(1, PointerProvider, new FuncActivator<int>(() => 69));
+                IntTypePointer = PointerProvider.Create(1, 0).As<int>();
 
-                SerializableNetworkType = new DefaultSerializableNetworkType<int>(NetworkType, IntDeserializer, IntSerializer);
+                NetworkType = new NetType<int>(IntTypePointer, new DefaultActivator<int>(), new DefaultDeactivator<int>());
+
+                SerializableNetworkType = new SerializableNetType<int>(NetworkType, IntSerializer, IntDeserializer);
 
                 TypeHandler = new NetworkTypeHandlerStub() { network = SerializableNetworkType, networkType = NetworkType };
+                
+                RuntimeHeap = new RuntimeHeap(TypeHandler,PointerProvider);
 
                 Sender = new PacketSenderStub();
 
-                MethodHandler = new DefaultMethodHandler(PointerProvider, TypeHandler);
+                MethodHandler = new DefaultMethodHandler(PointerProvider, TypeHandler, RuntimeHeap);
 
                 PointerSender = new ResponseSenderStub(Sender);
 
-                AllocOperation = new AllocPointerHandler(TypeHandler, PointerProvider, PointerSender);
-                SetOperation = new SetPointerHandler(TypeHandler, PointerProvider, PointerSender);
-                GetOperation = new GetPointerHandler(TypeHandler, PointerProvider, PointerSender);
-                FreeOperation = new FreePointerHandler(TypeHandler, PointerProvider, PointerSender);
+
+                AllocOperation = new AllocPointerHandler(RuntimeHeap, PointerProvider, PointerSender);
+                SetOperation = new SetPointerHandler(RuntimeHeap, TypeHandler, PointerProvider, PointerSender);
+                GetOperation = new GetPointerHandler(RuntimeHeap, TypeHandler, PointerProvider, PointerSender);
+                FreeOperation = new FreePointerHandler(RuntimeHeap, PointerProvider, PointerSender);
                 InvokeOperation = new InvokePointerHandler(PointerProvider, PointerSender, MethodHandler);
 
                 OperationHandler = new PointerPacketDispatchHandler(AllocOperation, SetOperation, GetOperation, FreeOperation);

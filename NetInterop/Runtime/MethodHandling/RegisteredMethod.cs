@@ -1,4 +1,5 @@
-﻿using NetInterop.Transport.Core.Abstractions.Packets;
+﻿using NetInterop.Abstractions;
+using NetInterop.Transport.Core.Abstractions.Packets;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -9,18 +10,21 @@ namespace NetInterop.Runtime.MethodHandling
     public class RegisteredMethod : IPacketSerializer<object[]>, IPacketDeserializer<object[]>
     {
         private readonly IPointerProvider pointerProvider;
-        private readonly INetworkType declaringNetworkType;
+        private readonly IObjectHeap heap;
         private readonly MethodInfo method;
         private readonly MethodParameter[] parameters;
         private readonly MethodParameter returnType;
+        
+        public INetType DeclaringType { get; private set; }
 
-        public RegisteredMethod(MethodInfo method, MethodParameter returnType, MethodParameter[] parameters, IPointerProvider pointerProvider, INetworkType declaringNetworkType = null)
+        public RegisteredMethod(MethodInfo method, MethodParameter returnType, MethodParameter[] parameters, IPointerProvider pointerProvider, IObjectHeap runtimeHeap = null, INetType declaringType = null)
         {
             this.method = method ?? throw new ArgumentNullException(nameof(method));
             this.returnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
             this.parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
-            this.declaringNetworkType = declaringNetworkType;
+            this.heap = runtimeHeap;
+            DeclaringType = declaringType;
         }
 
         /// <summary>
@@ -67,7 +71,7 @@ namespace NetInterop.Runtime.MethodHandling
 
             INetPtr instancePtr = pointerProvider.Deserialize(packet);
 
-            object instance = declaringNetworkType.GetPtr(instancePtr);
+            object instance = heap.Get(instancePtr);
 
             if (instance is null)
             {
