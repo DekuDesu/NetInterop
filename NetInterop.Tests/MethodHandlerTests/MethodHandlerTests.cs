@@ -25,7 +25,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             IPointerProvider pointerProvider = new DefaultPointerProvider();
             INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
             IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
-            INetworkMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
             var intSerializer = new IntSerializer();
 
             typeHandler.RegisterType<TestClass>(0x01);
@@ -57,7 +57,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             
             IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
             
-            INetworkMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
@@ -92,7 +92,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             IPointerProvider pointerProvider = new DefaultPointerProvider();
             INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
             IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
-            INetworkMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
@@ -123,7 +123,7 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
 
-            INetworkMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
@@ -174,7 +174,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             
             IObjectHeap<TestClass> heap = new ObjectHeap<TestClass>(networkType, pointerProvider);
             
-            INetworkMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
             
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.Adder)));
@@ -211,7 +211,7 @@ namespace NetInterop.Tests.MethodHandlerTests
             IPointerProvider pointerProvider = new DefaultPointerProvider();
             INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
             IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
-            INetworkMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());

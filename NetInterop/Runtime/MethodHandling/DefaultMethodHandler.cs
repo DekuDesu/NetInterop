@@ -9,7 +9,7 @@ using System.Text;
 
 namespace NetInterop.Runtime.MethodHandling
 {
-    public class DefaultMethodHandler : INetworkMethodHandler
+    public class DefaultMethodHandler : IMethodHandler
     {
         private readonly IPointerProvider pointerProvider;
         private readonly INetTypeHandler typeHandler;
@@ -126,7 +126,7 @@ namespace NetInterop.Runtime.MethodHandling
                 return new MethodParameter(info, null, null);
             }
 
-            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(INetworkMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetTypeHandler)}. Use {nameof(INetTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
+            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(IMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetTypeHandler)}. Use {nameof(INetTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
         }
 
         public void Clear()

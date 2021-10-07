@@ -26,7 +26,7 @@ namespace NetInterop.Clients
         public IConnection Connection { get; set; }
         public IStream<byte> Stream { get; set; }
         public INetTypeHandler Types { get; set; }
-        public INetworkMethodHandler Methods { get; set; }
+        public IMethodHandler Methods { get; set; }
         public INetworkHeap RemoteHeap { get; set; }
         public IPacketController PacketController { get; set; }
         public IPacketReceiver PacketReceiver { get; set; }

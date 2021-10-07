@@ -517,7 +517,7 @@ namespace NetInterop.Tests.CallbackTests
             public IDelegateHandler<bool, IPacket> DelegateHandler { get; set; }
             public IPointerResponseHandler PointerCallbackHandler { get; set; }
             public IPacketHandler<PointerOperations> RepsonseHandler { get; set; }
-            public INetworkMethodHandler MethodHandler { get; set; }
+            public IMethodHandler MethodHandler { get; set; }
             public IObjectHeap RuntimeHeap { get; set; }
             public INetPtr<int> IntTypePointer { get; set; }
             public TestObjects()

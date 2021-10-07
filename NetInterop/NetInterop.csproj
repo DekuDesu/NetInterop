@@ -15,6 +15,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\NetInterop.Transport.Sockets\NetInterop.Transport.Sockets.csproj" />
 		<ProjectReference Include="..\NetInterop.Transport\NetInterop.Transport.Core.csproj" />
 	</ItemGroup>

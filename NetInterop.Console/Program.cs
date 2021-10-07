@@ -6,6 +6,7 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Runtime.Extensions;
 using NetInterop.Transport.Core.Runtime;
+using System.Threading;
 
 namespace RemoteInvokeConsole
 {
@@ -21,22 +22,52 @@ namespace RemoteInvokeConsole
 
             server.Start("127.0.0.1", 25565);
 
+            var client = Interop.CreateClient("127.0.0.1", 25565);
 
+            try
+            {
+                Test(server,client);
+                Console.ReadLine();
+            }
+            finally
+            {
+                client.Disconnect();
+                server.Stop();
+            }
+        }
 
-            Console.ReadLine();
+        private static void Test(IServer server, IClient client)
+        {
 
-            server.Stop();
+            Barrier barrier = new Barrier(2);
+            INetPtr<TestClass> ptr = default;
+            client.RemoteHeap.Create<TestClass>((p) => {
+                ptr = p;
+
+                Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId} waiting for main thread");
+                barrier.SignalAndWait();
+            });
+
+            Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId} waiting for ptr to be set");
+            barrier.SignalAndWait();
+
+            Console.WriteLine($"Created remote TestClass instance ptr: {ptr}");
+
         }
 
         private static void Startup(INetTypeHandler handler)
         {
             var serializer = new TestClassSerializer();
+            var intSer = new IntSerializer();
+            handler.RegisterType<int>((ushort)TypeCode.Int32,intSer,intSer);
             handler.RegisterType<TestClass>(0x01,serializer,serializer,serializer,serializer);
         }
-        public static void Startup(INetworkMethodHandler handler)
+        private static INetPtr SetValuePtr;
+        private static INetPtr GetValuePtr;
+        public static void Startup(IMethodHandler handler)
         {
-            handler.Register<TestClass>((a)=>nameof(a.SetValue));
-            handler.Register<TestClass>((a) => nameof(a.GetValue));
+            SetValuePtr = handler.Register<TestClass,int>((a)=> a.SetValue);
+            GetValuePtr = handler.Register<TestClass,int>((a) => a.GetValue);
         }
         public class TestClass :IDisposable
         {
@@ -90,6 +121,14 @@ namespace RemoteInvokeConsole
             {
                 packetBuilder.AppendInt(value.Value);
             }
+        }
+        public class IntSerializer : IPacketSerializer<int>, IPacketDeserializer<int>
+        {
+            public object AmbiguousDeserialize(IPacket packet) => packet.GetInt();
+
+            public int Deserialize(IPacket packet) => packet.GetInt();
+
+            public void Serialize(int value, IPacket packetBuilder) => packetBuilder.AppendInt(value);
         }
     }
 }

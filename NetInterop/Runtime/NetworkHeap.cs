@@ -8,11 +8,11 @@ namespace NetInterop
 {
     public class NetworkHeap : INetworkHeap
     {
-        private readonly INetworkMethodHandler methodHandler;
+        private readonly IMethodHandler methodHandler;
         private readonly INetTypeHandler typeHandler;
         private readonly IPacketSender sender;
         private readonly IDelegateHandler<bool, IPacket> callbackDelegateHandler;
-        public NetworkHeap(INetTypeHandler typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, INetworkMethodHandler methodHandler)
+        public NetworkHeap(INetTypeHandler typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, IMethodHandler methodHandler)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
@@ -335,7 +335,7 @@ namespace NetInterop
 
         private Exception GenerateMissingMethodSerializerException(string methodPtr)
         {
-            return new MissingMemberException($"Missing serializer and/or deserializer. The method {methodPtr} is either not registered, or is missing serializers and/or deserializers for some of its parameters and they were not found within the {nameof(INetTypeHandler)}. Use {nameof(INetworkMethodHandler.Register)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {methodPtr}.");
+            return new MissingMemberException($"Missing serializer and/or deserializer. The method {methodPtr} is either not registered, or is missing serializers and/or deserializers for some of its parameters and they were not found within the {nameof(INetTypeHandler)}. Use {nameof(IMethodHandler.Register)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {methodPtr}.");
         }
 
         private Exception GenerateMissingReturnTypeSerializerException(string typeName)
