@@ -20,6 +20,8 @@ namespace NetInterop.Runtime
 
 
         #region Create
+        public Task<INetPtr<T>> Create<T>(INetPtr<T> typePointer) => Create<T>();
+
         public Task<INetPtr<T>> Create<T>()
         {
             var taskSource = new TaskCompletionSource<INetPtr<T>>();
@@ -58,12 +60,38 @@ namespace NetInterop.Runtime
 
         public Task<INetPtr> Create(INetPtr typePointer)
         {
-            throw new NotImplementedException();
-        }
+            var taskSource = new TaskCompletionSource<INetPtr>();
 
-        public Task<INetPtr<T>> Create<T>(INetPtr<T> typePointer)
-        {
-            throw new NotImplementedException();
+            void CreateCallback(bool success, IPacket response)
+            {
+                try
+                {
+                    if (success)
+                    {
+                        taskSource.SetResult(pointerProvider.Deserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(null);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            // try to get the pointer associated with the type of T
+            if (typeHandler.TryGetType(typePointer, out IType type) is false) throw MissingTypeException(typePointer.ToString());
+
+            // create and send the packet
+            var packet = new PointerOperationPacket(PointerOperations.Alloc,
+                new CallbackPacket(CreateCallback, type.TypePointer, callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
         #endregion Create
 
