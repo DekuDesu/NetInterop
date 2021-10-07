@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Tests.CallbackTests.Stubs
 {
-    public class NetworkTypeHandlerStub : INetTypeHandler
+    public class NetworkTypeHandlerStub : ITypeHander
     {
         public List<Type> registeredTypes = new List<Type>();
         public bool cleared = false;

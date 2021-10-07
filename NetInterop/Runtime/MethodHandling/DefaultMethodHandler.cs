@@ -12,13 +12,13 @@ namespace NetInterop.Runtime.MethodHandling
     public class DefaultMethodHandler : IMethodHandler
     {
         private readonly IPointerProvider pointerProvider;
-        private readonly INetTypeHandler typeHandler;
+        private readonly ITypeHander typeHandler;
         private readonly IObjectHeap heap;
         private readonly IDictionary<INetPtr, RegisteredMethod> registeredMethods = new Dictionary<INetPtr, RegisteredMethod>();
         private readonly IDictionary<MethodInfo, INetPtr> methodPtrs = new ConcurrentDictionary<MethodInfo, INetPtr>();
         private ushort nextId = 1;
 
-        public DefaultMethodHandler(IPointerProvider pointerProvider, INetTypeHandler typeHandler, IObjectHeap heap)
+        public DefaultMethodHandler(IPointerProvider pointerProvider, ITypeHander typeHandler, IObjectHeap heap)
         {
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
@@ -43,7 +43,26 @@ namespace NetInterop.Runtime.MethodHandling
         {
             RegisteredMethod registration = CreateRegistration(method);
 
-            INetPtr ptr = (INetPtr)((Func<ushort, ushort, INetPtr>)(this.pointerProvider.Create)).Method.MakeGenericMethod(method.ReturnType).Invoke(pointerProvider, new object[] { registration?.DeclaringType?.TypePointer?.PtrType ?? 0, nextId++ });
+            INetPtr ptr = default;
+
+            if (method.ReturnType != typeof(void))
+            {
+                var genericCreateMethod = typeof(IPointerProvider)
+                    .GetMethods()
+                    .Where(m => m.Name == nameof(IPointerProvider.Create) && m.IsGenericMethod)
+                    .FirstOrDefault();
+
+                var contructedGeneric = genericCreateMethod.MakeGenericMethod(method.ReturnType);
+
+                ptr = (INetPtr)contructedGeneric.Invoke(pointerProvider, 
+                    parameters: new object[] {
+                        registration?.DeclaringType?.TypePointer?.PtrType ?? 0, 
+                        nextId++ 
+                    });
+            }
+            else {
+                ptr = pointerProvider.Create(registration?.DeclaringType?.TypePointer?.PtrType ?? 0, nextId++);
+            } 
 
             AddRegistration(method, registration, ptr);
 
@@ -89,7 +108,7 @@ namespace NetInterop.Runtime.MethodHandling
             {
                 if (typeHandler.TryGetType(method.DeclaringType, out declaringNetwork) is false)
                 {
-                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(INetTypeHandler)}.");
+                    throw new InvalidOperationException($"Failed to register the method {method.Name}. {method.Name} is declared as an instance method (non-static) and requires a reference of an object to be invoked, however, the declaring type {method.DeclaringType.FullName} is not registered with the {nameof(ITypeHander)}.");
                 }
             }
 
@@ -156,7 +175,7 @@ namespace NetInterop.Runtime.MethodHandling
                 return new MethodParameter(info, null, null);
             }
 
-            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(IMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(INetTypeHandler)}. Use {nameof(INetTypeHandler)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
+            throw new InvalidOperationException($"Failed to register method {method.Name} with the {nameof(IMethodHandler)}. The parameter {info.Name}({paramType.FullName}) is not registered as a serializable and deserializable type with the {nameof(ITypeHander)}. Use {nameof(ITypeHander)}.Register<T>(ushort id, {nameof(IPacketSerializer)}<T> serializer, {nameof(IPacketDeserializer)}<T> deserializer) to register one.");
         }
 
         public void Clear()

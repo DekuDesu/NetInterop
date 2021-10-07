@@ -30,7 +30,7 @@ namespace NetInterop.Tests.CallbackTests
 
             ISerializableNetType<int> networkType = new SerializableNetType<int>(baseNetworkType, intSerializer, intDeserializer);
 
-            INetTypeHandler typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
+            ITypeHander typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
 
             IPacketSender sender = new PacketSenderStub();
 
@@ -505,7 +505,7 @@ namespace NetInterop.Tests.CallbackTests
             public IPointerProvider PointerProvider { get; set; }
             public INetType<int> NetworkType { get; set; }
             public ISerializableNetType<int> SerializableNetworkType { get; set; }
-            public INetTypeHandler TypeHandler { get; set; }
+            public ITypeHander TypeHandler { get; set; }
             public IPacketSender Sender { get; set; }
             public IPointerResponseSender PointerSender { get; set; }
             public IPacketHandler<PointerOperations> AllocOperation { get; set; }

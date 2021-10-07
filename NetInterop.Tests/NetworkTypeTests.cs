@@ -21,7 +21,7 @@ namespace NetInterop.Tests
         public void Test_BasicRegister()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
 
             typeHandler.RegisterType<int>(1);
 
@@ -36,7 +36,7 @@ namespace NetInterop.Tests
         public void Test_GetTypePtr()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
 
             typeHandler.RegisterType<int>(1);
 
@@ -51,7 +51,7 @@ namespace NetInterop.Tests
         public void Test_InstantiatorAndDisposerRegister()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
 
             bool instantiated = false; ;
             bool disposed = false;
@@ -86,7 +86,7 @@ namespace NetInterop.Tests
         public void Test_Serialization()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            INetTypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
 
             var serializer = new TestSerializer();
 

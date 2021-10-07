@@ -55,7 +55,7 @@ namespace RemoteInvokeConsole
 
         }
 
-        private static void Startup(INetTypeHandler handler)
+        private static void Startup(ITypeHander handler)
         {
             var serializer = new TestClassSerializer();
             var intSer = new IntSerializer();

@@ -26,7 +26,7 @@ namespace NetInterop.Abstractions
         /// <summary>
         /// The registered network types that can be sent between this client and the remote client
         /// </summary>
-        INetTypeHandler Types { get; set; }
+        ITypeHander Types { get; set; }
 
         /// <summary>
         /// The registred methods that can be invoked on this client of the remote client

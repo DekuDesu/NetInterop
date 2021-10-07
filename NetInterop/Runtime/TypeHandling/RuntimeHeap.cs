@@ -8,11 +8,11 @@ namespace NetInterop.Runtime.TypeHandling
 {
     public class RuntimeHeap : IObjectHeap
     {
-        private readonly INetTypeHandler typeHandler;
+        private readonly ITypeHander typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IDictionary<ushort, IObjectHeap> heaps = new ConcurrentDictionary<ushort, IObjectHeap>();
 
-        public RuntimeHeap(INetTypeHandler typeHandler, IPointerProvider pointerProvider)
+        public RuntimeHeap(ITypeHander typeHandler, IPointerProvider pointerProvider)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));

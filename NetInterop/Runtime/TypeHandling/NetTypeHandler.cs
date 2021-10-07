@@ -7,7 +7,7 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 
 namespace NetInterop.Runtime
 {
-    public class NetTypeHandler : INetTypeHandler
+    public class NetTypeHandler : ITypeHander
     {
         private readonly IPointerProvider pointerProvider;
         private readonly IDictionary<ushort, INetType> types = new ConcurrentDictionary<ushort, INetType>();
