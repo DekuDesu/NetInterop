@@ -120,12 +120,72 @@ namespace NetInterop.Runtime
         #region Get
         public Task<T> Get<T>(INetPtr<T> instancePointer)
         {
-            throw new NotImplementedException();
+            // make sure we have all the serializers available to us before we send any packets
+            if (typeHandler.TryGetSerializableType<T>(out ISerializableType<T> serializer) is false) throw MissingSerializerException(typeof(T).FullName);
+
+            var taskSource = new TaskCompletionSource<T>();
+
+            void GetCallback(bool sucess, IPacket response)
+            {
+                try
+                {
+                    if (sucess)
+                    {
+                        taskSource.SetResult(serializer.Deserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(default);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Get,
+                new CallbackPacket(GetCallback, instancePointer, callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
         public Task<object> Get(INetPtr instancePointer)
         {
-            throw new NotImplementedException();
+            // make sure we have all the serializers available to us before we send any packets
+            if (typeHandler.TryGetSerializableType(instancePointer, out ISerializableType serializer) is false) throw MissingSerializerException(instancePointer.PtrType.ToString());
+
+            var taskSource = new TaskCompletionSource<object>();
+
+            void GetCallback(bool sucess, IPacket response)
+            {
+                try
+                {
+                    if (sucess)
+                    {
+                        taskSource.SetResult(serializer.AmbiguousDeserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(default);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Get,
+                new CallbackPacket(GetCallback, instancePointer, callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
         #endregion Get
 
@@ -185,7 +245,11 @@ namespace NetInterop.Runtime
 
         private Exception MissingTypeException(string typeName)
         {
-            return new TypeInitializationException($"The type {typeName} was not found within the {nameof(ITypeHandler)} as a registed type. Use {nameof(ITypeHandler.RegisterType)} to register the type before attempting to use it {typeName}.", null);
+            return new MissingMemberException($"The type {typeName} was not found within the {nameof(ITypeHandler)} as a registered type. Use {nameof(ITypeHandler.RegisterType)} to register the type before attempting to use it {typeName}.");
+        }
+        private Exception MissingSerializerException(string typeName)
+        {
+            return new MissingMemberException($"The type {typeName} was not found within the {nameof(ITypeHandler)} as a serializable and/or deserializable type.");
         }
     }
 }
