@@ -14,14 +14,17 @@ namespace NetInterop.Runtime.MethodHandling
         private readonly MethodInfo method;
         private readonly MethodParameter[] parameters;
         private readonly MethodParameter returnType;
+        
+        public INetType DeclaringType { get; private set; }
 
-        public RegisteredMethod(MethodInfo method, MethodParameter returnType, MethodParameter[] parameters, IPointerProvider pointerProvider, IObjectHeap runtimeHeap = null)
+        public RegisteredMethod(MethodInfo method, MethodParameter returnType, MethodParameter[] parameters, IPointerProvider pointerProvider, IObjectHeap runtimeHeap = null, INetType declaringType = null)
         {
             this.method = method ?? throw new ArgumentNullException(nameof(method));
             this.returnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
             this.parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
             this.heap = runtimeHeap;
+            DeclaringType = declaringType;
         }
 
         /// <summary>

@@ -63,7 +63,7 @@ namespace RemoteInvokeConsole
             handler.RegisterType<TestClass>(0x01,serializer,serializer,serializer,serializer);
         }
         private static INetPtr SetValuePtr;
-        private static INetPtr GetValuePtr;
+        private static INetPtr<int> GetValuePtr;
         public static void Startup(IMethodHandler handler)
         {
             SetValuePtr = handler.Register<TestClass,int>((a)=> a.SetValue);
