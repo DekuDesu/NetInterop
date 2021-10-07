@@ -96,14 +96,24 @@ namespace NetInterop.Runtime
         #endregion Create
 
         #region Destroy
-        public Task Destroy<T>(INetPtr<T> instancePointer)
-        {
-            throw new NotImplementedException();
-        }
+        public Task<bool> Destroy<T>(INetPtr<T> instancePointer) => Destroy((INetPtr)instancePointer);
 
-        public Task Destroy(INetPtr instancePointer)
+        public Task<bool> Destroy(INetPtr instancePointer)
         {
-            throw new NotImplementedException();
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void DestroyCallback(bool success, IPacket response)
+            {
+                taskSource.SetResult(success);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Free,
+                new CallbackPacket(DestroyCallback, instancePointer, callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
         #endregion Destroy
 

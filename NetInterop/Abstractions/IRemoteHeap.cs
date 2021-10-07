@@ -147,8 +147,8 @@ namespace NetInterop
         Task Set<T>(INetPtr<T> instancePointer, T value);
         Task Set(INetPtr instancePointer, object value);
 
-        Task Destroy<T>(INetPtr<T> instancePointer);
-        Task Destroy(INetPtr instancePointer);
+        Task<bool> Destroy<T>(INetPtr<T> instancePointer);
+        Task<bool> Destroy(INetPtr instancePointer);
 
         Task InvokeStatic(INetPtr methodPointer);
         Task InvokeStatic(INetPtr methodPointer, params object[] parameters);
