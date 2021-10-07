@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NetInterop.Abstractions
 {
-    public interface ITypeHander
+    public interface ITypeHandler
     {
         bool TryGetType<T>(out INetType<T> netType);
         bool TryGetType(Type type, out INetType netType);

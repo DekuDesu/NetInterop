@@ -10,11 +10,11 @@ namespace NetInterop
     public class SetPointerHandler : IPacketHandler<PointerOperations>
     {
         private readonly IObjectHeap heap;
-        private readonly ITypeHander typeHandler;
+        private readonly ITypeHandler typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IPointerResponseSender sender;
 
-        public SetPointerHandler(IObjectHeap heap, ITypeHander typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
+        public SetPointerHandler(IObjectHeap heap, ITypeHandler typeHandler, IPointerProvider pointerProvider, IPointerResponseSender sender)
         {
             this.heap = heap ?? throw new ArgumentNullException(nameof(heap));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));

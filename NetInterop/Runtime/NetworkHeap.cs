@@ -9,10 +9,10 @@ namespace NetInterop
     public class NetworkHeap : INetworkHeap
     {
         private readonly IMethodHandler methodHandler;
-        private readonly ITypeHander typeHandler;
+        private readonly ITypeHandler typeHandler;
         private readonly IPacketSender sender;
         private readonly IDelegateHandler<bool, IPacket> callbackDelegateHandler;
-        public NetworkHeap(ITypeHander typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, IMethodHandler methodHandler)
+        public NetworkHeap(ITypeHandler typeHandler, IPacketSender sender, IDelegateHandler<bool, IPacket> callbackDelegateHandler, IMethodHandler methodHandler)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
@@ -335,12 +335,12 @@ namespace NetInterop
 
         private Exception GenerateMissingMethodSerializerException(string methodPtr)
         {
-            return new MissingMemberException($"Missing serializer and/or deserializer. The method {methodPtr} is either not registered, or is missing serializers and/or deserializers for some of its parameters and they were not found within the {nameof(ITypeHander)}. Use {nameof(IMethodHandler.Register)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {methodPtr}.");
+            return new MissingMemberException($"Missing serializer and/or deserializer. The method {methodPtr} is either not registered, or is missing serializers and/or deserializers for some of its parameters and they were not found within the {nameof(ITypeHandler)}. Use {nameof(IMethodHandler.Register)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {methodPtr}.");
         }
 
         private Exception GenerateMissingReturnTypeSerializerException(string typeName)
         {
-            return new MissingMemberException($"Missing serializer and/or deserializer. The type {typeName} was not found within the {typeHandler} with a registered serializer and deserializer. Use {nameof(ITypeHander.RegisterType)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {typeName}.");
+            return new MissingMemberException($"Missing serializer and/or deserializer. The type {typeName} was not found within the {typeHandler} with a registered serializer and deserializer. Use {nameof(ITypeHandler.RegisterType)} to register a {nameof(IPacketSerializer)} and {nameof(IPacketDeserializer)} for {typeName}.");
         }
 
         private Exception GenerateMethodDeclaringTypeMismatchException(string methodPtr, string instancePtr)
