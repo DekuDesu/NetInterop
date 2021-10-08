@@ -60,15 +60,18 @@ namespace RemoteInvokeConsole
             handler.RegisterType<string>((ushort)TypeCode.String, utf8Serializer, utf8Serializer);
             handler.RegisterType<TestClass>(0x01, serializer, serializer, serializer, serializer);
         }
+
         private static INetPtr SetValuePtr;
         private static INetPtr<int> GetValuePtr;
         private static INetPtr WriteMessagePtr;
+
         public static void Startup(IMethodHandler handler)
         {
             SetValuePtr = handler.Register<TestClass, int>(a => a.SetValue);
             GetValuePtr = handler.Register<TestClass, int>(a => a.GetValue);
             WriteMessagePtr = handler.Register<TestClass, string>(a => a.Write);
         }
+
         public class TestClass : IDisposable
         {
             public int Value { get; set; }
@@ -90,6 +93,7 @@ namespace RemoteInvokeConsole
                 Console.WriteLine("Disposed TestClass Instance");
             }
         }
+
         public class TestClassSerializer :
             IActivator<TestClass>,
             IDeactivator<TestClass>,
@@ -126,6 +130,7 @@ namespace RemoteInvokeConsole
                 packetBuilder.AppendInt(value.Value);
             }
         }
+
         public class IntSerializer : IPacketSerializer<int>, IPacketDeserializer<int>
         {
             public object AmbiguousDeserialize(IPacket packet) => packet.GetInt();
@@ -134,6 +139,7 @@ namespace RemoteInvokeConsole
 
             public void Serialize(int value, IPacket packetBuilder) => packetBuilder.AppendInt(value);
         }
+
         public class UTF8Serializer : IPacketSerializer<string>, IPacketDeserializer<string>
         {
             public object AmbiguousDeserialize(IPacket packet) => packet.GetString(System.Text.Encoding.UTF8);
