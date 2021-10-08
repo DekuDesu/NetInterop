@@ -6,7 +6,7 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 
 namespace NetInterop.Runtime
 {
-    public class SerializableNetType<T> : ISerializableType<T>
+    public class SerializableType<T> : ISerializableType<T>
     {
         private readonly IType<T> type;
         private readonly IPacketSerializer<T> serializer;
@@ -14,7 +14,7 @@ namespace NetInterop.Runtime
 
         public Type BackingType => type.BackingType;
 
-        public SerializableNetType(IType<T> type, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
+        public SerializableType(IType<T> type, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             this.type = type;
             this.serializer = serializer;

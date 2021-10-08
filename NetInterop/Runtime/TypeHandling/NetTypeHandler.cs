@@ -24,7 +24,7 @@ namespace NetInterop.Runtime
 
             if (serializer != null && deserializer != null)
             {
-                types.Add(interopId, new SerializableNetType<T>(new NetType<T>(ptr, activator, deactivator), serializer, deserializer));
+                types.Add(interopId, new SerializableType<T>(new NetType<T>(ptr, activator, deactivator), serializer, deserializer));
             }
             else
             {

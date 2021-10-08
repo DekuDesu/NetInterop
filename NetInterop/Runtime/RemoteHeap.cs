@@ -16,8 +16,15 @@ namespace NetInterop.Runtime
         private readonly ITypeHandler typeHandler;
         private readonly IMethodHandler methodHandler;
         private readonly IDelegateHandler<bool, IPacket> callbackHandler;
-        private readonly IProducerConsumerCollection<Barrier> barriers = new ConcurrentBag<Barrier>();
 
+        public RemoteHeap(IPointerProvider pointerProvider, IPacketSender sender, ITypeHandler typeHandler, IMethodHandler methodHandler, IDelegateHandler<bool, IPacket> callbackHandler)
+        {
+            this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
+            this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
+            this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
+            this.methodHandler = methodHandler ?? throw new ArgumentNullException(nameof(methodHandler));
+            this.callbackHandler = callbackHandler ?? throw new ArgumentNullException(nameof(callbackHandler));
+        }
 
         #region Create
         public Task<INetPtr<T>> Create<T>(INetPtr<T> typePointer) => Create<T>();

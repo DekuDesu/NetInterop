@@ -7,7 +7,6 @@ namespace NetInterop
     public enum PointerOperations : byte
     {
         none,
-        Callback,
         OperationResult,
         Alloc,
         Free,

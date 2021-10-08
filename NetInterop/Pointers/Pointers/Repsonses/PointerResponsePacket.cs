@@ -21,10 +21,7 @@ namespace NetInterop
 
         public void Serialize(IPacket packetBuilder)
         {
-            // this packet should be wrapped with a PointerOperationPacket so it is dispatched from the P
-            PointerResponses response = goodResponse ? PointerResponses.GoodResponse : PointerResponses.BadResponse;
-
-            packetBuilder.AppendByte((byte)response);
+            packetBuilder.AppendBool(goodResponse);
 
             data?.Serialize(packetBuilder);
         }

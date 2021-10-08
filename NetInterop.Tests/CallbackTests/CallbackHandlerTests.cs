@@ -28,7 +28,7 @@ namespace NetInterop.Tests.CallbackTests
 
             IType<int> baseNetworkType = new NetType<int>(pointerProvider.Create(1, 0), new DefaultActivator<int>(), new DefaultDeactivator<int>());
 
-            ISerializableType<int> networkType = new SerializableNetType<int>(baseNetworkType, intSerializer, intDeserializer);
+            ISerializableType<int> networkType = new SerializableType<int>(baseNetworkType, intSerializer, intDeserializer);
 
             ITypeHandler typeHandler = new NetworkTypeHandlerStub() { network = networkType, networkType = baseNetworkType };
 
@@ -531,11 +531,11 @@ namespace NetInterop.Tests.CallbackTests
 
                 NetworkType = new NetType<int>(IntTypePointer, new DefaultActivator<int>(), new DefaultDeactivator<int>());
 
-                SerializableNetworkType = new SerializableNetType<int>(NetworkType, IntSerializer, IntDeserializer);
+                SerializableNetworkType = new SerializableType<int>(NetworkType, IntSerializer, IntDeserializer);
 
                 TypeHandler = new NetworkTypeHandlerStub() { network = SerializableNetworkType, networkType = NetworkType };
-                
-                RuntimeHeap = new RuntimeHeap(TypeHandler,PointerProvider);
+
+                RuntimeHeap = new RuntimeHeap(TypeHandler, PointerProvider);
 
                 Sender = new PacketSenderStub();
 

@@ -20,9 +20,7 @@ namespace NetInterop
 
         public void Handle(IPacket packet)
         {
-            PointerResponses response = (PointerResponses)packet.GetByte();
-
-            handler.Handle(response.Contains(PointerResponses.GoodResponse), packet);
+            handler.Handle(packet.GetBool(), packet);
         }
     }
 }

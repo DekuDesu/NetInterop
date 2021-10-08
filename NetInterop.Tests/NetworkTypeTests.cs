@@ -61,7 +61,7 @@ namespace NetInterop.Tests
                 instantiated = true;
                 return 12;
             }
-            void Disposer(int value)
+            void Disposer(ref int value)
             {
                 disposed = true;
                 _ = value;
