@@ -27,7 +27,7 @@ namespace NetInterop.Clients
         public IStream<byte> Stream { get; set; }
         public ITypeHandler Types { get; set; }
         public IMethodHandler Methods { get; set; }
-        public INetworkHeap RemoteHeap { get; set; }
+        public IRemoteHeap RemoteHeap { get; set; }
         public IPacketController PacketController { get; set; }
         public IPacketReceiver PacketReceiver { get; set; }
         public IPacketSender PacketSender { get; set; }

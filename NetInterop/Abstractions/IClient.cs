@@ -36,7 +36,7 @@ namespace NetInterop.Abstractions
         /// <summary>
         /// The object heap that controls creating, destroying, and managing network types on the remote client
         /// </summary>
-        INetworkHeap RemoteHeap { get; set; }
+        IRemoteHeap RemoteHeap { get; set; }
 
         /// <summary>
         /// Controls recieving and sending raw <see cref="IPacket"/>s

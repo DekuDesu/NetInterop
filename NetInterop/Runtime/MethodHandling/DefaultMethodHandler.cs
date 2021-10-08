@@ -54,15 +54,16 @@ namespace NetInterop.Runtime.MethodHandling
 
                 var contructedGeneric = genericCreateMethod.MakeGenericMethod(method.ReturnType);
 
-                ptr = (INetPtr)contructedGeneric.Invoke(pointerProvider, 
+                ptr = (INetPtr)contructedGeneric.Invoke(pointerProvider,
                     parameters: new object[] {
-                        registration?.DeclaringType?.TypePointer?.PtrType ?? 0, 
-                        nextId++ 
+                        registration?.DeclaringType?.TypePointer?.PtrType ?? 0,
+                        nextId++
                     });
             }
-            else {
+            else
+            {
                 ptr = pointerProvider.Create(registration?.DeclaringType?.TypePointer?.PtrType ?? 0, nextId++);
-            } 
+            }
 
             AddRegistration(method, registration, ptr);
 

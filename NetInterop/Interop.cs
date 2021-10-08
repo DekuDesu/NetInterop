@@ -66,7 +66,7 @@ namespace NetInterop
 
             var PointerResponseSender = new DefaultPointerResponseSender(PacketSender);
 
-            var RemoteHeap = new NetworkHeap(Types, PacketSender, PacketCallbackHandler, Methods);
+            var RemoteHeap = new RemoteHeap(PointerProvider, PacketSender, Types, Methods, PacketCallbackHandler);
 
             var PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
                 new IPacketHandler<PointerOperations>[]
