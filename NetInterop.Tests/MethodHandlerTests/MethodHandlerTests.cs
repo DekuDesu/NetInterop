@@ -23,14 +23,14 @@ namespace NetInterop.Tests.MethodHandlerTests
         public void Test_Registration()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
-            IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
-            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            ITypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+            IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
             var intSerializer = new IntSerializer();
 
             typeHandler.RegisterType<TestClass>(0x01);
 
-            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.Test)));
 
@@ -53,16 +53,16 @@ namespace NetInterop.Tests.MethodHandlerTests
         public void Test_ParameterLessReturnless()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
-            
-            IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
-            
-            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            ITypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+
+            IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
+
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.Test)));
 
@@ -90,16 +90,16 @@ namespace NetInterop.Tests.MethodHandlerTests
         public void Test_Static_ParameterLessReturnless()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
-            IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
-            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            ITypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+            IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
 
-            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.GetInt)));
 
@@ -119,18 +119,18 @@ namespace NetInterop.Tests.MethodHandlerTests
         public void Test_Instance_Adder_NoReturn()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
+            ITypeHandler typeHandler = new NetTypeHandler(pointerProvider);
 
-            IObjectHeap heap = new RuntimeHeap(typeHandler,pointerProvider);
+            IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
 
             IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
 
-            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.Adder)));
 
@@ -162,20 +162,20 @@ namespace NetInterop.Tests.MethodHandlerTests
         public void Test_Instance_Adder_ReturnValue()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            
-            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
-            
+
+            ITypeHandler typeHandler = new NetTypeHandler(pointerProvider);
+
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
-            
+
             var intSerializer = new IntSerializer();
-            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
-            
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
-            
+            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
+
             IObjectHeap<TestClass> heap = new ObjectHeap<TestClass>(networkType, pointerProvider);
-            
-            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
-            
+
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
+
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.Adder)));
 
@@ -209,16 +209,16 @@ namespace NetInterop.Tests.MethodHandlerTests
         public void Test_Static_Adder_ReturnValue()
         {
             IPointerProvider pointerProvider = new DefaultPointerProvider();
-            ITypeHander typeHandler = new NetTypeHandler(pointerProvider);
+            ITypeHandler typeHandler = new NetTypeHandler(pointerProvider);
             IObjectHeap heap = new RuntimeHeap(typeHandler, pointerProvider);
-            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler,heap);
+            IMethodHandler methodHandler = new DefaultMethodHandler(pointerProvider, typeHandler, heap);
             var intSerializer = new IntSerializer();
 
             INetPtr typePtr = typeHandler.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(typeHandler.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(typeHandler.TryGetType<TestClass>(out IType<TestClass> networkType));
 
-            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            typeHandler.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             INetPtr methodPtr = methodHandler.Register(typeof(TestClass).GetMethod(nameof(TestClass.StaticAdder)));
 
@@ -247,28 +247,28 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(test.Types.TryGetType<TestClass>(out IType<TestClass> networkType));
 
-            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             // test that we receive net ptrs with correct types
 
             // should bev void(no type)
             INetPtr ptr = test.Methods.Register(TestClass.StaticVoid);
 
-            Assert.Equal(typeof(NetPtr),ptr.GetType());
-            Assert.NotEqual(typeof(NetPtr<>),ptr.GetType());
+            Assert.Equal(typeof(NetPtr), ptr.GetType());
+            Assert.NotEqual(typeof(NetPtr<>), ptr.GetType());
 
             // should be of the same type as the return type of the provided istance method
-            INetPtr intPtr = test.Methods.Register<TestClass,int,int,int>(x=>x.Adder);
+            INetPtr intPtr = test.Methods.Register<TestClass, int, int, int>(x => x.Adder);
 
-            Assert.Equal(typeof(NetPtr<int>),intPtr.GetType());
+            Assert.Equal(typeof(NetPtr<int>), intPtr.GetType());
 
             // we should get a net ptr that has a generic type of the return type
             // regarless of us specifying it as a generic param
             INetPtr otherIntPtr = test.Methods.Register(typeof(MethodHandlerTests).GetMethod(nameof(StaticIntDelegate)));
 
-            Assert.Equal(typeof(NetPtr<int>),otherIntPtr.GetType());
+            Assert.Equal(typeof(NetPtr<int>), otherIntPtr.GetType());
         }
 
         [Fact]
@@ -280,9 +280,9 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(test.Types.TryGetType<TestClass>(out IType<TestClass> networkType));
 
-            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             // any duplicate registrations to the method handler should return the same ptr each time
             void ShouldNotThrow()
@@ -307,9 +307,9 @@ namespace NetInterop.Tests.MethodHandlerTests
 
             INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
 
-            Assert.True(test.Types.TryGetType<TestClass>(out INetType<TestClass> networkType));
+            Assert.True(test.Types.TryGetType<TestClass>(out IType<TestClass> networkType));
 
-            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (num) => { }, intSerializer, intSerializer);
+            INetPtr<int> intTypePtr = test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
 
             // any duplicate registrations to the method handler should return the same ptr each time
             INetPtr<int> ptr = test.Methods.Register(StaticIntDelegate);
@@ -327,7 +327,7 @@ namespace NetInterop.Tests.MethodHandlerTests
         public class TestObjects
         {
             public IPointerProvider PointerProvider { get; set; } = new DefaultPointerProvider();
-            public ITypeHander Types { get; set; }
+            public ITypeHandler Types { get; set; }
             public IObjectHeap Heap { get; set; }
             public IMethodHandler Methods { get; set; }
             public TestObjects()
@@ -357,8 +357,8 @@ namespace NetInterop.Tests.MethodHandlerTests
             }
 
             public static void StaticVoid()
-            { 
-            
+            {
+
             }
             public static int GetInt()
             {

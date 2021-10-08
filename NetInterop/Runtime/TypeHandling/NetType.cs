@@ -6,7 +6,7 @@ using NetInterop.Transport.Core.Abstractions.Packets;
 
 namespace NetInterop.Runtime
 {
-    public class NetType<T> : INetType<T>
+    public class NetType<T> : IType<T>
     {
         private readonly IActivator<T> activator;
         private readonly IDeactivator<T> deactivator;
@@ -28,6 +28,6 @@ namespace NetInterop.Runtime
 
         public void Deactivate(ref object instance) => deactivator.DestroyInstance(ref instance);
 
-        object INetType.Activate() => activator.CreateInstance();
+        object IType.Activate() => activator.CreateInstance();
     }
 }

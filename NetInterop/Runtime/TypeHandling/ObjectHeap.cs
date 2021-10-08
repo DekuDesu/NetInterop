@@ -10,13 +10,13 @@ namespace NetInterop.Runtime
     public class ObjectHeap<T> : IObjectHeap<T>
     {
         private readonly IPointerProvider pointerProvider;
-        private readonly INetType<T> type;
+        private readonly IType<T> type;
         private readonly IProducerConsumerCollection<ushort> availableIndices = new ConcurrentBag<ushort>();
         private readonly SemaphoreSlim locker = new SemaphoreSlim(1, 1);
         private readonly T[] heap = new T[ushort.MaxValue];
         private ushort nextNewIndex = 1;
 
-        public ObjectHeap(INetType<T> type, IPointerProvider pointerProvider)
+        public ObjectHeap(IType<T> type, IPointerProvider pointerProvider)
         {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));

@@ -25,7 +25,7 @@ namespace NetInterop
     {
         public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
 
-        public static ITypeHander Types { get; set; }
+        public static ITypeHandler Types { get; set; }
         public static IMethodHandler Methods { get; set; }
         public static IPointerProvider PointerProvider { get; set; }
         public static IObjectHeap LocalHeap { get; set; }
@@ -36,8 +36,8 @@ namespace NetInterop
         {
             PointerProvider = new DefaultPointerProvider();
             Types = new NetTypeHandler(PointerProvider);
-            LocalHeap = new RuntimeHeap(Types,PointerProvider);
-            Methods = new DefaultMethodHandler(PointerProvider,Types,LocalHeap);
+            LocalHeap = new RuntimeHeap(Types, PointerProvider);
+            Methods = new DefaultMethodHandler(PointerProvider, Types, LocalHeap);
         }
 
         public static IClient CreateClient(string hostname, int port)
@@ -66,7 +66,7 @@ namespace NetInterop
 
             var PointerResponseSender = new DefaultPointerResponseSender(PacketSender);
 
-            var RemoteHeap = new NetworkHeap(Types, PacketSender, PacketCallbackHandler, Methods);
+            var RemoteHeap = new RemoteHeap(PointerProvider, PacketSender, Types, Methods, PacketCallbackHandler);
 
             var PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
                 new IPacketHandler<PointerOperations>[]

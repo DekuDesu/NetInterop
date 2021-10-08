@@ -8,63 +8,63 @@ using System.Threading.Tasks;
 
 namespace NetInterop.Tests.CallbackTests.Stubs
 {
-    public class NetworkTypeHandlerStub : ITypeHander
+    public class NetworkTypeHandlerStub : ITypeHandler
     {
         public List<Type> registeredTypes = new List<Type>();
         public bool cleared = false;
-        public ISerializableNetType network = null;
-        public INetType networkType = null;
+        public ISerializableType network = null;
+        public IType networkType = null;
 
         public INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> deactivator, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             throw new NotImplementedException();
         }
 
-        public bool TryGetSerializableType<T>(out ISerializableNetType<T> netType)
+        public bool TryGetSerializableType<T>(out ISerializableType<T> netType)
         {
-            netType = (ISerializableNetType<T>)network;
+            netType = (ISerializableType<T>)network;
             return true;
         }
 
-        public bool TryGetSerializableType(Type type, out ISerializableNetType netType)
+        public bool TryGetSerializableType(Type type, out ISerializableType netType)
         {
             netType = network;
             return true;
         }
 
-        public bool TryGetSerializableType(INetPtr typePtr, out ISerializableNetType netType)
+        public bool TryGetSerializableType(INetPtr typePtr, out ISerializableType netType)
         {
             netType = network;
             return true;
         }
 
-        public bool TryGetSerializableType<T>(INetPtr typePtr, out ISerializableNetType<T> netType)
+        public bool TryGetSerializableType<T>(INetPtr typePtr, out ISerializableType<T> netType)
         {
-            netType = (ISerializableNetType<T>)network;
+            netType = (ISerializableType<T>)network;
             return true;
         }
 
-        public bool TryGetType<T>(out INetType<T> netType)
+        public bool TryGetType<T>(out IType<T> netType)
         {
-            netType = (INetType<T>)networkType;
+            netType = (IType<T>)networkType;
             return true;
         }
 
-        public bool TryGetType(Type type, out INetType netType)
+        public bool TryGetType(Type type, out IType netType)
         {
             netType = networkType;
             return true;
         }
 
-        public bool TryGetType(INetPtr typePtr, out INetType netType)
+        public bool TryGetType(INetPtr typePtr, out IType netType)
         {
             netType = networkType;
             return true;
         }
 
-        public bool TryGetType<T>(INetPtr typePtr, out INetType<T> netType)
+        public bool TryGetType<T>(INetPtr typePtr, out IType<T> netType)
         {
-            netType = (INetType<T>)networkType;
+            netType = (IType<T>)networkType;
             return true;
         }
     }

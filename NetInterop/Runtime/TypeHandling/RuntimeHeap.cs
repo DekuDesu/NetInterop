@@ -8,11 +8,11 @@ namespace NetInterop.Runtime.TypeHandling
 {
     public class RuntimeHeap : IObjectHeap
     {
-        private readonly ITypeHander typeHandler;
+        private readonly ITypeHandler typeHandler;
         private readonly IPointerProvider pointerProvider;
         private readonly IDictionary<ushort, IObjectHeap> heaps = new ConcurrentDictionary<ushort, IObjectHeap>();
 
-        public RuntimeHeap(ITypeHander typeHandler, IPointerProvider pointerProvider)
+        public RuntimeHeap(ITypeHandler typeHandler, IPointerProvider pointerProvider)
         {
             this.typeHandler = typeHandler ?? throw new ArgumentNullException(nameof(typeHandler));
             this.pointerProvider = pointerProvider ?? throw new ArgumentNullException(nameof(pointerProvider));
@@ -27,7 +27,7 @@ namespace NetInterop.Runtime.TypeHandling
             }
 
             // since it doesnt have a heap attempt to create one if we have enough information
-            if (typeHandler.TryGetType(ptr, out INetType type) is false)
+            if (typeHandler.TryGetType(ptr, out IType type) is false)
             {
                 throw new ArgumentException($"Failed to activate a new instance of {ptr} becuase no IObjectHEap with that type is already registered and the type was not found within the type handler. Use ITypeHandler.Register<T> to register the type before attempting to create a new instance of it.");
             }
@@ -60,7 +60,7 @@ namespace NetInterop.Runtime.TypeHandling
 
         public void Set<T>(INetPtr<T> instancePtr, T value) => Set((INetPtr) instancePtr, value);
 
-        private IObjectHeap Create(INetType type)
+        private IObjectHeap Create(IType type)
         {
             return (IObjectHeap)Activator.CreateInstance(typeof(ObjectHeap<>).MakeGenericType(type.BackingType),type,pointerProvider);
         }

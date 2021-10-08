@@ -127,26 +127,38 @@ namespace NetInterop.Transport.Sockets.Server
 
             if (pending)
             {
-                TcpClient client = listener?.AcceptTcpClient();
-
-                if (client is null)
+                try
                 {
-                    return;
+                    AcceptClient();
                 }
-
-                IConnection connection = connectionProvider.CreateConnection(client);
-
-                connection.Connect();
-
-                lock (listSynchronizationObject)
+                catch (SocketException)
                 {
-                    clients.Add(connection);
+
                 }
-
-                dispatcher.Dispatch(client, connection);
-
-                Connected?.Invoke(connection);
             }
+        }
+
+        private void AcceptClient()
+        {
+            TcpClient client = listener?.AcceptTcpClient();
+
+            if (client is null)
+            {
+                return;
+            }
+
+            IConnection connection = connectionProvider.CreateConnection(client);
+
+            connection.Connect();
+
+            lock (listSynchronizationObject)
+            {
+                clients.Add(connection);
+            }
+
+            dispatcher.Dispatch(client, connection);
+
+            Connected?.Invoke(connection);
         }
 
         private void CheckClientConnections()
