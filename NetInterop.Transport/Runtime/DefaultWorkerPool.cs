@@ -114,7 +114,7 @@ namespace NetInterop.Transport.Core.Runtime
         {
             while (token.IsCancellationRequested is false)
             {
-                while (waitingWork.Count > 0)
+                while (waitingWork.Count != 0)
                 {
                     if (waitingWork.TryTake(out IWork work))
                     {
@@ -140,8 +140,7 @@ namespace NetInterop.Transport.Core.Runtime
                     break;
                 }
 
-                // wait 1/60th of a second
-                Thread.Sleep(1000 / 60);
+                Thread.Sleep(5);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using NetInterop.Transport.Core.Abstractions.Packets;
+using NetInterop.Transport.Core.Factories;
 using NetInterop.Transport.Core.Packets.Extensions;
 using System;
 using System.Diagnostics;
@@ -7,7 +8,7 @@ namespace NetInterop.Transport.Core.Packets
 {
     public class DefaultPacket : IPacket
     {
-        private byte[] buffer;
+        internal byte[] buffer;
 
         /// <summary>
         /// The size of the span, does not indicate end of data within the span, use <see cref="EndOffset"/> for the location of the end of data
@@ -51,10 +52,9 @@ namespace NetInterop.Transport.Core.Packets
 
         private const int MaxPacketSize = DefaultHeaderSize + ushort.MaxValue;
 
-        public DefaultPacket(byte[] data, int headerSize = DefaultHeaderSize)
+        public DefaultPacket(ref byte[] data, int headerSize = DefaultHeaderSize)
         {
-            buffer = new byte[data.Length + headerSize];
-            data.CopyTo(buffer, headerSize);
+            buffer = data;
             EndOffset = buffer.Length;
             StartOffset = 0;
             HeaderSize = headerSize;

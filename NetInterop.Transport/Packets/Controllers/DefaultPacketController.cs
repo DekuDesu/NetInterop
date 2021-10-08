@@ -50,19 +50,11 @@ namespace NetInterop.Transport.Core.Packets
                         return true;
                     }
 
-                    byte[] packetData = new byte[messageSize];
+                    packet = Packet.Create(messageSize);
 
-                    int bytesRead = backingStream.Read(packetData, 0, messageSize);
+                    int bytesRead = backingStream.Read(packet.GetData(), headerSize, messageSize);
 
-                    bool validPacket = bytesRead == messageSize;
-
-                    if (validPacket)
-                    {
-                        // no sense creating a new object if we got weird data
-                        packet = Packet.Create(packetData);
-                    }
-
-                    return validPacket;
+                    return bytesRead == messageSize;
                 }
             }
             finally

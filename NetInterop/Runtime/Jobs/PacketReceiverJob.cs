@@ -39,7 +39,7 @@ namespace NetInterop.Runtime.Jobs
                     receiver.Receive();
                 }
 
-                Thread.Sleep(1000 / 60);
+                Thread.Sleep(1000 / 244);
             }
         }
     }

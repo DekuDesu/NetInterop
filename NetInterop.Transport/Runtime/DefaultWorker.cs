@@ -15,7 +15,7 @@ namespace NetInterop.Transport.Core.Runtime
         public DefaultWorker(Action<CancellationToken> worker)
         {
             this.token = new CancellationTokenSource();
-            this.task = Task.Run(() => worker(token.Token), token.Token);
+            this.task = Task.Factory.StartNew(() => worker(token.Token), TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
         }
 
         public void Cancel()

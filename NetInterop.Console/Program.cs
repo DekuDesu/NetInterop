@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Text;
+using System.Collections.Generic;
 
 namespace RemoteInvokeConsole
 {
@@ -27,26 +28,37 @@ namespace RemoteInvokeConsole
 
             server.Start("127.0.0.1", 25565);
 
-            var client = Interop.CreateClient("127.0.0.1", 25565);
+            List<Task> tasks = new List<Task>();
+
+            for (int i = 0; i < (Environment.ProcessorCount / 2) - 2; i++)
+            {
+                Console.WriteLine("Starting Task");
+                var client = Interop.CreateClient("127.0.0.1", 25565);
+
+                tasks.Add(Task.Run(() => Test(server, client, TokenSource.Token)));
+            }
 
             try
             {
-                Console.WriteLine("Starting Task");
-                Task.Run(() => Test(server, client, TokenSource.Token));
                 Console.ReadLine();
                 Console.WriteLine("Cancelling");
                 TokenSource.Cancel();
+
+                Task.WaitAll(tasks.ToArray());
+
+                Console.WriteLine("Cancelled all tasks");
             }
             finally
             {
-                client.Disconnect();
                 server.Stop();
             }
         }
-
+        static int loggingProcessorId = -1;
         private static void Test(IServer server, IClient client, CancellationToken token)
         {
             _ = server;
+
+            Interlocked.CompareExchange(ref loggingProcessorId, Thread.CurrentThread.ManagedThreadId, -1);
 
             Console.WriteLine("Task Started");
             Stopwatch watch = Stopwatch.StartNew();
@@ -54,18 +66,27 @@ namespace RemoteInvokeConsole
             {
                 INetPtr<TestClass> ptr = client.RemoteHeap.Create<TestClass>().Result;
 
+                if (ptr is null)
+                {
+                    Console.WriteLine("Failed to get TestClass pointer");
+                    continue;
+                }
+
                 client.RemoteHeap.Invoke(WriteMessagePtr, ptr, "Hello World!");
 
                 client.RemoteHeap.Destroy(ptr);
 
-                Count++;
-                Current++;
+                Interlocked.Increment(ref Count);
+                Interlocked.Increment(ref Current);
 
-                if (watch.ElapsedMilliseconds >= 1000)
+                if (Thread.CurrentThread.ManagedThreadId == loggingProcessorId)
                 {
-                    watch.Restart();
-                    Console.WriteLine($"Performed {Current}/{Count} operations in 1 second");
-                    Current = 0;
+                    if (watch.ElapsedMilliseconds >= 1000)
+                    {
+                        watch.Restart();
+                        Console.WriteLine($"Performed {Current}/{Count} operations in 1 second");
+                        Interlocked.Exchange(ref Current, 0);
+                    }
                 }
             }
             watch.Stop();
@@ -106,7 +127,8 @@ namespace RemoteInvokeConsole
             }
             public void Write(string message)
             {
-                Console.WriteLine($"TestClass: {message}");
+                _ = message;
+                //Console.WriteLine($"TestClass: {message}");
             }
 
             public void Dispose()
