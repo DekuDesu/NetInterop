@@ -402,7 +402,7 @@ namespace NetInterop.Tests.Runtime
             public IRemoteHeap RemoteHeap { get; set; }
             public TestObjects()
             {
-                IntSerializer = new DefaultSerializer<int>((num, packet) => packet.AppendInt(num));
+                IntSerializer = new DefaultSerializer<int>((num, packet) => packet.AppendInt(num), (num) => sizeof(int));
                 IntDeserializer = new DefaultDeserializer<int>((packet) => packet.GetInt());
 
                 PointerProvider = new DefaultPointerProvider();
@@ -497,6 +497,8 @@ namespace NetInterop.Tests.Runtime
             {
                 return packet.GetInt();
             }
+
+            public int EstimatePacketSize(int value) => sizeof(int);
 
             public void Serialize(int value, IPacket packetBuilder)
             {

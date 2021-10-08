@@ -14,7 +14,7 @@ namespace NetInterop.Runtime.MethodHandling
         private readonly MethodInfo method;
         private readonly MethodParameter[] parameters;
         private readonly MethodParameter returnType;
-        
+
         public IType DeclaringType { get; private set; }
 
         public RegisteredMethod(MethodInfo method, MethodParameter returnType, MethodParameter[] parameters, IPointerProvider pointerProvider, IObjectHeap runtimeHeap = null, IType declaringType = null)
@@ -132,5 +132,17 @@ namespace NetInterop.Runtime.MethodHandling
         }
 
         public object AmbiguousDeserialize(IPacket packet) => Deserialize(packet);
+
+        public void AmbiguousSerialize(object value, IPacket packetBuilder) => Serialize((object[])value, packetBuilder);
+
+        public int EstimatePacketSize(object[] value)
+        {
+            int size = 0;
+            for (int i = 0; i < value.Length; i++)
+            {
+                size += parameters[i].EstimatePacketSize(value[i]);
+            }
+            return size;
+        }
     }
 }

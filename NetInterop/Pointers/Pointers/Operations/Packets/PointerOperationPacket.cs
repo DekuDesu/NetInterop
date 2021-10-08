@@ -18,7 +18,7 @@ namespace NetInterop
         /// <param name="wrappedPacket"></param>
         public PointerOperationPacket(PointerOperations operation, IPacketSerializable wrappedPacket)
         {
-            this.wrappedPacket = wrappedPacket;
+            this.wrappedPacket = wrappedPacket ?? throw new ArgumentNullException(nameof(wrappedPacket));
             this.operation = operation;
         }
 

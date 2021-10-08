@@ -7,12 +7,17 @@ using NetInterop.Transport.Core.Packets.Extensions;
 using NetInterop.Runtime.Extensions;
 using NetInterop.Transport.Core.Runtime;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Text;
 
 namespace RemoteInvokeConsole
 {
     public class Program
     {
-
+        static CancellationTokenSource TokenSource = new();
+        static long Count;
+        static long Current;
         public static void Main()
         {
             Startup(Interop.Types);
@@ -26,8 +31,11 @@ namespace RemoteInvokeConsole
 
             try
             {
-                Test(server, client);
+                Console.WriteLine("Starting Task");
+                Task.Run(() => Test(server, client, TokenSource.Token));
                 Console.ReadLine();
+                Console.WriteLine("Cancelling");
+                TokenSource.Cancel();
             }
             finally
             {
@@ -36,19 +44,32 @@ namespace RemoteInvokeConsole
             }
         }
 
-        private static void Test(IServer server, IClient client)
+        private static void Test(IServer server, IClient client, CancellationToken token)
         {
             _ = server;
 
-            INetPtr<TestClass> ptr = client.RemoteHeap.Create<TestClass>().Result;
-
-            Console.WriteLine($"Created remote TestClass instance ptr: {ptr}");
-
-            for (int i = 0; i < 10; i++)
+            Console.WriteLine("Task Started");
+            Stopwatch watch = Stopwatch.StartNew();
+            while (token.IsCancellationRequested is false)
             {
+                INetPtr<TestClass> ptr = client.RemoteHeap.Create<TestClass>().Result;
+
                 client.RemoteHeap.Invoke(WriteMessagePtr, ptr, "Hello World!");
-                Thread.Sleep(100);
+
+                client.RemoteHeap.Destroy(ptr);
+
+                Count++;
+                Current++;
+
+                if (watch.ElapsedMilliseconds >= 1000)
+                {
+                    watch.Restart();
+                    Console.WriteLine($"Performed {Current}/{Count} operations in 1 second");
+                    Current = 0;
+                }
             }
+            watch.Stop();
+            Console.WriteLine("Task Ended");
         }
 
         private static void Startup(ITypeHandler handler)
@@ -90,7 +111,7 @@ namespace RemoteInvokeConsole
 
             public void Dispose()
             {
-                Console.WriteLine("Disposed TestClass Instance");
+                //Console.WriteLine("Disposed TestClass Instance");
             }
         }
 
@@ -101,6 +122,8 @@ namespace RemoteInvokeConsole
             IPacketDeserializer<TestClass>
         {
             public object AmbiguousDeserialize(IPacket packet) => Deserialize(packet);
+
+            public void AmbiguousSerialize(object value, IPacket packetBuilder) => Serialize((TestClass)value, packetBuilder);
 
             public TestClass CreateInstance()
             {
@@ -125,6 +148,8 @@ namespace RemoteInvokeConsole
                 }
             }
 
+            public int EstimatePacketSize(TestClass value) => sizeof(int);
+
             public void Serialize(TestClass value, IPacket packetBuilder)
             {
                 packetBuilder.AppendInt(value.Value);
@@ -135,7 +160,11 @@ namespace RemoteInvokeConsole
         {
             public object AmbiguousDeserialize(IPacket packet) => packet.GetInt();
 
+            public void AmbiguousSerialize(object value, IPacket packetBuilder) => Serialize((int)value, packetBuilder);
+
             public int Deserialize(IPacket packet) => packet.GetInt();
+
+            public int EstimatePacketSize(int value) => sizeof(int);
 
             public void Serialize(int value, IPacket packetBuilder) => packetBuilder.AppendInt(value);
         }
@@ -144,7 +173,11 @@ namespace RemoteInvokeConsole
         {
             public object AmbiguousDeserialize(IPacket packet) => packet.GetString(System.Text.Encoding.UTF8);
 
+            public void AmbiguousSerialize(object value, IPacket packetBuilder) => Serialize((string)value, packetBuilder);
+
             public string Deserialize(IPacket packet) => packet.GetString(System.Text.Encoding.UTF8);
+
+            public int EstimatePacketSize(string value) => Encoding.UTF8.GetByteCount(value) + sizeof(int);
 
             public void Serialize(string value, IPacket packetBuilder) => packetBuilder.AppendString(value, System.Text.Encoding.UTF8);
         }

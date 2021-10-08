@@ -382,6 +382,8 @@ namespace NetInterop.Tests.MethodHandlerTests
                 return packet.GetInt();
             }
 
+            public int EstimatePacketSize(int value) => sizeof(int);
+
             public void Serialize(int value, IPacket packetBuilder)
             {
                 packetBuilder.AppendInt(value);

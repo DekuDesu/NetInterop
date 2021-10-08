@@ -17,7 +17,7 @@ namespace NetInterop
             this.wrappedPacket = wrappedPacket;
         }
 
-        public int EstimatePacketSize() => sizeof(ushort) + wrappedPacket?.EstimatePacketSize() ?? 0;
+        public int EstimatePacketSize() => sizeof(ushort) + (wrappedPacket?.EstimatePacketSize() ?? 0);
 
         public void Serialize(IPacket packetBuilder)
         {

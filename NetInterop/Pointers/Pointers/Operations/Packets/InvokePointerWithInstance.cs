@@ -17,7 +17,7 @@ namespace NetInterop
             this.instancePtr = instancePtr;
         }
 
-        public int EstimatePacketSize() => methodPtr.EstimatePacketSize() * 2;
+        public int EstimatePacketSize() => sizeof(long);
 
         public void Serialize(IPacket packetBuilder)
         {

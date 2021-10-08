@@ -38,5 +38,9 @@ namespace NetInterop.Runtime
         public void Serialize(T value, IPacket packetBuilder) => serializer.Serialize(value, packetBuilder);
 
         object IType.Activate() => type.Activate();
+
+        public int EstimatePacketSize(object value) => serializer.EstimatePacketSize((T)value);
+
+        public int EstimatePacketSize(T value) => serializer.EstimatePacketSize(value);
     }
 }

@@ -21,7 +21,7 @@ namespace NetInterop
             this.parameters = parameters;
         }
 
-        public int EstimatePacketSize() => (methodPtr.EstimatePacketSize() * 2) + (parameters.Length * sizeof(int));
+        public int EstimatePacketSize() => sizeof(long) + serializer.EstimatePacketSize(parameters);
 
         public void Serialize(IPacket packetBuilder)
         {

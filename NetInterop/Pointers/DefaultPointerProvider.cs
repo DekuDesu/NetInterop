@@ -30,6 +30,8 @@ namespace NetInterop
             }
         }
 
+        public int EstimatePacketSize(INetPtr value) => sizeof(int);
+
         public void Serialize(INetPtr value, IPacket packetBuilder) => packetBuilder.AppendSerializable(value);
     }
 }

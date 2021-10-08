@@ -27,5 +27,7 @@ namespace NetInterop.Runtime.MethodHandling
         public object AmbiguousDeserialize(IPacket packet) => deserializer?.AmbiguousDeserialize(packet);
 
         public void AmbiguousSerialize(object value, IPacket packetBuilder) => serializer?.AmbiguousSerialize(value, packetBuilder);
+
+        public int EstimatePacketSize(object value) => serializer.EstimatePacketSize(value);
     }
 }

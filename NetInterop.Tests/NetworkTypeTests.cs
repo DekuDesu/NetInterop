@@ -123,6 +123,8 @@ namespace NetInterop.Tests
                 return new TestSerializableClass() { Value = packet.GetInt() };
             }
 
+            public int EstimatePacketSize(TestSerializableClass value) => sizeof(int);
+
             public void Serialize(TestSerializableClass value, IPacket packetBuilder)
             {
                 packetBuilder.AppendInt(value.Value);

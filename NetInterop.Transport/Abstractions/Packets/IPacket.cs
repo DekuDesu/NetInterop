@@ -18,7 +18,7 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// Returns all the data contained within the packet, including reserved, hidden, and encoded portions
         /// </summary>
         /// <returns></returns>
-        byte[] GetData();
+        ref byte[] GetData();
 
         /// <summary>
         /// Appends the data to the end of the packet

@@ -172,6 +172,6 @@ namespace NetInterop.Transport.Core.Packets
         }
 
         [DebuggerHidden]
-        public byte[] GetData() => buffer;
+        public ref byte[] GetData() => ref buffer;
     }
 }

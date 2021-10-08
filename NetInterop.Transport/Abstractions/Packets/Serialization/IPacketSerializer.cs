@@ -11,10 +11,12 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
     /// <typeparam name="TResult"></typeparam>
     public interface IPacketSerializer<TResult>
     {
+        int EstimatePacketSize(TResult value);
         void Serialize(TResult value, IPacket packetBuilder);
     }
     public interface IPacketSerializer
     {
+        int EstimatePacketSize(object value);
         void AmbiguousSerialize(object value, IPacket packetBuilder);
     }
 }

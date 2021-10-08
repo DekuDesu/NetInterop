@@ -19,7 +19,7 @@ namespace NetInterop
             this.serializableNetworkType = serializableNetworkType ?? throw new ArgumentNullException(nameof(serializableNetworkType));
         }
 
-        public int EstimatePacketSize() => sizeof(int);
+        public int EstimatePacketSize() => sizeof(int) + serializableNetworkType.EstimatePacketSize(value);
 
         public void Serialize(IPacket packetBuilder)
         {
@@ -40,7 +40,7 @@ namespace NetInterop
             this.serializableNetworkType = serializableNetworkType ?? throw new ArgumentNullException(nameof(serializableNetworkType));
         }
 
-        public int EstimatePacketSize() => sizeof(int);
+        public int EstimatePacketSize() => sizeof(int) + serializableNetworkType.EstimatePacketSize(value);
 
         public void Serialize(IPacket packetBuilder)
         {
