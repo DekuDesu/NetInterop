@@ -7,6 +7,7 @@ namespace NetInterop.Abstractions
 {
     public interface ITypeHandler
     {
+        int Count { get; }
         bool TryGetType<T>(out IType<T> netType);
         bool TryGetType(Type type, out IType netType);
         bool TryGetType(INetPtr typePtr, out IType netType);

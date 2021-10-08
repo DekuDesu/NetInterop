@@ -18,6 +18,8 @@ namespace NetInterop.Runtime
             this.pointerProvider = pointerProvider;
         }
 
+        public int Count => types.Count;
+
         public INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> deactivator, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             INetPtr<T> ptr = pointerProvider.Create<T>(interopId, 0);
@@ -31,7 +33,7 @@ namespace NetInterop.Runtime
                 types.Add(interopId, new NetType<T>(ptr, activator, deactivator));
             }
 
-            typeMap.Add(typeof(T),interopId);
+            typeMap.Add(typeof(T), interopId);
 
             return ptr;
         }

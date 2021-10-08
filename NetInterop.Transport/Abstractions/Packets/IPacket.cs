@@ -19,7 +19,6 @@ namespace NetInterop.Transport.Core.Abstractions.Packets
         /// </summary>
         /// <returns></returns>
         ref byte[] GetData();
-
         /// <summary>
         /// Appends the data to the end of the packet
         /// </summary>

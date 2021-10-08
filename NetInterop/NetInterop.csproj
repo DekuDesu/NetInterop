@@ -6,16 +6,16 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<OutputPath>C:\_Programming\Repos\Unity Projects\NetInterop.Unity\Assets\DLLs\</OutputPath>
+		<OutputPath>C:\_Programming\Repos\Unity Projects\NetInterop.Multiplayer\Assets\DLLs\</OutputPath>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<OutputPath>C:\_Programming\Repos\Unity Projects\NetInterop.Unity\Assets\DLLs\</OutputPath>
+		<OutputPath>C:\_Programming\Repos\Unity Projects\NetInterop.Multiplayer\Assets\DLLs\</OutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
+		<PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
 	</ItemGroup>
 
 	<ItemGroup>

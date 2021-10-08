@@ -15,6 +15,8 @@ namespace NetInterop.Tests.CallbackTests.Stubs
         public ISerializableType network = null;
         public IType networkType = null;
 
+        public int Count { get; }
+
         public INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> deactivator, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)
         {
             throw new NotImplementedException();
