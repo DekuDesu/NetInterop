@@ -150,16 +150,16 @@ namespace NetInterop
         Task<bool> Destroy<T>(INetPtr<T> instancePointer);
         Task<bool> Destroy(INetPtr instancePointer);
 
-        Task InvokeStatic(INetPtr methodPointer);
-        Task InvokeStatic(INetPtr methodPointer, params object[] parameters);
+        Task<bool> InvokeStatic(INetPtr methodPointer);
+        Task<bool> InvokeStatic(INetPtr methodPointer, params object[] parameters);
 
         Task<T> InvokeStatic<T>(INetPtr<T> methodPointer);
         Task<T> InvokeStatic<T>(INetPtr<T> methodPointer, params object[] parameters);
 
-        Task Invoke(INetPtr methodPointer, INetPtr instancePointer);
+        Task<bool> Invoke(INetPtr methodPointer, INetPtr instancePointer);
         Task<T> Invoke<T>(INetPtr<T> methodPointer, INetPtr instancePointer);
 
-        Task Invoke(INetPtr methodPointer, INetPtr instancePointer, params object[] parameters);
+        Task<bool> Invoke(INetPtr methodPointer, INetPtr instancePointer, params object[] parameters);
         Task<T> Invoke<T>(INetPtr<T> methodPointer, INetPtr instancePointer, params object[] parameters);
     }
 }

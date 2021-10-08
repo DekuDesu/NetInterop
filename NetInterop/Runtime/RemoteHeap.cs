@@ -234,44 +234,250 @@ namespace NetInterop.Runtime
         #endregion Set
 
         #region Invoke
-        public Task Invoke(INetPtr methodPointer, INetPtr instancePointer)
+        public Task<bool> Invoke(INetPtr methodPointer, INetPtr instancePointer)
         {
-            throw new NotImplementedException();
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                taskSource.SetResult(success);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                new CallbackPacket(InvokeCallback, new InvokePointerWithInstance(methodPointer, instancePointer), callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
         public Task<T> Invoke<T>(INetPtr<T> methodPointer, INetPtr instancePointer)
         {
-            throw new NotImplementedException();
+            // we should make sure we can deserialize the result we get
+            if (typeHandler.TryGetSerializableType<T>(out ISerializableType<T> serializer) is false) throw MissingSerializerException(typeof(T).FullName);
+
+            var taskSource = new TaskCompletionSource<T>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                try
+                {
+                    if (success)
+                    {
+                        taskSource.SetResult(serializer.Deserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(default);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                new CallbackPacket(InvokeCallback, new InvokePointerWithInstance(methodPointer, instancePointer), callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
-        public Task Invoke(INetPtr methodPointer, INetPtr instancePointer, params object[] parameters)
+        public Task<bool> Invoke(INetPtr methodPointer, INetPtr instancePointer, params object[] parameters)
         {
-            throw new NotImplementedException();
+            // we should make sure we can deserialize the result we get
+            if (methodHandler.TryGetSerializer(methodPointer, out IPacketSerializer<object[]> serializer) is false) throw MissingParameterSerializer(methodPointer.ToString());
+
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                taskSource.SetResult(success);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                wrappedPacket: new CallbackPacket(
+                    callback: InvokeCallback,
+                    packet: new InvokePointerWithInstanceAndParametersPacket(methodPointer, instancePointer, serializer, parameters),
+                    packetCallbackHandler: callbackHandler
+                )
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
         public Task<T> Invoke<T>(INetPtr<T> methodPointer, INetPtr instancePointer, params object[] parameters)
         {
-            throw new NotImplementedException();
+            // we should make sure we can deserialize the result we get
+            if (methodHandler.TryGetSerializer(methodPointer, out IPacketSerializer<object[]> serializer) is false) throw MissingParameterSerializer(methodPointer.ToString());
+            // we should make sure we can deserialize the result we get
+            if (typeHandler.TryGetSerializableType<T>(out ISerializableType<T> deserializer) is false) throw MissingSerializerException(typeof(T).FullName);
+
+            var taskSource = new TaskCompletionSource<T>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                try
+                {
+                    if (success)
+                    {
+                        taskSource.SetResult(deserializer.Deserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(default);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                wrappedPacket: new CallbackPacket(
+                    callback: InvokeCallback,
+                    packet: new InvokePointerWithInstanceAndParametersPacket(methodPointer, instancePointer, serializer, parameters),
+                    packetCallbackHandler: callbackHandler
+                )
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
-        public Task InvokeStatic(INetPtr methodPointer)
+        public Task<bool> InvokeStatic(INetPtr methodPointer)
         {
-            throw new NotImplementedException();
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                taskSource.SetResult(success);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                wrappedPacket: new CallbackPacket(
+                    callback: InvokeCallback,
+                    packet: methodPointer,
+                    packetCallbackHandler: callbackHandler
+                )
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
-        public Task InvokeStatic(INetPtr methodPointer, params object[] parameters)
+        public Task<bool> InvokeStatic(INetPtr methodPointer, params object[] parameters)
         {
-            throw new NotImplementedException();
+            // we should make sure we can deserialize the result we get
+            if (methodHandler.TryGetSerializer(methodPointer, out IPacketSerializer<object[]> serializer) is false) throw MissingParameterSerializer(methodPointer.ToString());
+
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                taskSource.SetResult(success);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                wrappedPacket: new CallbackPacket(
+                    callback: InvokeCallback,
+                    packet: new InvokePointerWithParametersPacket(methodPointer, serializer, parameters),
+                    packetCallbackHandler: callbackHandler
+                )
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
         public Task<T> InvokeStatic<T>(INetPtr<T> methodPointer)
         {
-            throw new NotImplementedException();
+            // we should make sure we can deserialize the result we get
+            if (typeHandler.TryGetSerializableType<T>(out ISerializableType<T> deserializer) is false) throw MissingSerializerException(typeof(T).FullName);
+
+            var taskSource = new TaskCompletionSource<T>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                try
+                {
+                    if (success)
+                    {
+                        taskSource.SetResult(deserializer.Deserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(default);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                wrappedPacket: new CallbackPacket(
+                    callback: InvokeCallback,
+                    packet: methodPointer,
+                    packetCallbackHandler: callbackHandler
+                )
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
         public Task<T> InvokeStatic<T>(INetPtr<T> methodPointer, params object[] parameters)
         {
-            throw new NotImplementedException();
+            // we should make sure we can deserialize the result we get
+            if (methodHandler.TryGetSerializer(methodPointer, out IPacketSerializer<object[]> serializer) is false) throw MissingParameterSerializer(methodPointer.ToString());
+            // we should make sure we can deserialize the result we get
+            if (typeHandler.TryGetSerializableType<T>(out ISerializableType<T> deserializer) is false) throw MissingSerializerException(typeof(T).FullName);
+
+            var taskSource = new TaskCompletionSource<T>();
+
+            void InvokeCallback(bool success, IPacket response)
+            {
+                try
+                {
+                    if (success)
+                    {
+                        taskSource.SetResult(deserializer.Deserialize(response));
+                    }
+                    else
+                    {
+                        taskSource.SetResult(default);
+                    }
+                }
+                catch (Exception e)
+                {
+                    taskSource.SetException(e);
+                }
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Invoke,
+                wrappedPacket: new CallbackPacket(
+                    callback: InvokeCallback,
+                    packet: new InvokePointerWithParametersPacket(methodPointer, serializer, parameters),
+                    packetCallbackHandler: callbackHandler
+                )
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
         #endregion Invoke
 
@@ -282,6 +488,10 @@ namespace NetInterop.Runtime
         private Exception MissingSerializerException(string typeName)
         {
             return new MissingMemberException($"The type {typeName} was not found within the {nameof(ITypeHandler)} as a serializable and/or deserializable type.");
+        }
+        private Exception MissingParameterSerializer(string methodPointer)
+        {
+            return new MissingMemberException($"The method {methodPointer} is missing some or all serializers for some or all of it's parameters. Verify that they are registered with the {nameof(IMethodHandler)}.");
         }
     }
 }
