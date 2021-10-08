@@ -39,6 +39,26 @@ namespace NetInterop.Tests.Runtime
         }
 
         [Fact]
+        public void Test_AllocAmbiguous()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass());
+
+            INetPtr ptr = test.RemoteHeap.Create(typePtr).Result;
+
+            Assert.NotNull(ptr);
+
+            Assert.Equal("0100", ptr.ToString());
+
+            // make sure the object was actually created
+            Assert.NotNull(test.Heap.Get(ptr));
+        }
+
+        [Fact]
         public void Test_Free()
         {
             var test = new TestObjects();
