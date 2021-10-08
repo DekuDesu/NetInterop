@@ -144,8 +144,8 @@ namespace NetInterop
         Task<T> Get<T>(INetPtr<T> instancePointer);
         Task<object> Get(INetPtr instancePointer);
 
-        Task Set<T>(INetPtr<T> instancePointer, T value);
-        Task Set(INetPtr instancePointer, object value);
+        Task<bool> Set<T>(INetPtr<T> instancePointer, T value);
+        Task<bool> Set(INetPtr instancePointer, object value);
 
         Task<bool> Destroy<T>(INetPtr<T> instancePointer);
         Task<bool> Destroy(INetPtr instancePointer);

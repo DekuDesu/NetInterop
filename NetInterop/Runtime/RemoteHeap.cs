@@ -190,14 +190,46 @@ namespace NetInterop.Runtime
         #endregion Get
 
         #region Set
-        public Task Set<T>(INetPtr<T> instancePointer, T value)
+        public Task<bool> Set<T>(INetPtr<T> instancePointer, T value)
         {
-            throw new NotImplementedException();
+            // make sure we have all the serializers available to us before we send any packets
+            if (typeHandler.TryGetSerializableType<T>(out ISerializableType<T> serializer) is false) throw MissingSerializerException(typeof(T).FullName);
+
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void GetCallback(bool sucess, IPacket response)
+            {
+                taskSource.SetResult(sucess);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Set,
+                new CallbackPacket(GetCallback, new SetPointerPacket<T>(instancePointer, value, serializer), callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
 
-        public Task Set(INetPtr instancePointer, object value)
+        public Task<bool> Set(INetPtr instancePointer, object value)
         {
-            throw new NotImplementedException();
+            // make sure we have all the serializers available to us before we send any packets
+            if (typeHandler.TryGetSerializableType(instancePointer, out ISerializableType serializer) is false) throw MissingSerializerException(instancePointer.PtrType.ToString());
+
+            var taskSource = new TaskCompletionSource<bool>();
+
+            void GetCallback(bool sucess, IPacket response)
+            {
+                taskSource.SetResult(sucess);
+            }
+
+            var packet = new PointerOperationPacket(PointerOperations.Set,
+                new CallbackPacket(GetCallback, new SetAmbiguousPointerPacket(instancePointer, value, serializer), callbackHandler)
+            );
+
+            sender.Send(packet);
+
+            return taskSource.Task;
         }
         #endregion Set
 
