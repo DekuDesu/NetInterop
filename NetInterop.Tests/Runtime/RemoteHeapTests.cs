@@ -177,6 +177,206 @@ namespace NetInterop.Tests.Runtime
             Assert.Equal(23, result);
         }
 
+        [Fact]
+        public void Test_Invoke_Parameterless_Static()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr methodPtr = test.Methods.Register(TestClass.StaticVoid);
+
+            Assert.True(test.RemoteHeap.InvokeStatic(methodPtr).Result);
+
+            Assert.True(TestClass.RanStaticVoid);
+        }
+
+        [Fact]
+        public void Test_Invoke_Parametered_Static()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr methodPtr = test.Methods.Register<int, int>(TestClass.StaticParametered);
+
+            Assert.True(test.RemoteHeap.InvokeStatic(methodPtr, 12, 12).Result);
+
+            Assert.Equal(24, TestClass.StaticParameteredResult);
+        }
+
+        [Fact]
+        public void Test_Invoke_Parameterless_ReturnValue_Static()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr<int> methodPtr = test.Methods.Register<int>(TestClass.StaticGetInt);
+
+            Assert.Equal(23, test.RemoteHeap.InvokeStatic(methodPtr).Result);
+        }
+
+        [Fact]
+        public void Test_Invoke_Parametered_ReturnValue_Static()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr<int> methodPtr = test.Methods.Register<int, int, int>(TestClass.StaticAdder);
+
+            Assert.Equal(24, test.RemoteHeap.InvokeStatic(methodPtr, 12, 12).Result);
+        }
+
+        [Fact]
+        public void Test_Invoke_Parameterless()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr methodPtr = test.Methods.Register<TestClass>(x => x.Test);
+
+            Assert.True(test.RemoteHeap.Invoke(methodPtr, ptr).Result);
+
+            Assert.True(testClass.RanTest);
+        }
+
+        [Fact]
+        public void Test_Invoke_Parametered()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr methodPtr = test.Methods.Register<TestClass, int, int>(x => x.AddNoReturn);
+
+            Assert.True(test.RemoteHeap.Invoke(methodPtr, ptr, 12, 12).Result);
+
+            Assert.Equal(24, testClass.AddNoReturnResult);
+        }
+
+        [Fact]
+        public void Test_Invoke_Parametered_ReturnValue()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr<int> methodPtr = test.Methods.Register<TestClass, int, int, int>(x => x.Adder);
+
+            Assert.Equal(24, test.RemoteHeap.Invoke(methodPtr, ptr, 12, 12).Result);
+        }
+
+        [Fact]
+        public void Test_Invoke_ReturnValue()
+        {
+            var test = new TestObjects();
+
+            var intSerializer = new IntSerializer();
+            test.Types.RegisterType<int>((ushort)TypeCode.Int32, () => 0, (ref int num) => { }, intSerializer, intSerializer);
+
+            INetPtr<TestClass> typePtr = test.Types.RegisterType<TestClass>(0x01, () => new TestClass(), (ref TestClass value) => value = null);
+
+            // manually alloc the ptr
+            INetPtr<TestClass> ptr = test.Heap.Alloc(typePtr);
+
+
+            TestClass testClass = test.Heap.Get(ptr);
+
+            // make sure the object was actually created
+            Assert.NotNull(testClass);
+
+            INetPtr<int> methodPtr = test.Methods.Register<TestClass, int>(x => x.GetInt);
+
+            Assert.Equal(23, test.RemoteHeap.Invoke(methodPtr, ptr).Result);
+        }
+
         private class TestObjects
         {
             public IPacketSerializer<int> IntSerializer { get; set; }
@@ -245,7 +445,9 @@ namespace NetInterop.Tests.Runtime
         {
             public bool RanTest { get; set; } = false;
             public bool RanAdder { get; set; } = false;
-
+            public int AddNoReturnResult { get; set; } = 0;
+            public static bool RanStaticVoid { get; set; } = false;
+            public static int StaticParameteredResult { get; set; } = 0;
             public void Test()
             {
                 RanTest = true;
@@ -257,13 +459,26 @@ namespace NetInterop.Tests.Runtime
                 return a + b;
             }
 
-            public static void StaticVoid()
-            {
-
-            }
-            public static int GetInt()
+            public int GetInt()
             {
                 return 23;
+            }
+            public void AddNoReturn(int left, int right)
+            {
+                AddNoReturnResult = left + right;
+            }
+
+            public static void StaticVoid()
+            {
+                RanStaticVoid = true;
+            }
+            public static int StaticGetInt()
+            {
+                return 23;
+            }
+            public static void StaticParametered(int a, int b)
+            {
+                StaticParameteredResult = a + b;
             }
             public static int StaticAdder(int a, int b)
             {
