@@ -8,6 +8,7 @@ namespace NetInterop.Abstractions
     {
         INetPtr Alloc(INetPtr ptr);
         INetPtr<T> Alloc<T>(INetPtr<T> ptr);
+        INetPtr<T> Alloc<T>();
 
         void Set(INetPtr instancePtr, object value);
         void Set<T>(INetPtr<T> instancePtr, T value);

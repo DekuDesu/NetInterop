@@ -26,7 +26,9 @@ namespace NetInterop.Runtime
         {
             T instance = type.Activate();
 
-            ushort address = ptr?.PtrAddress ?? GetNewAddress();
+            _ = ptr;
+
+            ushort address = GetNewAddress();
 
             Set((heap) => heap[address] = instance);
 
@@ -106,7 +108,7 @@ namespace NetInterop.Runtime
 
         public INetPtr<T> Alloc() => Alloc(null);
 
-        public T Get(INetPtr<T> instancePtr) => Get((heap)=> heap[instancePtr.PtrAddress]);
+        public T Get(INetPtr<T> instancePtr) => Get((heap) => heap[instancePtr.PtrAddress]);
 
         public INetPtr<TResult> Alloc<TResult>(INetPtr<TResult> ptr)
         {
@@ -122,10 +124,10 @@ namespace NetInterop.Runtime
         {
             if (value is T isTValue)
             {
-                Set(instancePtr,isTValue);
+                Set(instancePtr, isTValue);
             }
             else
-            { 
+            {
                 throw new InvalidCastException($"Failed to convert type of {typeof(TAmbiguous).FullName} to the destination type of {typeof(T).FullName}");
             }
         }
@@ -142,11 +144,13 @@ namespace NetInterop.Runtime
                 return isResult;
             }
             else
-            { 
+            {
                 throw new InvalidCastException($"Failed to convert type of {typeof(TResult).FullName} to the destination type of {typeof(T).FullName}");
             }
         }
 
         INetPtr IObjectHeap.Alloc(INetPtr ptr) => Alloc(ptr);
+
+        public INetPtr<TResult> Alloc<TResult>() => Alloc<TResult>(null);
     }
 }

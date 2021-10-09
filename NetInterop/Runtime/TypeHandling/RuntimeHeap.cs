@@ -22,7 +22,7 @@ namespace NetInterop.Runtime.TypeHandling
         {
             // check to see if the type already has a heap
             if (heaps.ContainsKey(ptr.PtrType))
-            { 
+            {
                 return heaps[ptr.PtrType].Alloc(ptr);
             }
 
@@ -33,10 +33,19 @@ namespace NetInterop.Runtime.TypeHandling
             }
 
             // create a new heap
-            heaps.Add(ptr.PtrType,Create(type));
+            heaps.Add(ptr.PtrType, Create(type));
 
             // recurse to return the new value
             return Alloc(ptr);
+        }
+
+        public INetPtr<T> Alloc<T>()
+        {
+            if (typeHandler.TryGetType<T>(out var type))
+            {
+                return Alloc(type.TypePointer).As<T>();
+            }
+            return default;
         }
 
         public INetPtr<T> Alloc<T>(INetPtr<T> ptr) => Alloc((INetPtr)ptr).As<T>();
@@ -58,11 +67,11 @@ namespace NetInterop.Runtime.TypeHandling
 
         public void Set(INetPtr instancePtr, object value) => heaps[instancePtr.PtrType].Set(instancePtr, value);
 
-        public void Set<T>(INetPtr<T> instancePtr, T value) => Set((INetPtr) instancePtr, value);
+        public void Set<T>(INetPtr<T> instancePtr, T value) => Set((INetPtr)instancePtr, value);
 
         private IObjectHeap Create(IType type)
         {
-            return (IObjectHeap)Activator.CreateInstance(typeof(ObjectHeap<>).MakeGenericType(type.BackingType),type,pointerProvider);
+            return (IObjectHeap)Activator.CreateInstance(typeof(ObjectHeap<>).MakeGenericType(type.BackingType), type, pointerProvider);
         }
     }
 }

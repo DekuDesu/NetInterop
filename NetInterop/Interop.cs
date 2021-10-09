@@ -23,8 +23,9 @@ namespace NetInterop
 {
     public static class Interop
     {
-        public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
+        public static IClient Client { get; set; }
 
+        public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
         public static ITypeHandler Types { get; set; }
         public static IMethodHandler Methods { get; set; }
         public static IPointerProvider PointerProvider { get; set; }
