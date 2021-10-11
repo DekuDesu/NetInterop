@@ -51,6 +51,16 @@ namespace NetInterop.Runtime.Extensions
                 null);
 
         public static INetPtr<T> RegisterType<T>(this ITypeHandler handler,
+            ushort interopId,
+            IActivator<T> activator,
+            IDeactivator<T> disposer)
+            => handler.RegisterType<T>(interopId,
+                activator,
+                disposer,
+                null,
+                null);
+
+        public static INetPtr<T> RegisterType<T>(this ITypeHandler handler,
             Func<T> activator,
             RefAction<T> disposer,
             IPacketSerializer<T> serializer)
