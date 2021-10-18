@@ -32,7 +32,7 @@ namespace NetInterop.Tests.Runtime
 
             Assert.NotNull(ptr);
 
-            Assert.Equal("0100", ptr.ToString());
+            Assert.Equal("0101", ptr.ToString());
 
             // make sure the object was actually created
             Assert.NotNull(test.Heap.Get(ptr));
@@ -52,7 +52,7 @@ namespace NetInterop.Tests.Runtime
 
             Assert.NotNull(ptr);
 
-            Assert.Equal("0100", ptr.ToString());
+            Assert.Equal("0101", ptr.ToString());
 
             // make sure the object was actually created
             Assert.NotNull(test.Heap.Get(ptr));

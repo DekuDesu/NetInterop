@@ -18,11 +18,14 @@ using System.Net;
 using NetInterop.Transport.Core.Abstractions.Connections;
 using NetInterop.Runtime;
 using NetInterop.Runtime.TypeHandling;
+using NetInterop.Transport.Core.Abstractions;
 
 namespace NetInterop
 {
     public static class Interop
     {
+        public static bool IsServer { get; private set; }
+        public static bool IsClient => !IsServer;
         public static IClient Client { get; set; }
 
         public static IWorkPool WorkPool { get; set; } = new DefaultWorkPool();
@@ -31,20 +34,28 @@ namespace NetInterop
         public static IPointerProvider PointerProvider { get; set; }
         public static IObjectHeap LocalHeap { get; set; }
 
+        /// <summary>
+        /// Allows users to override all objects instantiated by this composition class
+        /// </summary>
+        public static ModifierGroup Modifiers { get; set; } = new ModifierGroup();
+
         public static event Action<IClient> OnNewClientConnected;
 
-        static Interop()
+        /// <summary>
+        /// Initializes this object's variables to initial use. Modifiers should have any overrides assigned before this is invoked.
+        /// </summary>
+        public static void Initialize()
         {
-            PointerProvider = new DefaultPointerProvider();
-            Types = new NetTypeHandler(PointerProvider);
-            LocalHeap = new RuntimeHeap(Types, PointerProvider);
-            Methods = new DefaultMethodHandler(PointerProvider, Types, LocalHeap);
+            PointerProvider = Modifiers.PointerProvider.Inject(new DefaultPointerProvider());
+            Types = Modifiers.TypeHandler.Inject(new NetTypeHandler(PointerProvider));
+            LocalHeap = Modifiers.ObjectHeap.Inject(new RuntimeHeap(Types, PointerProvider));
+            Methods = Modifiers.MethodHandler.Inject(new DefaultMethodHandler(PointerProvider, Types, LocalHeap));
         }
 
         public static IClient CreateClient(string hostname, int port)
         {
             var client = new TcpClient();
-            var connection = new DefaultTcpConnection(client, IPAddress.Parse(hostname), port);
+            var connection = Modifiers.Connection.Inject(new DefaultTcpConnection(client, IPAddress.Parse(hostname), port));
 
             return CreateClient(client, connection);
         }
@@ -53,23 +64,23 @@ namespace NetInterop
         {
             var BackingClient = client;
 
-            var PacketCallbackHandler = new DefaultPacketDelegateHandler();
+            var PacketCallbackHandler = Modifiers.CallbackHandler.Inject(new DefaultPacketDelegateHandler());
 
             var Connection = connection;
 
             Connection.Connect();
 
-            var Stream = new DefaultTcpStream(BackingClient, Connection);
+            var Stream = Modifiers.Stream.Inject(new DefaultTcpStream(BackingClient, Connection));
 
-            var PacketController = new DefaultPacketController(Stream);
+            var PacketController = Modifiers.PacketController.Inject(new DefaultPacketController(Stream));
 
-            var PacketSender = new PacketWorkPoolSender(new DefaultPacketSender(PacketController), WorkPool);
+            var PacketSender = Modifiers.PacketSender.Inject(new PacketWorkPoolSender(new DefaultPacketSender(PacketController), WorkPool));
 
-            var PointerResponseSender = new DefaultPointerResponseSender(PacketSender);
+            var PointerResponseSender = Modifiers.PointerRepsonseSender.Inject(new DefaultPointerResponseSender(PacketSender));
 
-            var RemoteHeap = new RemoteHeap(PointerProvider, PacketSender, Types, Methods, PacketCallbackHandler);
+            var RemoteHeap = Modifiers.RemoteHeap.Inject(new RemoteHeap(PointerProvider, PacketSender, Types, Methods, PacketCallbackHandler));
 
-            var PacketHandler = new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
+            var PacketHandler = Modifiers.PacketHandler.Inject(new PacketWorkPoolHandler(WorkPool, new PointerPacketDispatchHandler(
                 new IPacketHandler<PointerOperations>[]
                 {
                     // pointer operations
@@ -81,13 +92,13 @@ namespace NetInterop
                     // in charge of handling the results of the above operations
                     new DefaultPointerReponseHandler(new CallbackPacketHandler(PacketCallbackHandler))
                 }
-            ));
+            )));
 
-            var PacketReceiver = new DefaultPacketReceiver(PacketHandler, PacketController, Connection);
+            var PacketReceiver = Modifiers.PacketReceiver.Inject(new DefaultPacketReceiver(PacketHandler, PacketController, Connection));
 
             WorkPool.AddWork(new PacketReceiverJob(PacketReceiver, PacketController));
 
-            return new InteropClient()
+            return Modifiers.Client.Inject(new InteropClient()
             {
                 BackingClient = BackingClient,
                 WorkPool = WorkPool,
@@ -104,16 +115,20 @@ namespace NetInterop
                 PointerProvider = PointerProvider,
                 PacketCallbackHandler = PacketCallbackHandler,
                 PacketSender = PacketSender
-            };
+            });
         }
 
         public static IServer CreateServer()
         {
-            var clientHandler = new InteropClientHandler();
+            var interopHandler = new InteropClientHandler();
 
-            InteropServer result = new InteropServer() { Handler = clientHandler };
+            interopHandler.OnHandle += OnNewClientConnected;
 
-            clientHandler.OnHandle += OnNewClientConnected;
+            var clientHandler = Modifiers.ClientHandler.Inject(interopHandler);
+
+            IServer result = Modifiers.Server.Inject(new InteropServer() { Handler = clientHandler });
+
+            IsServer = true;
 
             return result;
         }
