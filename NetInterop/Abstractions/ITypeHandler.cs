@@ -19,6 +19,6 @@ namespace NetInterop.Abstractions
         bool TryGetSerializableType<T>(INetPtr typePtr, out ISerializableType<T> netType);
 
         INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> deactivator, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer);
-        void RegisterPrimitiveTypes();
+        void RegisterPrimitiveTypes(IAddressProvider provider);
     }
 }

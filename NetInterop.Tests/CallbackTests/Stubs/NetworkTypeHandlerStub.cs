@@ -17,7 +17,7 @@ namespace NetInterop.Tests.CallbackTests.Stubs
 
         public int Count { get; }
 
-        public void RegisterPrimitiveTypes()
+        public void RegisterPrimitiveTypes(IAddressProvider provider)
         {
 
         }

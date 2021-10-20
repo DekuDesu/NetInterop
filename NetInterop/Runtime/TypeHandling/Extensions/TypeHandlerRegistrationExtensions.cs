@@ -4,6 +4,7 @@ using NetInterop.Runtime.TypeHandling;
 using NetInterop.Transport.Core.Abstractions.Packets;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -135,6 +136,33 @@ namespace NetInterop.Runtime.Extensions
                 serializer,
                 deserializer);
 
+        public static INetPtr<T> RegisterType<T, U>(this ITypeHandler handler,
+            U serializer) where U : IActivator<T>, IDeactivator<T>, IPacketSerializer<T>, IPacketDeserializer<T>
+            => RegisterType<T, U>(handler, GetInteropAttributeId<T>(), serializer);
+
+        public static INetPtr<T> RegisterType<T, U>(this ITypeHandler handler) where U : IActivator<T>, IDeactivator<T>, IPacketSerializer<T>, IPacketDeserializer<T>
+            => RegisterType<T, U>(handler, GetInteropAttributeId<T>(), GetInstanceOrThrow<U>());
+
+        public static INetPtr<T> RegisterType<T, U>(this ITypeHandler handler,
+            ushort interopId) where U : IActivator<T>, IDeactivator<T>, IPacketSerializer<T>, IPacketDeserializer<T>
+        {
+            var serializer = GetInstanceOrThrow<U>();
+            return handler.RegisterType<T>(interopId,
+                serializer,
+                serializer,
+                serializer,
+                serializer);
+        }
+
+        public static INetPtr<T> RegisterType<T, U>(this ITypeHandler handler,
+            ushort interopId,
+            U serializer) where U : IActivator<T>, IDeactivator<T>, IPacketSerializer<T>, IPacketDeserializer<T>
+            => handler.RegisterType<T>(interopId,
+                serializer,
+                serializer,
+                serializer,
+                serializer);
+
         private static ushort GetInteropAttributeId<T>()
         {
             InteropIdAttribute interopId = typeof(T).GetCustomAttribute<InteropIdAttribute>();
@@ -145,6 +173,45 @@ namespace NetInterop.Runtime.Extensions
             }
 
             return interopId.Id;
+        }
+
+        private static T GetInstanceOrThrow<T>()
+        {
+            Type type = typeof(T);
+
+            // check to see if it has a public parameterless constructor
+            var parameterlessConstructor = type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, Array.Empty<Type>(), null);
+
+            if (parameterlessConstructor != null)
+            {
+                return (T)parameterlessConstructor.Invoke(Array.Empty<object>());
+            }
+
+            // if no parameterless constructor exists check to see if the object is a singleton
+            PropertyInfo[] staticProperties = type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+            var propertiesMatchingType = staticProperties.Where(x => x.PropertyType == type);
+
+            // we should prioritize properties that follow the singleton pattern by name matching
+            // if we cant find one we should then accept any public static property with matching type, but warn the user
+
+            const string error = "Failed create an instance of the activator/serializer: {0} since it has no public parameterless constructor and no public/private static property with the type of {0}.";
+
+            if (propertiesMatchingType is null || propertiesMatchingType.Count() is 0)
+            {
+                throw new NotSupportedException(string.Format(error, type.FullName));
+            }
+
+            // magic word but this should be prioritized
+            var instanceProperty = propertiesMatchingType.Where(x => x.Name.ToLowerInvariant() == "instance").FirstOrDefault();
+
+            if (instanceProperty != null)
+            {
+                return (T)instanceProperty.GetValue(null);
+            }
+
+            // if no property matches the magic word just return any one of them
+            return (T)propertiesMatchingType.First().GetValue(null);
         }
     }
 }

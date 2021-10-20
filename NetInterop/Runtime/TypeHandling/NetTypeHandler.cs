@@ -21,21 +21,21 @@ namespace NetInterop.Runtime
 
         public int Count => types.Count;
 
-        public void RegisterPrimitiveTypes()
+        public void RegisterPrimitiveTypes(IAddressProvider provider)
         {
-            RegisterType((ushort)TypeCode.Boolean, BoolSerializer.Instance, BoolSerializer.Instance, BoolSerializer.Instance, BoolSerializer.Instance);
-            RegisterType((ushort)TypeCode.Byte, ByteSerializer.Instance, ByteSerializer.Instance, ByteSerializer.Instance, ByteSerializer.Instance);
-            RegisterType((ushort)TypeCode.SByte, SByteSerializer.Instance, SByteSerializer.Instance, SByteSerializer.Instance, SByteSerializer.Instance);
-            RegisterType((ushort)TypeCode.Int16, ShortSerializer.Instance, ShortSerializer.Instance, ShortSerializer.Instance, ShortSerializer.Instance);
-            RegisterType((ushort)TypeCode.UInt16, UShortSerializer.Instance, UShortSerializer.Instance, UShortSerializer.Instance, UShortSerializer.Instance);
-            RegisterType((ushort)TypeCode.Int32, IntSerializer.Instance, IntSerializer.Instance, IntSerializer.Instance, IntSerializer.Instance);
-            RegisterType((ushort)TypeCode.UInt32, UIntSerializer.Instance, UIntSerializer.Instance, UIntSerializer.Instance, UIntSerializer.Instance);
-            RegisterType((ushort)TypeCode.Int64, LongSerializer.Instance, LongSerializer.Instance, LongSerializer.Instance, LongSerializer.Instance);
-            RegisterType((ushort)TypeCode.UInt64, ULongSerializer.Instance, ULongSerializer.Instance, ULongSerializer.Instance, ULongSerializer.Instance);
-            RegisterType((ushort)TypeCode.Single, FloatSerializer.Instance, FloatSerializer.Instance, FloatSerializer.Instance, FloatSerializer.Instance);
-            RegisterType((ushort)TypeCode.Double, DoubleSerializer.Instance, DoubleSerializer.Instance, DoubleSerializer.Instance, DoubleSerializer.Instance);
-            RegisterType((ushort)TypeCode.Decimal, DecimalSerializer.Instance, DecimalSerializer.Instance, DecimalSerializer.Instance, DecimalSerializer.Instance);
-            RegisterType((ushort)TypeCode.DateTime, DateTimeSerializer.Instance, DateTimeSerializer.Instance, DateTimeSerializer.Instance, DateTimeSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), BoolSerializer.Instance, BoolSerializer.Instance, BoolSerializer.Instance, BoolSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), ByteSerializer.Instance, ByteSerializer.Instance, ByteSerializer.Instance, ByteSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), SByteSerializer.Instance, SByteSerializer.Instance, SByteSerializer.Instance, SByteSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), ShortSerializer.Instance, ShortSerializer.Instance, ShortSerializer.Instance, ShortSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), UShortSerializer.Instance, UShortSerializer.Instance, UShortSerializer.Instance, UShortSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), IntSerializer.Instance, IntSerializer.Instance, IntSerializer.Instance, IntSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), UIntSerializer.Instance, UIntSerializer.Instance, UIntSerializer.Instance, UIntSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), LongSerializer.Instance, LongSerializer.Instance, LongSerializer.Instance, LongSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), ULongSerializer.Instance, ULongSerializer.Instance, ULongSerializer.Instance, ULongSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), FloatSerializer.Instance, FloatSerializer.Instance, FloatSerializer.Instance, FloatSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), DoubleSerializer.Instance, DoubleSerializer.Instance, DoubleSerializer.Instance, DoubleSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), DecimalSerializer.Instance, DecimalSerializer.Instance, DecimalSerializer.Instance, DecimalSerializer.Instance);
+            RegisterType(provider.GetNewAddress(), DateTimeSerializer.Instance, DateTimeSerializer.Instance, DateTimeSerializer.Instance, DateTimeSerializer.Instance);
         }
 
         public INetPtr<T> RegisterType<T>(ushort interopId, IActivator<T> activator, IDeactivator<T> deactivator, IPacketSerializer<T> serializer, IPacketDeserializer<T> deserializer)

@@ -20,6 +20,7 @@ namespace NetInterop.Example
 
         static long Count;
         static long Current;
+
         public static void Main()
         {
             Startup.Initialize();
@@ -30,12 +31,12 @@ namespace NetInterop.Example
 
             List<Task> tasks = new();
 
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 1; i++)
             {
                 Console.WriteLine("Starting Task");
                 var client = Interop.CreateClient("127.0.0.1", 25565);
 
-                tasks.Add(Task.Run(() => Test(server, client, TokenSource.Token)));
+                tasks.Add(Task.Run(() => TestRunner(client, TokenSource.Token, Test)));
             }
 
             try
@@ -57,46 +58,57 @@ namespace NetInterop.Example
         }
 
         static int loggingProcessorId = -1;
-        private static void Test(IServer server, IClient client, CancellationToken token)
-        {
-            _ = server;
 
+        private static void TestRunner(IClient client, CancellationToken token, Action<IClient, Stopwatch, CancellationToken> Expression)
+        {
             Interlocked.CompareExchange(ref loggingProcessorId, Thread.CurrentThread.ManagedThreadId, -1);
 
             Console.WriteLine("Task Started");
             Stopwatch watch = Stopwatch.StartNew();
 
-            while (token.IsCancellationRequested is false)
-            {
-                INetPtr<DiagnosticClass> ptr = client.RemoteHeap.Create<DiagnosticClass>().Result;
-
-                if (ptr is null)
-                {
-                    Console.WriteLine("Failed to get TestClass pointer");
-                    continue;
-                }
-
-                client.RemoteHeap.Invoke(DiagnosticClass.WritePointer, ptr, "Hello World!");
-
-                client.RemoteHeap.Destroy(ptr);
-
-                Interlocked.Increment(ref Count);
-
-                Interlocked.Increment(ref Current);
-
-                if (Thread.CurrentThread.ManagedThreadId == loggingProcessorId)
-                {
-                    if (watch.ElapsedMilliseconds >= 1000)
-                    {
-                        watch.Restart();
-                        Console.WriteLine($"Performed {Current}/{Count} operations in 1 second");
-                        Interlocked.Exchange(ref Current, 0);
-                    }
-                }
-            }
+            Expression?.Invoke(client, watch, token);
 
             watch.Stop();
             Console.WriteLine("Task Ended");
+        }
+
+        private static void Test(IClient client, Stopwatch watch, CancellationToken token)
+        {
+            while (token.IsCancellationRequested is false)
+            {
+                INetPtr<HelloWorld> localPtr = Interop.LocalHeap.Alloc<HelloWorld>();
+
+                HelloWorld local = Interop.LocalHeap.Get(localPtr);
+
+                local.Log();
+
+                INetPtr<HelloWorld> ptr = client.RemoteHeap.Create<HelloWorld>().Result;
+
+                if (ptr is null)
+                {
+                    Console.WriteLine("Failed to create remote HelloWorld");
+                    continue;
+                }
+
+                client.RemoteHeap.Invoke(HelloWorld.m_LogMessage, ptr, " World").Wait();
+
+                client.RemoteHeap.Destroy(ptr);
+                Interop.LocalHeap.Free(localPtr);
+
+                //Interlocked.Increment(ref Count);
+
+                //Interlocked.Increment(ref Current);
+
+                //if (Thread.CurrentThread.ManagedThreadId == loggingProcessorId)
+                //{
+                //    if (watch.ElapsedMilliseconds >= 1000)
+                //    {
+                //        watch.Restart();
+                //        Console.WriteLine($"Performed {Current}/{Count} operations in 1 second");
+                //        Interlocked.Exchange(ref Current, 0);
+                //    }
+                //}
+            }
         }
     }
 }

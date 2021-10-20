@@ -11,29 +11,28 @@ namespace NetInterop.Example
 {
     public static class Startup
     {
-        private static ushort nextTypeId;
+        private static readonly IAddressProvider addressProvider = new DefaultAddressProvider();
 
         public static void Initialize()
         {
             Interop.Initialize();
 
-            RegisterTypes(Interop.Types, ref nextTypeId);
-
+            RegisterTypes(Interop.Types, addressProvider);
             RegisterMethods(Interop.Methods);
         }
 
-        public static void RegisterTypes(ITypeHandler handler, ref ushort nextTypeId)
+        public static void RegisterTypes(ITypeHandler handler, IAddressProvider provider)
         {
-            handler.RegisterPrimitiveTypes();
+            handler.RegisterPrimitiveTypes(provider);
 
-            handler.RegisterType<string>((ushort)TypeCode.String, UTF8Serializer.Instance, UTF8Serializer.Instance);
+            handler.RegisterType<string>(provider.GetNewAddress(), UTF8Serializer.Instance, UTF8Serializer.Instance);
 
-            DiagnosticClass.RegisterType(handler, ref nextTypeId);
+            HelloWorld.RegisterType(handler, provider);
         }
 
         public static void RegisterMethods(IMethodHandler handler)
         {
-            DiagnosticClass.RegisterMethods(handler);
+            HelloWorld.RegisterMethods(handler);
         }
     }
 }
